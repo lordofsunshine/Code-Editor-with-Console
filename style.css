@@ -11,6 +11,9 @@ body{
     color: #f5f5f5;
     padding: 20px;
 }
+h1{
+    margin: 10px;
+}
 .container{
     width:100%;
     height: 100vh;
@@ -70,4 +73,19 @@ label{
 }
 ::-webkit-scrollbar-thumb {
   background: #3b3b3b;
+}
+
+@media only screen and (max-device-width: 640px) {
+.container {
+    display: block;
+}
+  textarea {
+    height: 35%;
+}
+  .left, .right {
+    padding: 0;
+}
+  h1{
+    margin: 10px 0;
+}
 }
