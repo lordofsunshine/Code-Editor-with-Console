@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Editor with Integrated Formatter</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://kit.fontawesome.com/d21f706b87.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <h1>Code Editor</h1>
+    <div class="container">
+        <div class="left">
+            <!-- HTML -->
+            <label><i class="fa-brands fa-html5" style="color: #f25621;"></i>HTML</label>
+            <textarea id="html-code" onkeyup="run()"></textarea>
+            <!-- CSS -->
+            <label><i class="fa-brands fa-css3-alt" style="color: #434dd6;"></i>CSS</label>
+            <textarea id="css-code" onkeyup="run()"></textarea>
+            <!-- JavaScript -->
+            <label><i class="fa-brands fa-js" style="color: #FFD43B;"></i>JavaScript</label>
+            <textarea id="js-code" onkeyup="run()"></textarea>
+        </div>
+        <div class="right">
+            <!-- Output -->
+            <label><i class="fa-solid fa-play" style="color: #fff;"></i> Output</label>
+            <iframe id="output"></iframe>
+            <!-- Console -->
+            <label><i class="fa-solid fa-terminal" style="color: #fff;"></i> Console</label>
+            <div id="console-log"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
