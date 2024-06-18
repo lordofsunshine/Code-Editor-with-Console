@@ -32,3 +32,5 @@ The console has been completely updated in the update, now it is also a Terminal
 
 # ⭐ Star
 Did you like the repository? Put an asterisk, thank you! ❤️
+
+developed by lordofsunshine
