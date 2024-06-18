@@ -3,34 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Editor with Integrated Formatter</title>
+    <title>Code Editor with Console</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://kit.fontawesome.com/d21f706b87.js" crossorigin="anonymous"></script>
 </head>
 <body>
-    <h1>Code Editor</h1>
+    <div class="flex">
+        <h1>Code Editor</h1>
+        <div class="menu">
+        <button id="webview-btn" class="menu-btn active">WebView</button>
+        <button id="console-btn" class="menu-btn">Console</button>
+    </div>
+        </div>
     <div class="container">
         <div class="left">
             <!-- HTML -->
-            <label><i class="fa-brands fa-html5" style="color: #f25621;"></i>HTML</label>
-            <textarea id="html-code" onkeyup="run()"></textarea>
+            <label><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><g fill="none"><rect width="256" height="256" fill="#e14e1d" rx="60"/><path fill="#fff" d="m48 38l8.61 96.593h110.71l-3.715 41.43l-35.646 9.638l-35.579-9.624l-2.379-26.602H57.94l4.585 51.281l65.427 18.172l65.51-18.172l8.783-98.061H85.824l-2.923-32.71h122.238L208 38z"/><path fill="#ebebeb" d="M128 38H48l8.61 96.593H128v-31.938H85.824l-2.923-32.71H128zm0 147.647l-.041.014l-35.579-9.624l-2.379-26.602H57.94l4.585 51.281l65.427 18.172l.049-.014z"/></g></svg> HTML</label>
+            <textarea class="resizable" id="html-code" onkeyup="run()"></textarea>
             <!-- CSS -->
-            <label><i class="fa-brands fa-css3-alt" style="color: #434dd6;"></i>CSS</label>
-            <textarea id="css-code" onkeyup="run()"></textarea>
+            <label><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><g fill="none"><rect width="256" height="256" fill="#0277bd" rx="60"/><path fill="#ebebeb" d="m53.753 102.651l2.862 31.942h71.481v-31.942zM128.095 38H48l2.904 31.942h77.191zm0 180.841v-33.233l-.14.037l-35.574-9.605l-2.274-25.476H58.042l4.475 50.154l65.431 18.164z"/><path fill="#fff" d="m167.318 134.593l-3.708 41.426l-35.625 9.616v33.231l65.483-18.148l.48-5.397l7.506-84.092l.779-8.578L208 38h-80.015v31.942h45.009l-2.906 32.709h-42.103v31.942z"/></g></svg> CSS</label>
+            <textarea class="resizable" id="css-code" onkeyup="run()"></textarea>
             <!-- JavaScript -->
-            <label><i class="fa-brands fa-js" style="color: #FFD43B;"></i>JavaScript</label>
-            <textarea id="js-code" onkeyup="run()"></textarea>
+            <label><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><g fill="none"><rect width="256" height="256" fill="#f0db4f" rx="60"/><path fill="#323330" d="m67.312 213.932l19.59-11.856c3.78 6.701 7.218 12.371 15.465 12.371c7.905 0 12.889-3.092 12.889-15.12v-81.798h24.058v82.138c0 24.917-14.606 36.259-35.916 36.259c-19.245 0-30.416-9.967-36.087-21.996m85.07-2.576l19.588-11.341c5.157 8.421 11.859 14.607 23.715 14.607c9.969 0 16.325-4.984 16.325-11.858c0-8.248-6.53-11.17-17.528-15.98l-6.013-2.579c-17.357-7.388-28.871-16.668-28.871-36.258c0-18.044 13.748-31.792 35.229-31.792c15.294 0 26.292 5.328 34.196 19.247l-18.731 12.029c-4.125-7.389-8.591-10.31-15.465-10.31c-7.046 0-11.514 4.468-11.514 10.31c0 7.217 4.468 10.139 14.778 14.608l6.014 2.577c20.449 8.765 31.963 17.699 31.963 37.804c0 21.654-17.012 33.51-39.867 33.51c-22.339 0-36.774-10.654-43.819-24.574"/></g></svg> JavaScript</label>
+            <textarea class="resizable" id="js-code" onkeyup="run()"></textarea>
         </div>
         <div class="right">
             <!-- Output -->
-            <label><i class="fa-solid fa-play" style="color: #fff;"></i> Output</label>
+            <label class="webview-label"><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 24 24"><path fill="#fafafa" d="M21.409 9.353a2.998 2.998 0 0 1 0 5.294L8.597 21.614C6.534 22.737 4 21.277 4 18.968V5.033c0-2.31 2.534-3.769 4.597-2.648z"/></svg> Output</label>
             <iframe id="output"></iframe>
             <!-- Console -->
-            <label><i class="fa-solid fa-terminal" style="color: #fff;"></i> Console</label>
-            <div id="console-log"></div>
+            <label class="console-label"><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 24 24"><path fill="none" stroke="#fafafa" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16m-4 10h-3m-5-4l2 2l-2 2m-5 .8V7.2c0-1.12 0-1.68.218-2.108c.192-.377.497-.682.874-.874C4.52 4 5.08 4 6.2 4h11.6c1.12 0 1.68 0 2.107.218c.377.192.683.497.875.874c.218.427.218.987.218 2.105v9.606c0 1.118 0 1.677-.218 2.104a2.003 2.003 0 0 1-.875.875c-.427.218-.986.218-2.104.218H6.197c-1.118 0-1.678 0-2.105-.218a2.001 2.001 0 0 1-.874-.875C3 18.48 3 17.92 3 16.8"/></svg> Console</label>
+            <div id="console-log">
+            </div>
+            <div class="console-input">
+                <input type="text" id="command-input" placeholder="Enter the command here...">
+            </div>
+
         </div>
     </div>
 
     <script src="script.js"></script>
 </body>
 </html>
+
