@@ -1,19 +1,3 @@
-const styles = `
-    .error-message {
-        color: white;
-        padding: 2px 10px;
-    }
-    .error-text {
-        color: red;
-    }
-    .command-symbol {
-        color: grey;
-    }
-    .command-message {
-        color: white;
-    }
-`;
-
 function addMessageToConsole(message, isError, isCommand) {
     let consoleElement = document.getElementById('console-log');
     let messageElement = document.createElement('div');
@@ -22,7 +6,10 @@ function addMessageToConsole(message, isError, isCommand) {
     if (isError) {
         let errorTime = document.createElement('span');
         let currentTime = new Date();
-        errorTime.textContent = currentTime.getHours() + ':' + currentTime.getMinutes() + ':' + currentTime.getSeconds();
+        let hours = String(currentTime.getHours()).padStart(2, '0');
+        let minutes = String(currentTime.getMinutes()).padStart(2, '0');
+        let seconds = String(currentTime.getSeconds()).padStart(2, '0');
+        errorTime.textContent = hours + ':' + minutes + ':' + seconds;
         errorTime.classList.add('error-text');
         messageElement.appendChild(errorTime);
     } else if (isCommand) {
@@ -41,7 +28,15 @@ function addMessageToConsole(message, isError, isCommand) {
     consoleElement.scrollTop = consoleElement.scrollHeight;
 }
 
-function executeCommand(command) {
+function executeCommand() {
+    var commandInput = document.getElementById('command-input');
+    var command = commandInput.value;
+
+    if (command.trim() === '') {
+        addMessageToConsole('The command cannot be empty.', true, false);
+        return;
+    }
+
     try {
         let result = eval(command);
         addMessageToConsole(command, false, true);
@@ -53,21 +48,27 @@ function executeCommand(command) {
 
 function run() {
     let htmlCode = document.getElementById("html-code").value;
-    let cssCode = "<style>" + styles + document.getElementById("css-code").value + "</style>";
+    let cssCode = document.getElementById("css-code").value;
     let jsCode = document.getElementById("js-code").value;
     let output = document.getElementById("output");
-    let consoleLog = document.getElementById("console-log");
+
+    output.contentDocument.body.innerHTML = '';
+    output.contentDocument.head.innerHTML = '';
+
+    let styleEl = output.contentDocument.createElement('style');
+    styleEl.type = 'text/css';
+    styleEl.appendChild(output.contentDocument.createTextNode(cssCode));
+    output.contentDocument.head.appendChild(styleEl);
+
+    output.contentDocument.body.innerHTML = htmlCode;
 
     output.contentWindow.console.log = function(message) {
         addMessageToConsole(message, false, false);
     };
-
     output.contentWindow.onerror = function(message, source, lineno, colno, error) {
         addMessageToConsole(message, true, false);
         return true;
     };
-
-    output.contentDocument.body.innerHTML = htmlCode + cssCode;
 
     try {
         output.contentWindow.eval(jsCode);
@@ -75,6 +76,8 @@ function run() {
         addMessageToConsole(e.message, true, false);
     }
 }
+
+window.run = run;
 
 document.addEventListener('DOMContentLoaded', function() {
     var consoleInput = document.querySelector('.right .console-input');
@@ -98,34 +101,34 @@ document.addEventListener('DOMContentLoaded', function() {
     consoleLabels.forEach(function(label) {
         label.style.display = 'none';
     });
-    
-webviewButton.addEventListener('click', function() {
-    output.style.display = 'block';
-    webviewLabels.forEach(function(label) {
-        label.style.display = 'flex';
-    });
-    consoleLog.style.display = 'none';
-    consoleLabels.forEach(function(label) {
-        label.style.display = 'none';
-    });
-    consoleInput.style.display = 'none'; 
-    this.classList.add('active');
-    consoleButton.classList.remove('active');
-});
 
-consoleButton.addEventListener('click', function() {
-    output.style.display = 'none';
-    webviewLabels.forEach(function(label) {
-        label.style.display = 'none';
+    webviewButton.addEventListener('click', function() {
+        output.style.display = 'block';
+        webviewLabels.forEach(function(label) {
+            label.style.display = 'flex';
+        });
+        consoleLog.style.display = 'none';
+        consoleLabels.forEach(function(label) {
+            label.style.display = 'none';
+        });
+        consoleInput.style.display = 'none';
+        this.classList.add('active');
+        consoleButton.classList.remove('active');
     });
-    consoleLog.style.display = 'block';
-    consoleLabels.forEach(function(label) {
-        label.style.display = 'flex';
+
+    consoleButton.addEventListener('click', function() {
+        output.style.display = 'none';
+        webviewLabels.forEach(function(label) {
+            label.style.display = 'none';
+        });
+        consoleLog.style.display = 'block';
+        consoleLabels.forEach(function(label) {
+            label.style.display = 'flex';
+        });
+        consoleInput.style.display = 'block';
+        this.classList.add('active');
+        webviewButton.classList.remove('active');
     });
-    consoleInput.style.display = 'block';
-    this.classList.add('active');
-    webviewButton.classList.remove('active');
-});
 
     var commandInput = document.getElementById('command-input');
     commandInput.addEventListener('keypress', function(e) {
@@ -135,6 +138,43 @@ consoleButton.addEventListener('click', function() {
             this.value = '';
         }
     });
+})
 
-    document.getElementById('run-btn').addEventListener('click', run);
-     })
+// Save the Project
+
+function downloadFilesAsZip() {
+    const htmlContent = document.getElementById('html-code').value;
+    const cssContent = document.getElementById('css-code').value;
+    const jsContent = document.getElementById('js-code').value;
+
+    const zip = new JSZip();
+
+    zip.file("index.html", htmlContent);
+    zip.file("style.css", cssContent);
+    zip.file("script.js", jsContent);
+
+    zip.generateAsync({
+            type: "blob"
+        })
+        .then(function(content) {
+            saveAs(content, "website.zip");
+        });
+}
+
+document.getElementById('downloadFilesAsZip').addEventListener('click', downloadFilesAsZip);
+
+
+function clearConsole() {
+    let consoleLog = document.getElementById('console-log');
+    for (let i = consoleLog.children.length - 1; i >= 0; i--) {
+        let child = consoleLog.children[i];
+        if (child.classList.contains('console-message')) {
+            consoleLog.removeChild(child);
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    let closeButton = document.querySelector('.close');
+    closeButton.addEventListener('click', clearConsole);
+});
