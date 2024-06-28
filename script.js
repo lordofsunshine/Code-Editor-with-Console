@@ -163,6 +163,7 @@ function downloadFilesAsZip() {
 
 document.getElementById('downloadFilesAsZip').addEventListener('click', downloadFilesAsZip);
 
+// Clear Console function
 
 function clearConsole() {
     let consoleLog = document.getElementById('console-log');
