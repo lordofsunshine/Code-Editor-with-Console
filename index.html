@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Code Editor with Console</title>
@@ -8,43 +8,58 @@
     <script src="https://kit.fontawesome.com/d21f706b87.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-  </head>
-  <body>
+</head>
+<body>
     <div class="flex">
-      <div class="flex-magic">
-        <h1>Code Editor</h1>
-        <button class="download-btn" id="downloadFilesAsZip">Save the project <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M17.6 18L8 8.4V17H6V5h12v2H9.4l9.6 9.6z" />
-          </svg>
-        </button>
-      </div>
-      <div class="menu">
-        <button id="webview-btn" class="menu-btn active">WebView</button>
-        <button id="console-btn" class="menu-btn">Console</button>
-      </div>
+        <div class="flex-magic">
+            <h1>Code Editor</h1>
+            <button class="dropbtn" id="dropdownButton">More...</button>
+          <i id="saveIcon" class="fa fa-save save-icon" style="display: none;"></i>
+        </div>
+        <div class="menu">
+            <button id="webview-btn" class="menu-btn active">WebView</button>
+            <button id="console-btn" class="menu-btn">Console</button>
+        </div>
     </div>
+  <div id="dropdownPopup" class="dropdown-popup">
+    <div class="dropdown-flex">
+    <div class="dropdown-column">
+    <p>Settings</p>
+    <hr class="custom">
+    <button id="toggle-autosave-dropdown">Enable Autosave</button>
+    </div>
+    <div class="dropdown-column">
+    <p>More</p>
+    <hr class="custom">
+    <button class="download-btn" id="downloadFilesAsZip">Save the project <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M17.6 18L8 8.4V17H6V5h12v2H9.4l9.6 9.6z" />
+      </svg>
+    </button>
+      </div>
+      </div>
+  </div>
     <div class="container">
-      <div class="left">
-        <!-- HTML -->
-        <label>
-          <svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256">
-            <g fill="none">
-              <rect width="256" height="256" fill="#e14e1d" rx="60" />
-              <path fill="#fff" d="m48 38l8.61 96.593h110.71l-3.715 41.43l-35.646 9.638l-35.579-9.624l-2.379-26.602H57.94l4.585 51.281l65.427 18.172l65.51-18.172l8.783-98.061H85.824l-2.923-32.71h122.238L208 38z" />
-              <path fill="#ebebeb" d="M128 38H48l8.61 96.593H128v-31.938H85.824l-2.923-32.71H128zm0 147.647l-.041.014l-35.579-9.624l-2.379-26.602H57.94l4.585 51.281l65.427 18.172l.049-.014z" />
-            </g>
-          </svg> HTML </label>
-        <textarea class="resizable" id="html-code" onkeyup="run()"></textarea>
-        <!-- CSS -->
-        <label>
-          <svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256">
-            <g fill="none">
-              <rect width="256" height="256" fill="#0277bd" rx="60" />
-              <path fill="#ebebeb" d="m53.753 102.651l2.862 31.942h71.481v-31.942zM128.095 38H48l2.904 31.942h77.191zm0 180.841v-33.233l-.14.037l-35.574-9.605l-2.274-25.476H58.042l4.475 50.154l65.431 18.164z" />
-              <path fill="#fff" d="m167.318 134.593l-3.708 41.426l-35.625 9.616v33.231l65.483-18.148l.48-5.397l7.506-84.092l.779-8.578L208 38h-80.015v31.942h45.009l-2.906 32.709h-42.103v31.942z" />
-            </g>
-          </svg> CSS </label>
-        <textarea class="resizable" id="css-code" onkeyup="run()"></textarea>
+        <div class="left">
+            <label>
+                <svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256">
+                    <g fill="none">
+                        <rect width="256" height="256" fill="#e14e1d" rx="60"/>
+                        <path fill="#fff" d="m48 38l8.61 96.593h110.71l-3.715 41.43l-35.646 9.638l-35.579-9.624l-2.379-26.602H57.94l4.585 51.281l65.427 18.172l65.51-18.172l8.783-98.061H85.824l-2.923-32.71h122.238L208 38z"/>
+                        <path fill="#ebebeb" d="M128 38H48l8.61 96.593H128v-31.938H85.824l-2.923-32.71H128zm0 147.647l-.041.014l-35.579-9.624l-2.379-26.602H57.94l4.585 51.281l65.427 18.172l.049-.014z"/>
+                    </g>
+                </svg> HTML
+            </label>
+            <textarea class="resizable" id="html-code" onkeyup="run()"></textarea>
+            <label>
+                <svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256">
+                    <g fill="none">
+                        <rect width="256" height="256" fill="#0277bd" rx="60"/>
+                        <path fill="#ebebeb" d="m53.753 102.651l2.862 31.942h71.481v-31.942zM128.095 38H48l2.904 31.942h77.191zm0 180.841v-33.233l-.14.037l-35.574-9.605l-2.274-25.476H58.042l4.475 50.154l65.431 18.164z"/>
+                        <path fill="#fff" d="m167.318 134.593l-3.708 41.426l-35.625 9.616v33.231l65.483-18.148l.48-5.397l7.506-84.092l.779-8.578L208 38h-80.015l-5.385 58.349h31.92zm-18.384-20.939H74.25l2.857 31.942h71.481z"/>
+                    </g>
+                </svg> CSS
+            </label>
+            <textarea class="resizable" id="css-code" onkeyup="run()"></textarea>
         <!-- JavaScript -->
         <label>
           <svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256">
@@ -65,20 +80,22 @@
         <!-- Console -->
         <label class="console-label">
           <svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 24 24">
-            <path fill="none" stroke="#fafafa" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16m-4 10h-3m-5-4l2 2l-2 2m-5 .8V7.2c0-1.12 0-1.68.218-2.108c.192-.377.497-.682.874-.874C4.52 4 5.08 4 6.2 4h11.6c1.12 0 1.68 0 2.107.218c.377.192.683.497.875.874c.218.427.218.987.218 2.105v9.606c0 1.118 0 1.677-.218 2.104a2.003 2.003 0 0 1-.875.875c-.427.218-.986.218-2.104.218H6.197c-1.118 0-1.678 0-2.105-.218a2.001 2.001 0 0 1-.874-.875C3 18.48 3 17.92 3 16.8" />
+            <path fill="none" stroke="#fafafa" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16m-4 10h-3m-5-4l2 2l-2 2m-5 .8V7.2c0-1.12 0-1.68.218-2.108c.192-.377.497-.682.874-.874C4.52 4 5.08 4 6.2 4h11.6c1.12 0 1.68 0 2.108.218c.377.192.682.497.874.874c.218.428.218.988.218 2.108v9.6c0 1.12 0 1.68-.218 2.108c-.192.377-.497.682-.874.874c-.428.218-.988.218-2.108.218H6.2c-1.12 0-1.68 0-2.108-.218c-.377-.192-.682-.497-.874-.874C3.68 18 3.68 17.44 3.68 16.32z" />
           </svg> Console </label>
-        <div id="console-log">
-          <div class="close tooltip">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M6.4 19L5 17.6l5.6-5.6L5 6.4L6.4 5l5.6 5.6L17.6 5L19 6.4L13.4 12l5.6 5.6l-1.4 1.4l-5.6-5.6z" />
-            </svg>
-          </div>
-        </div>
-        <div class="console-input">
-          <input type="text" id="command-input" placeholder="Enter the command here..." autocomplete="off" required>
+              <div id="console-log">
+                <div class="close tooltip">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M6.4 19L5 17.6l5.6-5.6L5 6.4L6.4 5l5.6 5.6L17.6 5L19 6.4L13.4 12l5.6 5.6l-1.4 1.4l-5.6-5.6z" />
+                  </svg>
+                </div>
+              </div>
+              <div class="console-input">
+                <input type="text" id="command-input" placeholder="Enter the command here..." autocomplete="off" required>
+              </div>
         </div>
       </div>
     </div>
-    <script type="module" src="script.js"></script>
+
+    <script src="script.js"></script>
   </body>
 </html>
