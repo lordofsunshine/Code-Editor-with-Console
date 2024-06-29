@@ -160,7 +160,6 @@ label {
   background: transparent;
   margin-left: auto;
   border: 0;
-  color: #fff;
   cursor: pointer;
   transition: all 0.3s;
   white-space: nowrap;
@@ -188,6 +187,83 @@ label {
   opacity: 0.6;
   transition: all 0.3s;
 }
+.save-icon {
+  margin-left: 10px;
+  color: #404040;
+  animation: blink 1s infinite;
+}
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
+.save-icon.blink {
+  display: inline !important;
+  animation: blink 1s infinite;
+}
+.dropdown-popup {
+    position: fixed;
+    background-color: #fff;
+    color: #48484891;
+    letter-spacing: -0.2px;
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 16px 28px;
+    display: none;
+    animation: fadeIn 0.3s ease-in-out;
+}
+.dropdown-popup.show {
+    display: block; 
+}
+.dropdown-popup button {
+    margin-bottom: 8px;
+    padding: 10px 16px;
+    background-color: #f0f0f0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+.dropdown-popup button:hover {
+    background-color: #e0e0e0;
+}
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.custom {
+  border: 1px solid #4848483b;
+  margin-block-start: 5px;
+  margin-block-end: 10px;
+}
+.dropdown-flex {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+.dropbtn {
+  background-color: #191919;
+  color: white;
+  border: none;
+  padding: 8px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.dropbtn:hover {
+  opacity: 0.8;
+}
+
 @media only screen and (max-device-width: 670px) {
   .container {
     display: block;
@@ -221,5 +297,18 @@ label {
   }
   .console-message {
     padding: 8px 10px;
+  }
+  .dropdown-flex {
+      align-items: baseline;
+  }
+  .download-btn {
+      white-space: normal;
+  }
+  .dropdown-popup {
+      position: unset;
+      font-size: 14px;
+  }
+  .dropbtn {
+      margin-left: auto;
   }
 }
