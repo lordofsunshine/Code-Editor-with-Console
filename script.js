@@ -1,25 +1,33 @@
+document.addEventListener('DOMContentLoaded', init);
+
+function init() {
+    setupConsole();
+    setupUIElements();
+    setupEventListeners();
+    initializeAutosave();
+    loadSavedContent();
+}
+
 function addMessageToConsole(message, isError, isCommand) {
-    let consoleElement = document.getElementById('console-log');
-    let messageElement = document.createElement('div');
+    const consoleElement = document.getElementById('console-log');
+    if (!consoleElement) return;
+
+    const messageElement = document.createElement('div');
     messageElement.classList.add('console-message');
 
     if (isError) {
-        let errorTime = document.createElement('span');
-        let currentTime = new Date();
-        let hours = String(currentTime.getHours()).padStart(2, '0');
-        let minutes = String(currentTime.getMinutes()).padStart(2, '0');
-        let seconds = String(currentTime.getSeconds()).padStart(2, '0');
-        errorTime.textContent = hours + ':' + minutes + ':' + seconds;
+        const errorTime = document.createElement('span');
+        errorTime.textContent = new Date().toLocaleTimeString();
         errorTime.classList.add('error-text');
         messageElement.appendChild(errorTime);
     } else if (isCommand) {
-        let commandSymbol = document.createElement('span');
+        const commandSymbol = document.createElement('span');
         commandSymbol.textContent = '>';
         commandSymbol.classList.add('command-symbol');
         messageElement.appendChild(commandSymbol);
     }
 
-    let messageContent = document.createElement('span');
+    const messageContent = document.createElement('span');
     messageContent.textContent = message;
     messageContent.classList.add(isCommand ? 'command-message' : 'error-message');
     messageElement.appendChild(messageContent);
@@ -28,17 +36,14 @@ function addMessageToConsole(message, isError, isCommand) {
     consoleElement.scrollTop = consoleElement.scrollHeight;
 }
 
-function executeCommand() {
-    var commandInput = document.getElementById('command-input');
-    var command = commandInput.value;
-
+function executeCommand(command) {
     if (command.trim() === '') {
         addMessageToConsole('The command cannot be empty.', true, false);
         return;
     }
 
     try {
-        let result = eval(command);
+        const result = eval(command);
         addMessageToConsole(command, false, true);
         addMessageToConsole(result, false, false);
     } catch (e) {
@@ -47,100 +52,199 @@ function executeCommand() {
 }
 
 function run() {
-    let htmlCode = document.getElementById("html-code").value;
-    let cssCode = document.getElementById("css-code").value;
-    let jsCode = document.getElementById("js-code").value;
-    let output = document.getElementById("output");
+    const htmlCode = document.getElementById('html-code').value;
+    const cssCode = document.getElementById('css-code').value;
+    const jsCode = document.getElementById('js-code').value;
+    const output = document.getElementById('output');
 
-    output.contentDocument.body.innerHTML = '';
-    output.contentDocument.head.innerHTML = '';
+    if (!output) return;
 
-    let styleEl = output.contentDocument.createElement('style');
-    styleEl.type = 'text/css';
-    styleEl.appendChild(output.contentDocument.createTextNode(cssCode));
-    output.contentDocument.head.appendChild(styleEl);
+    const doc = output.contentDocument;
+    doc.open();
+    doc.write(`
+        <html>
+        <head>
+            <style>${cssCode}</style>
+        </head>
+        <body>
+            ${htmlCode}
+            <script>
+                console.log = function(message) {
+                    window.parent.addMessageToConsole(message, false, false);
+                };
+                window.onerror = function(message) {
+                    window.parent.addMessageToConsole(message, true, false);
+                    return true;
+                };
+                try {
+                    ${jsCode}
+                } catch (e) {
+                    window.parent.addMessageToConsole(e.message, true, false);
+                }
+            </script>
+        </body>
+        </html>
+    `);
+    doc.close();
+}
 
-    output.contentDocument.body.innerHTML = htmlCode;
+let autosaveEnabled = localStorage.getItem('autosave') === 'true';
+let autosaveInterval;
 
-    output.contentWindow.console.log = function(message) {
-        addMessageToConsole(message, false, false);
-    };
-    output.contentWindow.onerror = function(message, source, lineno, colno, error) {
-        addMessageToConsole(message, true, false);
-        return true;
-    };
+function toggleAutosave() {
+    autosaveEnabled = !autosaveEnabled;
+    localStorage.setItem('autosave', autosaveEnabled);
+    document.getElementById('toggle-autosave-dropdown').textContent = autosaveEnabled ? 'Disable Autosave' : 'Enable Autosave';
 
-    try {
-        output.contentWindow.eval(jsCode);
-    } catch (e) {
-        addMessageToConsole(e.message, true, false);
+    if (autosaveEnabled) {
+        startAutosave();
+    } else {
+        stopAutosave();
     }
 }
 
-window.run = run;
+function startAutosave() {
+    if (autosaveInterval) clearInterval(autosaveInterval);
+    autosaveInterval = setInterval(saveCode, 5000);
+}
 
-document.addEventListener('DOMContentLoaded', function() {
-    var consoleInput = document.querySelector('.right .console-input');
-    consoleInput.style.display = 'none';
-});
+function stopAutosave() {
+    if (autosaveInterval) clearInterval(autosaveInterval);
+}
 
-var consoleInput, rightContainer, consoleLog, output, webviewButton, consoleButton, consoleLabels, webviewLabels;
+function saveCode() {
+    const htmlCode = document.getElementById('html-code').value;
+    const cssCode = document.getElementById('css-code').value;
+    const jsCode = document.getElementById('js-code').value;
 
-document.addEventListener('DOMContentLoaded', function() {
-    consoleInput = document.querySelector('.right .console-input');
-    rightContainer = document.querySelector('.right');
-    consoleLog = rightContainer.querySelector('#console-log');
-    output = rightContainer.querySelector('#output');
-    webviewButton = document.getElementById('webview-btn');
-    consoleButton = document.getElementById('console-btn');
-    consoleLabels = rightContainer.querySelectorAll('.console-label');
-    webviewLabels = rightContainer.querySelectorAll('.webview-label');
+    localStorage.setItem('htmlCode', htmlCode);
+    localStorage.setItem('cssCode', cssCode);
+    localStorage.setItem('jsCode', jsCode);
 
-    consoleInput.style.display = 'none';
-    consoleLog.style.display = 'none';
-    consoleLabels.forEach(function(label) {
+    showSaveIcon();
+}
+
+function showSaveIcon() {
+    const saveIcon = document.getElementById('saveIcon');
+    if (saveIcon) {
+        saveIcon.style.display = 'block';
+        setTimeout(() => {
+            saveIcon.style.display = 'none';
+        }, 2000);
+    }
+}
+
+function saveCodeOnChange() {
+    if (autosaveEnabled) {
+        if (autosaveInterval) clearTimeout(autosaveInterval);
+        autosaveInterval = setTimeout(saveCode, 500);
+    }
+}
+
+function loadSavedContent() {
+    const htmlCode = localStorage.getItem('htmlCode');
+    const cssCode = localStorage.getItem('cssCode');
+    const jsCode = localStorage.getItem('jsCode');
+
+    if (htmlCode) document.getElementById('html-code').value = htmlCode;
+    if (cssCode) document.getElementById('css-code').value = cssCode;
+    if (jsCode) document.getElementById('js-code').value = jsCode;
+}
+
+function setupConsole() {
+    const consoleInput = document.querySelector('.right .console-input');
+    if (consoleInput) {
+        consoleInput.style.display = 'none';
+    }
+
+    const consoleLog = document.getElementById('console-log');
+    if (consoleLog) {
+        consoleLog.style.display = 'none';
+        document.querySelectorAll('.console-label').forEach(label => {
+            label.style.display = 'none';
+        });
+    }
+}
+
+function setupUIElements() {
+    document.getElementById('dropdownButton')?.addEventListener('click', toggleDropdown);
+    document.getElementById('downloadFilesAsZip')?.addEventListener('click', downloadFilesAsZip);
+    document.getElementById('toggle-autosave-dropdown')?.addEventListener('click', toggleAutosave);
+
+    const commandInput = document.getElementById('command-input');
+    if (commandInput) {
+        commandInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                executeCommand(commandInput.value);
+                commandInput.value = '';
+            }
+        });
+    }
+
+    document.querySelector('.close')?.addEventListener('click', clearConsole);
+
+    ['html-code', 'css-code', 'js-code'].forEach(id => {
+        document.getElementById(id)?.addEventListener('input', () => {
+            saveCodeOnChange();
+            run();
+        });
+    });
+
+    ['webview-btn', 'console-btn'].forEach(id => {
+        document.getElementById(id)?.addEventListener('click', toggleView);
+    });
+}
+
+function setupEventListeners() {
+    const output = document.getElementById('output');
+    if (!output) return;
+
+    output.contentWindow.console.log = message => addMessageToConsole(message, false, false);
+    output.contentWindow.onerror = (message, source, lineno, colno, error) => {
+        addMessageToConsole(message, true, false);
+        return true;
+    };
+}
+
+function toggleDropdown() {
+    const dropdownMenu = document.getElementById('dropdownPopup');
+    if (dropdownMenu) {
+        dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+    }
+}
+
+function toggleView(e) {
+    const isWebView = e.target.id === 'webview-btn';
+    const output = document.getElementById('output');
+    const consoleLog = document.getElementById('console-log');
+    const consoleInput = document.querySelector('.right .console-input');
+
+    if (output) output.style.display = isWebView ? 'block' : 'none';
+    if (consoleLog) consoleLog.style.display = isWebView ? 'none' : 'block';
+    if (consoleInput) consoleInput.style.display = isWebView ? 'none' : 'block';
+
+    document.querySelectorAll(isWebView ? '.webview-label' : '.console-label').forEach(label => {
+        label.style.display = 'flex';
+    });
+    document.querySelectorAll(isWebView ? '.console-label' : '.webview-label').forEach(label => {
         label.style.display = 'none';
     });
 
-    webviewButton.addEventListener('click', function() {
-        output.style.display = 'block';
-        webviewLabels.forEach(function(label) {
-            label.style.display = 'flex';
-        });
-        consoleLog.style.display = 'none';
-        consoleLabels.forEach(function(label) {
-            label.style.display = 'none';
-        });
-        consoleInput.style.display = 'none';
-        this.classList.add('active');
-        consoleButton.classList.remove('active');
-    });
+    document.getElementById('webview-btn')?.classList.toggle('active', isWebView);
+    document.getElementById('console-btn')?.classList.toggle('active', !isWebView);
+}
 
-    consoleButton.addEventListener('click', function() {
-        output.style.display = 'none';
-        webviewLabels.forEach(function(label) {
-            label.style.display = 'none';
+function clearConsole() {
+    const consoleLog = document.getElementById('console-log');
+    if (consoleLog) {
+        Array.from(consoleLog.children).forEach(child => {
+            if (child.classList.contains('console-message')) {
+                consoleLog.removeChild(child);
+            }
         });
-        consoleLog.style.display = 'block';
-        consoleLabels.forEach(function(label) {
-            label.style.display = 'flex';
-        });
-        consoleInput.style.display = 'block';
-        this.classList.add('active');
-        webviewButton.classList.remove('active');
-    });
-
-    var commandInput = document.getElementById('command-input');
-    commandInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            executeCommand(this.value);
-            this.value = '';
-        }
-    });
-})
-
-// Save the Project
+    }
+}
 
 function downloadFilesAsZip() {
     const htmlContent = document.getElementById('html-code').value;
@@ -149,33 +253,15 @@ function downloadFilesAsZip() {
 
     const zip = new JSZip();
 
-    zip.file("index.html", htmlContent);
-    zip.file("style.css", cssContent);
-    zip.file("script.js", jsContent);
+    if (htmlContent) zip.file("index.html", htmlContent);
+    if (cssContent) zip.file("style.css", cssContent);
+    if (jsContent) zip.file("script.js", jsContent);
 
-    zip.generateAsync({
-            type: "blob"
-        })
-        .then(function(content) {
-            saveAs(content, "website.zip");
-        });
+    zip.generateAsync({ type: "blob" })
+        .then(content => saveAs(content, "website.zip"));
 }
 
-document.getElementById('downloadFilesAsZip').addEventListener('click', downloadFilesAsZip);
-
-// Clear Console function
-
-function clearConsole() {
-    let consoleLog = document.getElementById('console-log');
-    for (let i = consoleLog.children.length - 1; i >= 0; i--) {
-        let child = consoleLog.children[i];
-        if (child.classList.contains('console-message')) {
-            consoleLog.removeChild(child);
-        }
-    }
+function initializeAutosave() {
+    document.getElementById('toggle-autosave-dropdown').textContent = autosaveEnabled ? 'Disable Autosave' : 'Enable Autosave';
+    if (autosaveEnabled) startAutosave();
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-    let closeButton = document.querySelector('.close');
-    closeButton.addEventListener('click', clearConsole);
-});
