@@ -10,8 +10,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body>
+  <noscript>
+    <div style="position: fixed;left: 0;right: 0;background: #ffffff0a;border-radius: 18px;word-break: break-word;border: 1px solid #ffffff5e;backdrop-filter: blur(30px);padding: 20px 30px;width: max-content;margin: 20px auto;">
+        <strong>Enable JavaScript to use the code editor.</strong>
+    </div>
+  </noscript>
+  <div id="app" style="display: none;">
     <div class="flex">
-        <div class="flex-magic">
+<div class="flex-magic">
             <h1>Code Editor</h1>
             <button class="dropbtn" id="dropdownButton">More...</button>
           <i id="saveIcon" class="fa fa-save save-icon" style="display: none;"></i>
@@ -27,6 +33,7 @@
     <p>Settings</p>
     <hr class="custom">
     <button id="toggle-autosave-dropdown">Enable Autosave</button>
+    <button id="toggleAutoRefresh">Enable Auto-refresh</button>
     </div>
     <div class="dropdown-column">
     <p>More</p>
@@ -35,6 +42,7 @@
         <path fill="currentColor" d="M17.6 18L8 8.4V17H6V5h12v2H9.4l9.6 9.6z" />
       </svg>
     </button>
+      <div class="input-file"></div>
       </div>
       </div>
   </div>
@@ -73,9 +81,12 @@
       <div class="right">
         <!-- Output -->
         <label class="webview-label">
+          <div class="flex-objects">
           <svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 24 24">
             <path fill="#fafafa" d="M21.409 9.353a2.998 2.998 0 0 1 0 5.294L8.597 21.614C6.534 22.737 4 21.277 4 18.968V5.033c0-2.31 2.534-3.769 4.597-2.648z" />
-          </svg> WebView </label>
+          </svg> WebView</div><div class="object"><button style="display: none" onclick="refresh()" class="func-btn" id="runButton"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M12 20q-3.35 0-5.675-2.325T4 12t2.325-5.675T12 4q1.725 0 3.3.712T18 6.75V4h2v7h-7V9h4.2q-.8-1.4-2.187-2.2T12 6Q9.5 6 7.75 7.75T6 12t1.75 4.25T12 18q1.925 0 3.475-1.1T17.65 14h2.1q-.7 2.65-2.85 4.325T12 20"/></svg></button> <button onclick="toggleFullscreen()" class="more-btn" id="fullscreenButton">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M3 21v-5h2v3h3v2zm13 0v-2h3v-3h2v5zM3 8V3h5v2H5v3zm16 0V5h-3V3h5v5z"/></svg>
+        </button></div></label>
         <iframe id="output"></iframe>
         <!-- Console -->
         <label class="console-label">
@@ -95,7 +106,6 @@
         </div>
       </div>
     </div>
-
-    <script src="script.js"></script>
+   <script src="script.js"></script>
   </body>
 </html>
