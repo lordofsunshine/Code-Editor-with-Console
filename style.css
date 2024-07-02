@@ -216,6 +216,7 @@ label {
     border-radius: 10px;
     padding: 16px 28px;
     display: none;
+    z-index: 999;
     animation: fadeIn 0.3s ease-in-out;
 }
 .dropdown-popup.show {
