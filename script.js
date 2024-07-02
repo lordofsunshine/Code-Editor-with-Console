@@ -6,6 +6,174 @@ function init() {
     setupEventListeners();
     initializeAutosave();
     loadSavedContent();
+    initializeAutoRefresh();
+    showRunButton();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const fileInputs = {
+        'html': document.getElementById('html-code'),
+        'css': document.getElementById('css-code'),
+        'js': document.getElementById('js-code')
+    };
+
+    function handleFileSelect(evt) {
+        const files = evt.target.files;
+        let filesLoaded = 0;
+
+        for (const file of files) {
+            const reader = new FileReader();
+
+            reader.onload = (function(theFile) {
+                return function(e) {
+                    const fileType = theFile.name.split('.').pop().toLowerCase();
+                    if (fileInputs[fileType]) {
+                        fileInputs[fileType].value = e.target.result;
+                        filesLoaded++;
+
+                        if (filesLoaded === files.length) {
+                            collectAndRunCode();
+                        }
+                    }
+                };
+            })(file);
+
+            reader.readAsText(file);
+        }
+    }
+
+    const uploadButton = document.createElement('button');
+    uploadButton.textContent = 'Upload Files';
+    uploadButton.className = 'button-file';
+    uploadButton.addEventListener('click', () => {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.multiple = true;
+        fileInput.accept = '.html,.css,.js';
+        fileInput.style.display = 'none';
+
+        fileInput.addEventListener('change', handleFileSelect);
+
+        document.body.appendChild(fileInput);
+        fileInput.click();
+
+        fileInput.addEventListener('change', () => {
+            document.body.removeChild(fileInput);
+        });
+    });
+
+    const editorContainer = document.querySelector('.input-file');
+    editorContainer.insertBefore(uploadButton, editorContainer.firstChild);
+});
+
+function toggleFullscreen() {
+    const iframe = document.getElementById('output');
+
+    if (!iframe) return;
+
+    if (!document.fullscreenElement && !document.mozFullScreenElement &&
+        !document.webkitFullscreenElement && !document.msFullscreenElement) {
+        if (iframe.requestFullscreen) {
+            iframe.requestFullscreen();
+        } else if (iframe.msRequestFullscreen) {
+            iframe.msRequestFullscreen();
+        } else if (iframe.mozRequestFullScreen) {
+            iframe.mozRequestFullScreen();
+        } else if (iframe.webkitRequestFullscreen) {
+            iframe.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        }
+    }
+}
+
+function collectAndRunCode() {
+    const htmlCode = document.getElementById('html-code').value;
+    const cssCode = document.getElementById('css-code').value;
+    const jsCode = document.getElementById('js-code').value;
+    const output = document.getElementById('output');
+
+    if (output) {
+        const doc = output.contentDocument;
+        doc.open();
+        doc.write(`
+            <html>
+            <head>
+                <style>${cssCode}</style>
+            </head>
+            <body>
+                ${htmlCode}
+                <script>
+                    console.log = function(message) {
+                        window.parent.addMessageToConsole(message, false, false);
+                    };
+                    window.onerror = function(message) {
+                        window.parent.addMessageToConsole(message, true, false);
+                        return true;
+                    };
+                    try {
+                        ${jsCode}
+                    } catch (e) {
+                        window.parent.addMessageToConsole(e.message, true, false);
+                    }
+                </script>
+            </body>
+            </html>
+        `);
+        doc.close();
+    }
+}
+
+function refresh() {
+    collectAndRunCode();
+}
+
+function toggleAutoRefresh() {
+    const toggleButton = document.getElementById('toggleAutoRefresh');
+
+    autoRefreshEnabled = !autoRefreshEnabled;
+    localStorage.setItem('autoRefresh', autoRefreshEnabled);
+    toggleButton.textContent = autoRefreshEnabled ? 'Disable Auto-refresh' : 'Enable Auto-refresh';
+
+    const runButton = document.getElementById('runButton');
+    if (autoRefreshEnabled) {
+        if (runButton) runButton.style.display = 'none';
+        run();
+    } else {
+        showRunButton();
+    }
+}
+
+document.getElementById('runButton').addEventListener('click', run);
+
+function initializeAutoRefresh() {
+    autoRefreshEnabled = localStorage.getItem('autoRefresh') !== 'false';
+    document.getElementById('toggleAutoRefresh').textContent = autoRefreshEnabled ? 'Disable Auto-refresh' : 'Enable Auto-refresh';
+    if (!autoRefreshEnabled) {
+        showRunButton();
+    }
+}
+
+function showRunButton() {
+    let runButton = document.getElementById('runButton');
+    if (!runButton) {
+        runButton = document.createElement('button');
+        runButton.id = 'runButton';
+        runButton.classList.add('refresh-btn');
+        runButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M12 20q-3.35 0-5.675-2.325T4 12t2.325-5.675T12 4q1.725 0 3.3.712T18 6.75V4h2v7h-7V9h4.2q-.8-1.4-2.187-2.2T12 6Q9.5 6 7.75 7.75T6 12t1.75 4.25T12 18q1.925 0 3.475-1.1T17.65 14h2.1q-.7 2.65-2.85 4.325T12 20"/></svg>';
+        runButton.addEventListener('click', run);
+        document.body.appendChild(runButton);
+    } else {
+        runButton.style.display = 'flex';
+    }
 }
 
 function addMessageToConsole(message, isError, isCommand) {
@@ -38,7 +206,7 @@ function addMessageToConsole(message, isError, isCommand) {
 
 function executeCommand(command) {
     if (command.trim() === '') {
-        addMessageToConsole('The command cannot be empty.', true, false);
+        alert('The command cannot be empty.');
         return;
     }
 
@@ -57,7 +225,7 @@ function run() {
     const jsCode = document.getElementById('js-code').value;
     const output = document.getElementById('output');
 
-    if (!output) return;
+    if (!output || !autoRefreshEnabled) return;
 
     const doc = output.contentDocument;
     doc.open();
@@ -149,6 +317,8 @@ function loadSavedContent() {
     if (htmlCode) document.getElementById('html-code').value = htmlCode;
     if (cssCode) document.getElementById('css-code').value = cssCode;
     if (jsCode) document.getElementById('js-code').value = jsCode;
+
+    collectAndRunCode();
 }
 
 function setupConsole() {
@@ -167,9 +337,11 @@ function setupConsole() {
 }
 
 function setupUIElements() {
+    document.getElementById('toggleAutoRefresh')?.addEventListener('click', toggleAutoRefresh);
     document.getElementById('dropdownButton')?.addEventListener('click', toggleDropdown);
     document.getElementById('downloadFilesAsZip')?.addEventListener('click', downloadFilesAsZip);
     document.getElementById('toggle-autosave-dropdown')?.addEventListener('click', toggleAutosave);
+    document.getElementById('app').style.display = 'block';
 
     const commandInput = document.getElementById('command-input');
     if (commandInput) {
@@ -265,3 +437,8 @@ function initializeAutosave() {
     document.getElementById('toggle-autosave-dropdown').textContent = autosaveEnabled ? 'Disable Autosave' : 'Enable Autosave';
     if (autosaveEnabled) startAutosave();
 }
+
+window.onerror = function(message, source, lineno, colno, error) {
+    alert('An error occurred in the Code Editor: ' + message);
+    return true;
+};
