@@ -54,7 +54,9 @@ label {
   font-weight: 500;
   vertical-align: middle;
   font-family: "Inter", sans-serif;
+  overflow: hidden;
   background: #1c1c1c;
+  user-select: none;
 }
 #console-log {
   position: relative;
@@ -116,6 +118,7 @@ label {
   margin: 0 5px;
   cursor: pointer;
   transition: background-color 0.2s;
+  user-select: none;
 }
 .menu-btn.active {
   background-color: #fff;
@@ -165,6 +168,7 @@ label {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  user-select: none;
 }
 .download-btn:hover {
   opacity: 0.6;
@@ -208,8 +212,8 @@ label {
     letter-spacing: -0.2px;
     font-weight: 600;
     font-size: 16px;
-    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
+    box-shadow: 0px 8px 16px rgb(0 0 0 / 28%);
+    border-radius: 10px;
     padding: 16px 28px;
     display: none;
     animation: fadeIn 0.3s ease-in-out;
@@ -218,6 +222,10 @@ label {
     display: block; 
 }
 .dropdown-popup button {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    gap: 5px;
     margin-bottom: 8px;
     padding: 10px 16px;
     background-color: #f0f0f0;
@@ -227,7 +235,12 @@ label {
     font-size: 14px;
     width: 100%;
     transition: all 0.3s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    user-select: none;
 }
+
+
 .dropdown-popup button:hover {
     background-color: #e0e0e0;
 }
@@ -248,8 +261,9 @@ label {
 }
 .dropdown-flex {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 40px;
+  user-select: none;
 }
 .dropbtn {
   background-color: #191919;
@@ -259,11 +273,82 @@ label {
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
+  user-select: none;
 }
 .dropbtn:hover {
   opacity: 0.8;
 }
-
+.flex-objects {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+@keyframes rotate-refresh {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    50% {
+        transform: rotate(360deg);
+    }
+}
+.func-btn {
+    transition: all 0.5s;
+    background: transparent;
+    color: #848484;
+    font-weight: 500;
+    border: 0;
+    border-radius: 8px;
+    width: max-content;
+    height: max-content;
+    user-select: none;
+}
+.func-btn:hover {
+    animation: rotate-refresh 2s infinite;
+    background: #ffffff14;
+    color: #a4a4a4;
+}
+.more-btn {
+  display: flex;
+  transition: all 0.5s;
+  background: transparent;
+  color: #848484;
+  font-weight: 500;
+  border: 0;
+  border-radius: 2px;
+  margin-left: auto;
+  user-select: none;
+}
+.more-btn:hover {
+  background: #ffffff14;
+  color: #a4a4a4;
+}
+.webview-label {
+    display: flex;
+    padding: 8px 10px;
+    gap: 5px;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+    font-weight: 500;
+    vertical-align: middle;
+    font-family: "Inter", sans-serif;
+    overflow: hidden;
+    background: #1c1c1c;
+    user-select: none;
+}
+.object {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.button-file {
+  background: #1c1c1c;
+}
+::selection {
+    background: #ffffff21;
+    color: #fff;
+    text-shadow: none;
+}
 @media only screen and (max-device-width: 670px) {
   .container {
     display: block;
