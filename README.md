@@ -1,4 +1,4 @@
-# Code Editor with Console *(v.0.0.5)*
+# Code Editor with Console *(v.0.0.6)*
 This web code editor is an interactive environment designed for developers to write, test, and run HTML, CSS, and JavaScript code directly in the browser. It features a live output window and a console for logging, making it a convenient tool for real-time coding and debugging.
 
 The web code editor is a convenient tool for developers that allows writing and testing HTML, CSS, and JavaScript code directly in the browser. The main features of the editor include:
@@ -10,6 +10,7 @@ The web code editor is a convenient tool for developers that allows writing and 
 ### ✨ What's new?
 The web code editor has received a series of updates and improvements that make it even more functional and user-friendly:
 
+- [x] Added a font for programming in text fields - Source Code Pro
 - [x] Added a <noscript> block to display a message if JavaScript is disabled in the browser.
 - [x] Added an "Enable Auto-refresh" button and corresponding functionality for automatic content refresh.
 - [x] Added global error handling using window.onerror.
