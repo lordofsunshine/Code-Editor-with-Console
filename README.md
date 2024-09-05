@@ -1,4 +1,4 @@
-# Code Editor with Console (v.0.0.8)
+# Code Editor with Console (v.0.0.7)
 
 A versatile and interactive code editor built with Vue.js, featuring live preview, console output, and theme customization.
 
