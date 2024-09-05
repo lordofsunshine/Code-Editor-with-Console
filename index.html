@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <link href="https://unpkg.com/tailwindcss@1.9.6/dist/tailwind.min.css" rel="stylesheet">
+    <link href="./src/style.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Code Editor</title>
+    <style>
+      .preloader {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: #ffffffd1;
+          backdrop-filter: blur(4px);
+          z-index: 9999;
+          transition: opacity 0.3s ease-out;
+      }
+      .preloader svg {
+          width: 48px;
+          height: 48px;
+          margin-bottom: 16px;
+      }
+      .preloader.hidden {
+          opacity: 0;
+          pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="preloader" id="preloader">
+      <div><img src="./src/loader.svg"></div>
+    </div>
+    <div id="app"></div>
+    <noscript>Enable JavaScript in your browser!</noscript>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+  <script>
+    window.addEventListener('load', function() {
+        const preloader = document.getElementById('preloader');
+        preloader.classList.add('hidden');
+      
+        setTimeout(() => {
+            preloader.remove();
+        }, 500);
+    });
+  </script>
+</html>
