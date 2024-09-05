@@ -1,39 +1,64 @@
-# Code Editor with Console *(v.0.0.6)*
-This web code editor is an interactive environment designed for developers to write, test, and run HTML, CSS, and JavaScript code directly in the browser. It features a live output window and a console for logging, making it a convenient tool for real-time coding and debugging.
+# Code Editor with Console (v.0.0.8)
 
-The web code editor is a convenient tool for developers that allows writing and testing HTML, CSS, and JavaScript code directly in the browser. The main features of the editor include:
-- **Live Preview:** Instant reflection of code changes in the preview window.
-- **JavaScript Testing:** Execute JavaScript code on-the-fly.
-- **Multilingual Support:** Edit code in various programming languages.
-- **User-Friendly:** Intuitive interface for all skill levels.
+A versatile and interactive code editor built with Vue.js, featuring live preview, console output, and theme customization.
 
-### ✨ What's new?
-The web code editor has received a series of updates and improvements that make it even more functional and user-friendly:
+<img src="https://cdn.glitch.global/4fd6680f-dccd-4eae-8213-47230a51f7b6/3.jpg?v=1725551522546">
 
-- [x] Added a font for programming in text fields - Source Code Pro
-- [x] Added a <noscript> block to display a message if JavaScript is disabled in the browser.
-- [x] Added an "Enable Auto-refresh" button and corresponding functionality for automatic content refresh.
-- [x] Added global error handling using window.onerror.
-- [x] Added the ability to upload files by creating an "Upload Files" button and corresponding event handler.
+<hr>
 
-## ❗ Getting Started
+## ✨ Features
 
-- **1.** Write your HTML, CSS, and JavaScript code in the respective fields.
-- **2.** The output window automatically updates to display the results as you code.
-- **3.** Check the console for logs and errors.
+- Live HTML, CSS, and JavaScript editing
+- Real-time preview of your code
+- Built-in console for JavaScript output and error logging
+- Theme customization (Light, Dark, and System)
+- File management system
+- Code download functionality
+- Fullscreen preview mode
+- Responsive design for various screen sizes
 
-### Screenshot
+## Installation
 
-<img src="https://cdn.glitch.global/de93c334-a8c2-4333-808c-da266614e993/77.png?v=1719932522927" alt="Preview" />
+To set up the project locally, follow these steps:
 
-### Video-Preview (click)
+1. Clone the repository:
+```bash
+git clone [https://github.com/lordofsunshine/Code-Editor-with-Console.git](https://github.com/lordofsunshine/Code-Editor-with-Console.git)
+```
+2. Navigate to the project directory:
+```bash
+ cd code-editor-with-console
+```
+3. Install the dependencies using Yarn:
+```bash
+yarn install
+```
+4. Start the development server:
+```bash
+yarn dev
+```
+5. Open your browser and visit `http://localhost:5173` to see the app running.
+## Usage
 
-<a href="https://cdn.glitch.global/de93c334-a8c2-4333-808c-da266614e993/79.mp4?v=1719932525303" title="Preview"><img src="https://cdn.glitch.global/de93c334-a8c2-4333-808c-da266614e993/78_.jpg?v=1719932797560" alt="Preview" /></a>
+- Edit HTML, CSS, and JavaScript code in their respective tabs
+- See live updates in the preview pane
+- Toggle the console to view JavaScript output and errors
+- Change themes using the theme dropdown in the header
+- Upload existing HTML, CSS, or JavaScript files using the upload button
+- Download your project as a zip file using the download button
+- Use the fullscreen button to view your preview in fullscreen mode
 
-### How the Console works
-The console is equipped to display errors and allows execution of commands for efficient debugging.
+## Dependencies
 
-<img src="https://cdn.glitch.global/de93c334-a8c2-4333-808c-da266614e993/9.jpg?v=1718718479501" alt="Preview" width="400px" height="auto">
+- Vue.js
+- Monaco Editor
+- JSZip
+- File Saver
 
-## Support
-If you find this tool helpful, consider giving it a star! Your support is much appreciated. ❤️
+## License
+
+This project is open source and available under the [MIT License](https://github.com/lordofsunshine/Code-Editor-with-Console/blob/main/LICENSE).
+
+## Credits
+
+Created by [lordofsunshine](https://github.com/lordofsunshine)
