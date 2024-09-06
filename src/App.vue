@@ -158,685 +158,483 @@
 </template>
 
 <script>
-  import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
-  import * as monaco from 'monaco-editor';
-  import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
-  import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
-  import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
-  import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
-  import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
-  import JSZip from 'jszip';
-  import { saveAs } from 'file-saver';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import * as monaco from 'monaco-editor';
+import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
+import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
+import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
+import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
+import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 
-  self.MonacoEnvironment = {
-    getWorker(_, label) {
-      if (label === 'json') return new jsonWorker();
-      if (label === 'css' || label === 'scss' || label === 'less') return new cssWorker();
-      if (label === 'html' || label === 'handlebars' || label === 'razor') return new htmlWorker();
-      if (label === 'typescript' || label === 'javascript') return new tsWorker();
-      return new editorWorker();
-    }
-  };
-
-  const initialHtmlCode = `<!DOCTYPE html>
-  <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <link rel="icon" href="/favicon.ico" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Code Editor</title>
-    </head>
-    <body>
-      <div class="container">
-        <h1 class="title">Code Editor</h1>
-        <a href="https://github.com/lordofsunshine/Code-Editor-with-Console" class="watermark">by lordofsunshine</a>
-      </div>
-    </body>
-  </html>`;
-
-  const initialCssCode = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Pixelify+Sans:wght@400..700&display=swap');
-
-  body {
-    font-family: "Bebas Neue", sans-serif;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: visible;
-    min-height: 100vh;
+self.MonacoEnvironment = {
+  getWorker(_, label) {
+    if (label === 'json') return new jsonWorker();
+    if (label === 'css' || label === 'scss' || label === 'less') return new cssWorker();
+    if (label === 'html' || label === 'handlebars' || label === 'razor') return new htmlWorker();
+    if (label === 'typescript' || label === 'javascript') return new tsWorker();
+    return new editorWorker();
   }
+};
 
-  .container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
+const initialHtmlCode = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Code Editor</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="title">Code Editor</h1>
+      <a href="https://github.com/lordofsunshine/Code-Editor-with-Console" class="watermark">by lordofsunshine</a>
+    </div>
+  </body>
+</html>`;
 
+const initialCssCode = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Pixelify+Sans:wght@400..700&display=swap');
+
+body {
+  font-family: "Bebas Neue", sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: visible;
+  min-height: 100vh;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.title {
+  color: #5e5e5e;
+  font-size: 4rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.watermark {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 1.5rem;
+  background: #1a1a1ade;
+  color: #fff;
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+
+.watermark:hover {
+  background-color: #1b1b1b;
+}
+
+@media (max-width: 768px) {
   .title {
-    color: #5e5e5e;
-    font-size: 4rem;
-    font-weight: 500;
-    margin-bottom: 0.5rem;
+    font-size: 3rem;
   }
 
   .watermark {
-    font-family: "Pixelify Sans", sans-serif;
-    font-size: 1.5rem;
-    background: #1a1a1ade;
-    color: #fff;
-    padding: 0.5rem 1.5rem;
-    border-radius: 8px;
-    text-decoration: none;
-    transition: background-color 0.3s ease;
+    font-size: 1.2rem;
   }
+}`;
 
-  .watermark:hover {
-    background-color: #1b1b1b;
+const initialJsCode = `document.addEventListener('DOMContentLoaded', () => {
+  const watermark = document.querySelector('.watermark');
+  if (watermark) {
+    watermark.addEventListener('click', (e) => {
+      e.preventDefault();
+      alert('Thanks for using the Code Editor!');
+      window.open(e.target.href, '_blank');
+    });
   }
+});`;
 
-  @media (max-width: 768px) {
-    .title {
-      font-size: 3rem;
-    }
+export default {
+  setup() {
+    const htmlCode = ref(localStorage.getItem('htmlCode') || initialHtmlCode);
+    const cssCode = ref(localStorage.getItem('cssCode') || initialCssCode);
+    const jsCode = ref(localStorage.getItem('jsCode') || initialJsCode);
+    const activeFile = ref('html');
+    const theme = ref(localStorage.getItem('theme') || 'dark');
+    const showThemeDropdown = ref(false);
+    const showUploadDropdown = ref(false);
+    const showConsole = ref(false);
+    const consoleLogs = ref([]);
+    const consoleInput = ref('');
+    const previewFrame = ref(null);
+    const showSaveTooltip = ref(false);
+    const codeEditor = ref(null);
+    const fileInput = ref(null);
+    let editor = null;
 
-    .watermark {
-      font-size: 1.2rem;
-    }
-  }`;
+    const files = [
+      { name: 'index.html', type: 'html' },
+      { name: 'style.css', type: 'css' },
+      { name: 'script.js', type: 'js' }
+    ];
 
-  const initialJsCode = `document.addEventListener('DOMContentLoaded', () => {
-    const watermark = document.querySelector('.watermark');
-    if (watermark) {
-      watermark.addEventListener('click', (e) => {
-        e.preventDefault();
-        alert('Thanks for using the Code Editor!');
-        window.open(e.target.href, '_blank');
+    const fileIcons = {
+      html: `
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 256 256">
+  <rect width="256" height="256" fill="none" />
+  <g fill="none">
+    <rect width="256" height="256" fill="#e14e1d" rx="60" />
+    <path fill="#fff" d="m48 38l8.61 96.593h110.71l-3.715 41.43l-35.646 9.638l-35.579-9.624l-2.379-26.602H57.94l4.585 51.281l65.427 18.172l65.51-18.172l8.783-98.061H85.824l-2.923-32.71h122.238L208 38z" />
+    <path fill="#ebebeb" d="M128 38H48l8.61 96.593H128v-31.938H85.824l-2.923-32.71H128zm0 147.647l-.041.014l-35.579-9.624l-2.379-26.602H57.94l4.585 51.281l65.427 18.172l.049-.014z" />
+  </g>
+</svg>
+      `,
+      css: `
+       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 256 256">
+  <rect width="256" height="256" fill="none" />
+  <g fill="none">
+    <rect width="256" height="256" fill="#0277bd" rx="60" />
+    <path fill="#ebebeb" d="m53.753 102.651l2.862 31.942h71.481v-31.942zM128.095 38H48l2.904 31.942h77.191zm0 180.841v-33.233l-.14.037l-35.574-9.605l-2.274-25.476H58.042l4.475 50.154l65.431 18.164z" />
+    <path fill="#fff" d="m167.318 134.593l-3.708 41.426l-35.625 9.616v33.231l65.483-18.148l.48-5.397l7.506-84.092l.779-8.578L208 38h-80.015v31.942h45.009l-2.906 32.709h-42.103v31.942z" />
+  </g>
+</svg>
+      `,
+      js: `
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 256 256">
+  <rect width="256" height="256" fill="none" />
+  <g fill="none">
+    <rect width="256" height="256" fill="#f0db4f" rx="60" />
+    <path fill="#323330" d="m67.312 213.932l19.59-11.856c3.78 6.701 7.218 12.371 15.465 12.371c7.905 0 12.889-3.092 12.889-15.12v-81.798h24.058v82.138c0 24.917-14.606 36.259-35.916 36.259c-19.245 0-30.416-9.967-36.087-21.996m85.07-2.576l19.588-11.341c5.157 8.421 11.859 14.607 23.715 14.607c9.969 0 16.325-4.984 16.325-11.858c0-8.248-6.53-11.17-17.528-15.98l-6.013-2.579c-17.357-7.388-28.871-16.668-28.871-36.258c0-18.044 13.748-31.792 35.229-31.792c15.294 0 26.292 5.328 34.196 19.247l-18.731 12.029c-4.125-7.389-8.591-10.31-15.465-10.31c-7.046 0-11.514 4.468-11.514 10.31c0 7.217 4.468 10.139 14.778 14.608l6.014 2.577c20.449 8.765 31.963 17.699 31.963 37.804c0 21.654-17.012 33.51-39.867 33.51c-22.339 0-36.774-10.654-43.819-24.574" />
+  </g>
+</svg>
+      `
+    };
+
+    const themeClass = computed(() => `theme-${theme.value}`);
+
+    const getMonacoTheme = (themeValue) => {
+      if (themeValue === 'system') {
+        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'vs-dark'
+          : 'vs-light';
+      }
+      return themeValue === 'dark' ? 'vs-dark' : 'vs-light';
+    };
+
+    const applyTheme = (newTheme) => {
+      let appliedTheme = newTheme;
+      if (newTheme === 'system') {
+        appliedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.className = `theme-${appliedTheme}`;
+      const monacoTheme = appliedTheme === 'dark' ? 'vs-dark' : 'vs-light';
+      if (editor) {
+        monaco.editor.setTheme(monacoTheme);
+      }
+    };
+
+    const setTheme = (newTheme) => {
+      theme.value = newTheme;
+      showThemeDropdown.value = false;
+      applyTheme(newTheme);
+      localStorage.setItem('theme', newTheme);
+    };
+
+    const updateEditorOptions = (fileType) => {
+      if (editor) {
+        editor.updateOptions({
+          language: fileType,
+          wordWrap: fileType === 'css' ? 'on' : 'off',
+        });
+      }
+    };
+
+    onMounted(() => {
+      const initialLanguage = getLanguageForFile(activeFile.value);
+      editor = monaco.editor.create(codeEditor.value, {
+        value: getContentByFileType(activeFile.value),
+        language: initialLanguage,
+        theme: getMonacoTheme(theme.value),
+        automaticLayout: true,
+        minimap: { enabled: false },
+        lineNumbers: 'off',
+        folding: false,
+        scrollBeyondLastLine: false,
+        renderLineHighlight: 'none',
+        hideCursorInOverviewRuler: true,
+        overviewRulerBorder: false,
+        overviewRulerLanes: 0,
+        fontFamily: '"Source Code Pro", monospace',
+        fontSize: 14,
+        lineDecorationsWidth: 0,
+        lineNumbersMinChars: 0,
+        glyphMargin: false,
+        renderWhitespace: 'none',
+        wordWrap: 'on',
+        contextmenu: false,
+        scrollbar: {
+          vertical: 'visible',
+          horizontal: 'visible',
+          useShadows: false,
+          verticalHasArrows: false,
+          horizontalHasArrows: false,
+          verticalScrollbarSize: 10,
+          horizontalScrollbarSize: 10,
+        },
+        fixedOverflowWidgets: true,
       });
-    }
-  });`;
 
-  export default {
-    setup() {
-      const htmlCode = ref(localStorage.getItem('htmlCode') || initialHtmlCode);
-      const cssCode = ref(localStorage.getItem('cssCode') || initialCssCode);
-      const jsCode = ref(localStorage.getItem('jsCode') || initialJsCode);
-      const activeFile = ref('html');
-      const theme = ref(localStorage.getItem('theme') || 'system');
-      const showThemeDropdown = ref(false);
-      const showUploadDropdown = ref(false);
-      const showConsole = ref(false);
-      const consoleLogs = ref([]);
-      const consoleInput = ref('');
-      const previewFrame = ref(null);
-      const showSaveTooltip = ref(false);
-      const codeEditor = ref(null);
-      const fileInput = ref(null);
-      let editor = null;
+      watch(activeFile, (newFile) => {
+        const content = getContentByFileType(newFile);
+        editor.setValue(content);
+        updateEditorOptions(newFile);
+      });
 
-      const files = [
-        { name: 'index.html', type: 'html' },
-        { name: 'style.css', type: 'css' },
-        { name: 'script.js', type: 'js' }
-      ];
+      watch(theme, (newTheme) => {
+        setTheme(newTheme);
+      });
 
-      const fileIcons = {
-        html: `
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 256 256">
-    <rect width="256" height="256" fill="none" />
-    <g fill="none">
-      <rect width="256" height="256" fill="#e14e1d" rx="60" />
-      <path fill="#fff" d="m48 38l8.61 96.593h110.71l-3.715 41.43l-35.646 9.638l-35.579-9.624l-2.379-26.602H57.94l4.585 51.281l65.427 18.172l65.51-18.172l8.783-98.061H85.824l-2.923-32.71h122.238L208 38z" />
-      <path fill="#ebebeb" d="M128 38H48l8.61 96.593H128v-31.938H85.824l-2.923-32.71H128zm0 147.647l-.041.014l-35.579-9.624l-2.379-26.602H57.94l4.585 51.281l65.427 18.172l.049-.014z" />
-    </g>
-  </svg>
-        `,
-        css: `
-         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 256 256">
-    <rect width="256" height="256" fill="none" />
-    <g fill="none">
-      <rect width="256" height="256" fill="#0277bd" rx="60" />
-      <path fill="#ebebeb" d="m53.753 102.651l2.862 31.942h71.481v-31.942zM128.095 38H48l2.904 31.942h77.191zm0 180.841v-33.233l-.14.037l-35.574-9.605l-2.274-25.476H58.042l4.475 50.154l65.431 18.164z" />
-      <path fill="#fff" d="m167.318 134.593l-3.708 41.426l-35.625 9.616v33.231l65.483-18.148l.48-5.397l7.506-84.092l.779-8.578L208 38h-80.015v31.942h45.009l-2.906 32.709h-42.103v31.942z" />
-    </g>
-  </svg>
-        `,
-        js: `
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 256 256">
-    <rect width="256" height="256" fill="none" />
-    <g fill="none">
-      <rect width="256" height="256" fill="#f0db4f" rx="60" />
-      <path fill="#323330" d="m67.312 213.932l19.59-11.856c3.78 6.701 7.218 12.371 15.465 12.371c7.905 0 12.889-3.092 12.889-15.12v-81.798h24.058v82.138c0 24.917-14.606 36.259-35.916 36.259c-19.245 0-30.416-9.967-36.087-21.996m85.07-2.576l19.588-11.341c5.157 8.421 11.859 14.607 23.715 14.607c9.969 0 16.325-4.984 16.325-11.858c0-8.248-6.53-11.17-17.528-15.98l-6.013-2.579c-17.357-7.388-28.871-16.668-28.871-36.258c0-18.044 13.748-31.792 35.229-31.792c15.294 0 26.292 5.328 34.196 19.247l-18.731 12.029c-4.125-7.389-8.591-10.31-15.465-10.31c-7.046 0-11.514 4.468-11.514 10.31c0 7.217 4.468 10.139 14.778 14.608l6.014 2.577c20.449 8.765 31.963 17.699 31.963 37.804c0 21.654-17.012 33.51-39.867 33.51c-22.339 0-36.774-10.654-43.819-24.574" />
-    </g>
-  </svg>
-        `
-      };
-
-      const themeClass = computed(() => `theme-${theme.value}`);
-
-      const getMonacoTheme = (themeValue) => {
-        if (themeValue === 'system') {
-          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-            ? 'vs-dark'
-            : 'vs-light';
-        }
-        return themeValue === 'dark' ? 'vs-dark' : 'vs-light';
-      };
-
-      const applyTheme = (newTheme) => {
-        document.documentElement.className = `theme-${newTheme}`;
-        const monacoTheme = newTheme === 'dark' ? 'vs-dark' : 'vs-light';
-        if (editor) {
-          monaco.editor.setTheme(monacoTheme);
-        }
-      };
-
-      const setTheme = (newTheme) => {
-        theme.value = newTheme;
-        showThemeDropdown.value = false;
-        if (newTheme === 'system') {
-          const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-          applyTheme(systemTheme);
-        } else {
-          applyTheme(newTheme);
-        }
-        localStorage.setItem('theme', newTheme);
-      };
-
-      const updateEditorOptions = (fileType) => {
-        if (editor) {
-          editor.updateOptions({
-            language: fileType,
-            wordWrap: fileType === 'css' ? 'on' : 'off',
-            // Add any other file-specific options here
-          });
-        }
-      };
-
-      onMounted(() => {
-        const initialLanguage = getLanguageForFile(activeFile.value);
-        editor = monaco.editor.create(codeEditor.value, {
-          value: getContentByFileType(activeFile.value),
-          language: initialLanguage,
-          theme: getMonacoTheme(theme.value),
-          automaticLayout: true,
-          minimap: { enabled: false },
-          lineNumbers: 'off',
-          folding: false,
-          scrollBeyondLastLine: false,
-          renderLineHighlight: 'none',
-          hideCursorInOverviewRuler: true,
-          overviewRulerBorder: false,
-          overviewRulerLanes: 0,
-          fontFamily: '"Source Code Pro", monospace',
-          fontSize: 14,
-          lineDecorationsWidth: 0,
-          lineNumbersMinChars: 0,
-          glyphMargin: false,
-          renderWhitespace: 'none',
-          wordWrap: 'on',
-          contextmenu: false,
-          scrollbar: {
-            vertical: 'visible',
-            horizontal: 'visible',
-            useShadows: false,
-            verticalHasArrows: false,
-            horizontalHasArrows: false,
-            verticalScrollbarSize: 10,
-            horizontalScrollbarSize: 10,
-          },
-          fixedOverflowWidgets: true,
-        });
-
-        watch(activeFile, (newFile) => {
-          const content = getContentByFileType(newFile);
-          editor.setValue(content);
-          updateEditorOptions(newFile);
-        });
-
-        watch(theme, (newTheme) => {
-          setTheme(newTheme);
-        });
-
-        editor.onDidChangeModelContent(() => {
-          const content = editor.getValue();
-          updateContentByFileType(activeFile.value, content);
-          updatePreviewFrame();
-        });
-
+      editor.onDidChangeModelContent(() => {
+        const content = editor.getValue();
+        updateContentByFileType(activeFile.value, content);
         updatePreviewFrame();
-
-        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        mediaQuery.addListener(() => {
-          if (theme.value === 'system') {
-            const systemTheme = mediaQuery.matches ? 'dark' : 'light';
-            applyTheme(systemTheme);
-          }
-        });
-
-        window.addEventListener('resize', () => {
-          if (editor) {
-            editor.layout();
-          }
-        });
-
-        // Initial theme application
-        setTheme(theme.value);
       });
 
-      onUnmounted(() => {
+      updatePreviewFrame();
+
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      mediaQuery.addListener(() => {
+        if (theme.value === 'system') {
+          applyTheme('system');
+        }
+      });
+
+      window.addEventListener('resize', () => {
         if (editor) {
-          editor.dispose();
+          editor.layout();
         }
       });
 
-      const getContentByFileType = (fileType) => {
-        switch (fileType) {
-          case 'html': return htmlCode.value;
-          case 'css': return cssCode.value;
-          case 'js': return jsCode.value;
-          default: return '';
-        }
-      };
+      setTheme(theme.value);
+    });
 
-      const updateContentByFileType = (fileType, content) => {
-        switch (fileType) {
-          case 'html': htmlCode.value = content; break;
-          case 'css': cssCode.value = content; break;
-          case 'js': jsCode.value = content; break;
-        }
-      };
+    onUnmounted(() => {
+      if (editor) {
+        editor.dispose();
+      }
+    });
 
-      const updatePreviewFrame = () => {
-        const frameDoc = previewFrame.value.contentDocument;
-        if (!frameDoc.body) {
-          frameDoc.open();
-          frameDoc.write('<html><head></head><body></body></html>');
-          frameDoc.close();
-        }
+    const getContentByFileType = (fileType) => {
+      switch (fileType) {
+        case 'html': return htmlCode.value;
+        case 'css': return cssCode.value;
+        case 'js': return jsCode.value;
+        default: return '';
+      }
+    };
 
-        // Update CSS
-        let styleElement = frameDoc.head.querySelector('style');
-        if (!styleElement) {
-          styleElement = frameDoc.createElement('style');
-          frameDoc.head.appendChild(styleElement);
-        }
-        styleElement.textContent = cssCode.value;
+    const updateContentByFileType = (fileType, content) => {
+      switch (fileType) {
+        case 'html': htmlCode.value = content; break;
+        case 'css': cssCode.value = content; break;
+        case 'js': jsCode.value = content; break;
+      }
+    };
 
-        // Update HTML
-        frameDoc.body.innerHTML = htmlCode.value;
+    const updatePreviewFrame = () => {
+      const frameDoc = previewFrame.value.contentDocument;
+      if (!frameDoc.body) {
+        frameDoc.open();
+        frameDoc.write('<html><head></head><body></body></html>');
+        frameDoc.close();
+      }
 
-        // Update JavaScript
-        let scriptElement = frameDoc.querySelector('script');
-        if (!scriptElement) {
-          scriptElement = frameDoc.createElement('script');
-          frameDoc.body.appendChild(scriptElement);
-        }
-        scriptElement.textContent = `
-          (function(){
-            var oldLog = console.log;
-            console.log = function(...args) {
-              window.parent.postMessage({type: 'log', message: args.join(' ')}, '*');
-              oldLog.apply(console, args);
-            };
-            window.onerror = function(message, source, lineno, colno, error) {
-              window.parent.postMessage({type: 'error', message: message}, '*');
-              return false;
-            };
-          })();
-          ${jsCode.value}
-        `;
-      };
+      let styleElement = frameDoc.head.querySelector('style');
+      if (!styleElement) {
+        styleElement = frameDoc.createElement('style');
+        frameDoc.head.appendChild(styleElement);
+      }
+      styleElement.textContent = cssCode.value;
 
-      const executeConsoleCommand = () => {
-        if (!consoleInput.value.trim()) {
-          consoleLogs.value.push({ type: 'error', message: 'Please enter a command.' });
-          return;
-        }
-        try {
-          const result = previewFrame.value.contentWindow.eval(consoleInput.value);
-          consoleLogs.value.push({ type: 'log', message: String(result) });
-        } catch (error) {
-          consoleLogs.value.push({ type: 'error', message: error.message });
-        }
-        consoleInput.value = '';
-      };
+      frameDoc.body.innerHTML = htmlCode.value;
 
-      const downloadFiles = async () => {
-        const zip = new JSZip();
-        zip.file('index.html', htmlCode.value);
-        zip.file('style.css', cssCode.value);
-        zip.file('script.js', jsCode.value);
-
-        const content = await zip.generateAsync({ type: 'blob' });
-        saveAs(content, 'project.zip');
-      };
-
-      const toggleThemeDropdown = () => {
-        showThemeDropdown.value = !showThemeDropdown.value;
-      };
-
-      const saveCode = () => {
-        localStorage.setItem('htmlCode', htmlCode.value);
-        localStorage.setItem('cssCode', cssCode.value);
-        localStorage.setItem('jsCode', jsCode.value);
-        showSaveTooltip.value = true;
-        setTimeout(() => {
-          showSaveTooltip.value = false;
-        }, 2000);
-      };
-
-      const toggleUploadDropdown = () => {
-        showUploadDropdown.value = !showUploadDropdown.value;
-      };
-
-      const triggerFileUpload = () => {
-        fileInput.value.click();
-      };
-
-      const handleFileUpload = (event) => {
-        const files = event.target.files;
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const content = e.target.result;
-            if (file.name.endsWith('.html')) {
-              htmlCode.value = content;
-              setActiveFile('html');
-            } else if (file.name.endsWith('.css')) {
-              cssCode.value = content;
-              setActiveFile('css');
-            } else if (file.name.endsWith('.js')) {
-              jsCode.value = content;
-              setActiveFile('js');
-            }
-            updatePreviewFrame();
+      let scriptElement = frameDoc.querySelector('script');
+      if (!scriptElement) {
+        scriptElement = frameDoc.createElement('script');
+        frameDoc.body.appendChild(scriptElement);
+      }
+      scriptElement.textContent = `
+        (function(){
+          var oldLog = console.log;
+          console.log = function(...args) {
+            window.parent.postMessage({type: 'log', message: args.join(' ')}, '*');
+            oldLog.apply(console, args);
           };
-          reader.readAsText(file);
-        }
-        showUploadDropdown.value = false;
-      };
+          window.onerror = function(message, source, lineno, colno, error) {
+            window.parent.postMessage({type: 'error', message: message}, '*');
+            return false;
+          };
+        })();
+        ${jsCode.value}
+      `;
+    };
 
-      const getLanguageForFile = (fileType) => {
-        switch (fileType) {
-          case 'html': return 'html';
-          case 'css': return 'css';
-          case 'js': return 'javascript';
-          default: return 'plaintext';
-        }
-      };
+    const executeConsoleCommand = () => {
+      if (!consoleInput.value.trim()) {
+        consoleLogs.value.push({ type: 'error', message: 'Please enter a command.' });
+        return;
+      }
+      try {
+        const result = previewFrame.value.contentWindow.eval(consoleInput.value);
+        consoleLogs.value.push({ type: 'log', message: String(result) });
+      } catch (error) {
+        consoleLogs.value.push({ type: 'error', message: error.message });
+      }
+      consoleInput.value = '';
+    };
 
-      const setActiveFile = (fileType) => {
-        activeFile.value = fileType;
-        if (editor) {
-          const content = getContentByFileType(fileType);
-          const language = getLanguageForFile(fileType);
+    const downloadFiles = async () => {
+      const zip = new JSZip();
+      zip.file('index.html', htmlCode.value);
+      zip.file('style.css', cssCode.value);
+      zip.file('script.js', jsCode.value);
 
-          // Dispose of the old model
-          const oldModel = editor.getModel();
-          if (oldModel) {
-            oldModel.dispose();
+      const content = await zip.generateAsync({ type: 'blob' });
+      saveAs(content, 'project.zip');
+    };
+
+    const toggleThemeDropdown = () => {
+      showThemeDropdown.value = !showThemeDropdown.value;
+    };
+
+    const saveCode = () => {
+      localStorage.setItem('htmlCode', htmlCode.value);
+      localStorage.setItem('cssCode', cssCode.value);
+      localStorage.setItem('jsCode', jsCode.value);
+      showSaveTooltip.value = true;
+      setTimeout(() => {
+        showSaveTooltip.value = false;
+      }, 2000);
+    };
+
+    const toggleUploadDropdown = () => {
+      showUploadDropdown.value = !showUploadDropdown.value;
+    };
+
+    const triggerFileUpload = () => {
+      fileInput.value.click();
+    };
+
+    const handleFileUpload = (event) => {
+      const files = event.target.files;
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const content = e.target.result;
+          if (file.name.endsWith('.html')) {
+            htmlCode.value = content;
+            setActiveFile('html');
+          } else if (file.name.endsWith('.css')) {
+            cssCode.value = content;
+            setActiveFile('css');
+          } else if (file.name.endsWith('.js')) {
+            jsCode.value = content;
+            setActiveFile('js');
           }
+          updatePreviewFrame();
+        };
+        reader.readAsText(file);
+      }
+      showUploadDropdown.value = false;
+    };
 
-          // Create a new model with the correct language
-          const newModel = monaco.editor.createModel(content, language);
-          editor.setModel(newModel);
+    const getLanguageForFile = (fileType) => {
+      switch (fileType) {
+        case 'html': return 'html';
+        case 'css': return 'css';
+        case 'js': return 'javascript';
+        default: return 'plaintext';
+      }
+    };
 
-          updateEditorOptions(fileType);
+    const setActiveFile = (fileType) => {
+      activeFile.value = fileType;
+      if (editor) {
+        const content = getContentByFileType(fileType);
+        const language = getLanguageForFile(fileType);
+
+        const oldModel = editor.getModel();
+        if (oldModel) {
+          oldModel.dispose();
         }
-      };
 
-      const toggleConsole = () => {
-        showConsole.value = !showConsole.value;
-      };
+        const newModel = monaco.editor.createModel(content, language);
+        editor.setModel(newModel);
 
-      const clearConsole = () => {
-        consoleLogs.value = [];
-      };
+        updateEditorOptions(fileType);
+      }
+    };
 
-      const toggleFullscreen = () => {
-        if (!document.fullscreenElement) {
-          previewFrame.value.requestFullscreen();
-        } else {
-          document.exitFullscreen();
-        }
-      };
+    const toggleConsole = () => {
+      showConsole.value = !showConsole.value;
+    };
 
-      window.addEventListener('message', (event) => {
-        if (event.data && (event.data.type === 'log' || event.data.type === 'error')) {
-          consoleLogs.value.push(event.data);
-        }
-      });
+    const clearConsole = () => {
+      consoleLogs.value = [];
+    };
 
-      return {
-        htmlCode,
-        cssCode,
-        jsCode,
-        activeFile,
-        theme,
-        showThemeDropdown,
-        showUploadDropdown,
-        showConsole,
-        consoleLogs,
-        consoleInput,
-        previewFrame,
-        showSaveTooltip,
-        codeEditor,
-        fileInput,
-        files,
-        fileIcons,
-        themeClass,
-        getContentByFileType,
-        updateContentByFileType,
-        updatePreviewFrame,
-        executeConsoleCommand,
-        downloadFiles,
-        toggleThemeDropdown,
-        setTheme,
-        saveCode,
-        toggleUploadDropdown,
-        triggerFileUpload,
-        handleFileUpload,
-        setActiveFile,
-        toggleConsole,
-        clearConsole,
-        toggleFullscreen
-      };
-    }
-  };
+    const toggleFullscreen = () => {
+      if (!document.fullscreenElement) {
+        previewFrame.value.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    };
+
+    window.addEventListener('message', (event) => {
+      if (event.data && (event.data.type === 'log' || event.data.type === 'error')) {
+        consoleLogs.value.push(event.data);
+      }
+    });
+
+    return {
+      htmlCode,
+      cssCode,
+      jsCode,
+      activeFile,
+      theme,
+      showThemeDropdown,
+      showUploadDropdown,
+      showConsole,
+      consoleLogs,
+      consoleInput,
+      previewFrame,
+      showSaveTooltip,
+      codeEditor,
+      fileInput,
+      files,
+      fileIcons,
+      themeClass,
+      getContentByFileType,
+      updateContentByFileType,
+      updatePreviewFrame,
+      executeConsoleCommand,
+      downloadFiles,
+      toggleThemeDropdown,
+      setTheme,
+      saveCode,
+      toggleUploadDropdown,
+      triggerFileUpload,
+      handleFileUpload,
+      setActiveFile,
+      toggleConsole,
+      clearConsole,
+      toggleFullscreen
+    };
+  }
+};
 </script>
-
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap');
-
-:root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f3f4f6;
-  --bg-hover: #e5e7eb;
-  --bg-selected: #f1f3f5;
-  --bg-dropdown: #ffffff;
-  --bg-console: #f9f9f9;
-  --text-primary: #111827;
-  --text-secondary: #4b5563;
-  --border-color: #e5e7eb;
-  --bg-tooltip: #f5f5f5;
-}
-
-.theme-dark {
-  --bg-primary: #020202;
-  --body-bg: #020202;
-  --bg-secondary: #2d2d2d;
-  --bg-hover: #3a3a3a;
-  --bg-selected: #161616;
-  --bg-dropdown: #101010;
-  --bg-console: #060606;
-  --text-primary: #e5e7eb;
-  --text-secondary: #9ca3af;
-  --border-color: #1e1e1e;
-  --dark-sidebar: #ccc;
-  --code-bg: #1e1e1e;
-  --dark-sidebar-weight: 500;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  line-height: 1.5;
-  font-size: 16px;
-}
-
-.body-bg {
-  background-color: var(--body-bg);
-}
-
-.border-muted {
-  border-color: var(--border-color);
-  color: var(--text-primary);
-}
-
-.bg-hover:hover {
-  background-color: var(--bg-hover);
-}
-
-.bg-selected {
-  background-color: var(--bg-selected);
-}
-
-.bg-dropdown {
-  background-color: var(--bg-dropdown);
-}
-
-.bg-console {
-  background-color: var(--bg-console);
-}
-
-.text-primary {
-  color: var(--text-primary);
-}
-
-.bg-white {
-  --bg-opacity: 1 !important;
-  background-color: #fff !important;
-  background-color: rgb(255 255 255 / 0%) !important;
-}
-
-.fixed {
-  z-index: 999999;
-}
-
-.text-secondary {
-  color: var(--text-secondary);
-}
-
-.dark-color {
-  color: var(--dark-sidebar) !important;
-  font-weight: var(--dark-sidebar-weight) !important;
-}
-
-.nav-link {
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s ease;
-}
-
-.nav-link:hover {
-  color: var(--text-primary);
-}
-
-.console-icon {
-  color: var(--text-secondary);
-  font-weight: 500;
-  font-size: 15px;
-  transition: color 0.2s ease;
-}
-
-.console-icon:hover {
-  color: var(--text-primary);
-}
-
-.dropdown-enter-active,
-.dropdown-leave-active {
-  transition: opacity 0.3s, transform 0.3s;
-}
-
-.dropdown-enter-from,
-.dropdown-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
-.slide-fade-enter-active,
-.slide-fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-.slide-fade-enter-from,
-.slide-fade-leave-to {
-  transform: translateY(20px);
-  opacity: 0;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.5s;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-.dropdown-text {
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.tooltip-bottom {
-  color: var(--text-primary);
-  background: var(--bg-tooltip);
-  box-shadow: 0 0 20px var(--bg-primary);
-  margin-top: 5px;
-  white-space: nowrap;
-}
-
-.upload-btn {
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.upload-dropdown {
-  width: max-content;
-  padding: 2px 8px;
-}
-
-.code-bg {
-  background: var(--code-bg);
-}
-
-.z-9999999 {
-  z-index: 9999999
-}
-
-@media (max-width: 640px) {
-  body {
-    font-size: 14px;
-  }
-
-  .title {
-    font-size: 1.5rem;
-  }
-
-  .console-icon {
-    font-size: 14px;
-  }
-
-  .flex-1 {
-    flex-direction: column;
-  }
-}
-</style>
