@@ -31,7 +31,7 @@
               <span class="sr-only">Toggle theme</span>
             </button>
             <transition name="dropdown">
-              <div v-if="showThemeDropdown" class="absolute right-0 w-40 bg-dropdown shadow-lg mt-2 rounded-md overflow-hidden z-10">
+              <div v-if="showThemeDropdown" class="absolute right-0 w-40 bg-dropdown shadow-lg mt-2 rounded-md overflow-hidden z-9999999">
                 <div class="px-2 py-1 border-b dropdown-text border-muted">Theme</div>
                 <div v-for="t in ['light', 'dark', 'system']" :key="t">
                   <button 
@@ -158,7 +158,7 @@
 </template>
 
 <script>
-  import { ref, computed, onMounted, watch } from 'vue';
+  import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
   import * as monaco from 'monaco-editor';
   import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
   import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
@@ -203,6 +203,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: visible;
     min-height: 100vh;
   }
 
@@ -216,7 +217,8 @@
   .title {
     color: #5e5e5e;
     font-size: 4rem;
-    margin-bottom: 1rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
   }
 
   .watermark {
@@ -244,9 +246,7 @@
     }
   }`;
 
-  const initialJsCode = `console.log("Welcome to the Code Editor!");
-
-  document.addEventListener('DOMContentLoaded', () => {
+  const initialJsCode = `document.addEventListener('DOMContentLoaded', () => {
     const watermark = document.querySelector('.watermark');
     if (watermark) {
       watermark.addEventListener('click', (e) => {
@@ -315,10 +315,50 @@
 
       const themeClass = computed(() => `theme-${theme.value}`);
 
+      const getMonacoTheme = (themeValue) => {
+        if (themeValue === 'system') {
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'vs-dark'
+            : 'vs-light';
+        }
+        return themeValue === 'dark' ? 'vs-dark' : 'vs-light';
+      };
+
+      const applyTheme = (newTheme) => {
+        document.documentElement.className = `theme-${newTheme}`;
+        const monacoTheme = newTheme === 'dark' ? 'vs-dark' : 'vs-light';
+        if (editor) {
+          monaco.editor.setTheme(monacoTheme);
+        }
+      };
+
+      const setTheme = (newTheme) => {
+        theme.value = newTheme;
+        showThemeDropdown.value = false;
+        if (newTheme === 'system') {
+          const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          applyTheme(systemTheme);
+        } else {
+          applyTheme(newTheme);
+        }
+        localStorage.setItem('theme', newTheme);
+      };
+
+      const updateEditorOptions = (fileType) => {
+        if (editor) {
+          editor.updateOptions({
+            language: fileType,
+            wordWrap: fileType === 'css' ? 'on' : 'off',
+            // Add any other file-specific options here
+          });
+        }
+      };
+
       onMounted(() => {
+        const initialLanguage = getLanguageForFile(activeFile.value);
         editor = monaco.editor.create(codeEditor.value, {
           value: getContentByFileType(activeFile.value),
-          language: activeFile.value,
+          language: initialLanguage,
           theme: getMonacoTheme(theme.value),
           automaticLayout: true,
           minimap: { enabled: false },
@@ -334,18 +374,29 @@
           lineDecorationsWidth: 0,
           lineNumbersMinChars: 0,
           glyphMargin: false,
+          renderWhitespace: 'none',
+          wordWrap: 'on',
+          contextmenu: false,
+          scrollbar: {
+            vertical: 'visible',
+            horizontal: 'visible',
+            useShadows: false,
+            verticalHasArrows: false,
+            horizontalHasArrows: false,
+            verticalScrollbarSize: 10,
+            horizontalScrollbarSize: 10,
+          },
+          fixedOverflowWidgets: true,
         });
 
         watch(activeFile, (newFile) => {
           const content = getContentByFileType(newFile);
           editor.setValue(content);
-          monaco.editor.setModelLanguage(editor.getModel(), newFile);
+          updateEditorOptions(newFile);
         });
 
         watch(theme, (newTheme) => {
-          const monacoTheme = getMonacoTheme(newTheme);
-          monaco.editor.setTheme(monacoTheme);
-          localStorage.setItem('theme', newTheme);
+          setTheme(newTheme);
         });
 
         editor.onDidChangeModelContent(() => {
@@ -355,6 +406,29 @@
         });
 
         updatePreviewFrame();
+
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        mediaQuery.addListener(() => {
+          if (theme.value === 'system') {
+            const systemTheme = mediaQuery.matches ? 'dark' : 'light';
+            applyTheme(systemTheme);
+          }
+        });
+
+        window.addEventListener('resize', () => {
+          if (editor) {
+            editor.layout();
+          }
+        });
+
+        // Initial theme application
+        setTheme(theme.value);
+      });
+
+      onUnmounted(() => {
+        if (editor) {
+          editor.dispose();
+        }
       });
 
       const getContentByFileType = (fileType) => {
@@ -376,35 +450,43 @@
 
       const updatePreviewFrame = () => {
         const frameDoc = previewFrame.value.contentDocument;
-        frameDoc.open();
-        frameDoc.write(`
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>${cssCode.value}</style>
-          </head>
-          <body>
-            ${htmlCode.value}
-            <script>
-              (function(){
-                var oldLog = console.log;
-                console.log = function(...args) {
-                  window.parent.postMessage({type: 'log', message: args.join(' ')}, '*');
-                  oldLog.apply(console, args);
-                };
-                window.onerror = function(message, source, lineno, colno, error) {
-                  window.parent.postMessage({type: 'error', message: message}, '*');
-                  return false;
-                };
-              })();
-              ${jsCode.value}
-            <\/script>
-          </body>
-          </html>
-        `);
-        frameDoc.close();
+        if (!frameDoc.body) {
+          frameDoc.open();
+          frameDoc.write('<html><head></head><body></body></html>');
+          frameDoc.close();
+        }
+
+        // Update CSS
+        let styleElement = frameDoc.head.querySelector('style');
+        if (!styleElement) {
+          styleElement = frameDoc.createElement('style');
+          frameDoc.head.appendChild(styleElement);
+        }
+        styleElement.textContent = cssCode.value;
+
+        // Update HTML
+        frameDoc.body.innerHTML = htmlCode.value;
+
+        // Update JavaScript
+        let scriptElement = frameDoc.querySelector('script');
+        if (!scriptElement) {
+          scriptElement = frameDoc.createElement('script');
+          frameDoc.body.appendChild(scriptElement);
+        }
+        scriptElement.textContent = `
+          (function(){
+            var oldLog = console.log;
+            console.log = function(...args) {
+              window.parent.postMessage({type: 'log', message: args.join(' ')}, '*');
+              oldLog.apply(console, args);
+            };
+            window.onerror = function(message, source, lineno, colno, error) {
+              window.parent.postMessage({type: 'error', message: message}, '*');
+              return false;
+            };
+          })();
+          ${jsCode.value}
+        `;
       };
 
       const executeConsoleCommand = () => {
@@ -433,23 +515,6 @@
 
       const toggleThemeDropdown = () => {
         showThemeDropdown.value = !showThemeDropdown.value;
-      };
-
-      const getMonacoTheme = (themeValue) =>
-        themeValue === 'system'
-          ? window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-            ? 'vs-dark'
-            : 'vs-light'
-          : themeValue === 'dark'
-          ? 'vs-dark'
-          : 'vs-light';
-
-      const setTheme = (newTheme) => {
-        theme.value = newTheme;
-        showThemeDropdown.value = false;
-        const monacoTheme = getMonacoTheme(newTheme);
-        monaco.editor.setTheme(monacoTheme);
-        localStorage.setItem('theme', newTheme);
       };
 
       const saveCode = () => {
@@ -494,8 +559,33 @@
         showUploadDropdown.value = false;
       };
 
+      const getLanguageForFile = (fileType) => {
+        switch (fileType) {
+          case 'html': return 'html';
+          case 'css': return 'css';
+          case 'js': return 'javascript';
+          default: return 'plaintext';
+        }
+      };
+
       const setActiveFile = (fileType) => {
         activeFile.value = fileType;
+        if (editor) {
+          const content = getContentByFileType(fileType);
+          const language = getLanguageForFile(fileType);
+
+          // Dispose of the old model
+          const oldModel = editor.getModel();
+          if (oldModel) {
+            oldModel.dispose();
+          }
+
+          // Create a new model with the correct language
+          const newModel = monaco.editor.createModel(content, language);
+          editor.setModel(newModel);
+
+          updateEditorOptions(fileType);
+        }
       };
 
       const toggleConsole = () => {
@@ -557,3 +647,196 @@
     }
   };
 </script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap');
+
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f3f4f6;
+  --bg-hover: #e5e7eb;
+  --bg-selected: #f1f3f5;
+  --bg-dropdown: #ffffff;
+  --bg-console: #f9f9f9;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --border-color: #e5e7eb;
+  --bg-tooltip: #f5f5f5;
+}
+
+.theme-dark {
+  --bg-primary: #020202;
+  --body-bg: #020202;
+  --bg-secondary: #2d2d2d;
+  --bg-hover: #3a3a3a;
+  --bg-selected: #161616;
+  --bg-dropdown: #101010;
+  --bg-console: #060606;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --border-color: #1e1e1e;
+  --dark-sidebar: #ccc;
+  --code-bg: #1e1e1e;
+  --dark-sidebar-weight: 500;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  font-size: 16px;
+}
+
+.body-bg {
+  background-color: var(--body-bg);
+}
+
+.border-muted {
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.bg-hover:hover {
+  background-color: var(--bg-hover);
+}
+
+.bg-selected {
+  background-color: var(--bg-selected);
+}
+
+.bg-dropdown {
+  background-color: var(--bg-dropdown);
+}
+
+.bg-console {
+  background-color: var(--bg-console);
+}
+
+.text-primary {
+  color: var(--text-primary);
+}
+
+.bg-white {
+  --bg-opacity: 1 !important;
+  background-color: #fff !important;
+  background-color: rgb(255 255 255 / 0%) !important;
+}
+
+.fixed {
+  z-index: 999999;
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.dark-color {
+  color: var(--dark-sidebar) !important;
+  font-weight: var(--dark-sidebar-weight) !important;
+}
+
+.nav-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.nav-link:hover {
+  color: var(--text-primary);
+}
+
+.console-icon {
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 15px;
+  transition: color 0.2s ease;
+}
+
+.console-icon:hover {
+  color: var(--text-primary);
+}
+
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  transform: translateY(20px);
+  opacity: 0;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.dropdown-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tooltip-bottom {
+  color: var(--text-primary);
+  background: var(--bg-tooltip);
+  box-shadow: 0 0 20px var(--bg-primary);
+  margin-top: 5px;
+  white-space: nowrap;
+}
+
+.upload-btn {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.upload-dropdown {
+  width: max-content;
+  padding: 2px 8px;
+}
+
+.code-bg {
+  background: var(--code-bg);
+}
+
+.z-9999999 {
+  z-index: 9999999
+}
+
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .console-icon {
+    font-size: 14px;
+  }
+
+  .flex-1 {
+    flex-direction: column;
+  }
+}
+</style>

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap');
 
 :root {
   --bg-primary: #ffffff;
@@ -23,7 +23,7 @@
   --bg-console: #060606;
   --text-primary: #e5e7eb;
   --text-secondary: #9ca3af;
-  --border-color: #0c0c0c;
+  --border-color: #1e1e1e;
   --dark-sidebar: #ccc;
   --code-bg: #1e1e1e;
   --dark-sidebar-weight: 500;
@@ -165,6 +165,10 @@ body {
 
 .code-bg {
   background: var(--code-bg);
+}
+
+.z-9999999 {
+  z-index: 9999999
 }
 
 @media (max-width: 640px) {

@@ -17,15 +17,14 @@
           left: 0;
           width: 100%;
           height: 100%;
-          background-color: #ffffffd1;
+          background-color: #000000eb;
           backdrop-filter: blur(4px);
           z-index: 9999;
           transition: opacity 0.3s ease-out;
       }
-      .preloader svg {
+      .preloader img {
           width: 48px;
           height: 48px;
-          margin-bottom: 16px;
       }
       .preloader.hidden {
           opacity: 0;
@@ -35,7 +34,7 @@
   </head>
   <body>
     <div class="preloader" id="preloader">
-      <div><img src="./src/loader.svg"></div>
+      <div><img src="./src/loader-white.svg" alt="Loading..."></div>
     </div>
     <div id="app"></div>
     <noscript>Enable JavaScript in your browser!</noscript>
@@ -43,12 +42,12 @@
   </body>
   <script>
     window.addEventListener('load', function() {
-        const preloader = document.getElementById('preloader');
-        preloader.classList.add('hidden');
-      
-        setTimeout(() => {
-            preloader.remove();
-        }, 500);
+      const preloader = document.getElementById('preloader');
+      preloader.classList.add('hidden');
+
+      setTimeout(() => {
+        preloader.remove();
+      }, 500);
     });
   </script>
 </html>
