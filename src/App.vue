@@ -374,7 +374,7 @@ export default {
         glyphMargin: false,
         renderWhitespace: 'none',
         wordWrap: 'on',
-        contextmenu: false,
+        contextmenu: true,
         scrollbar: {
           vertical: 'visible',
           horizontal: 'visible',
