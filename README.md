@@ -1,4 +1,4 @@
-# Code Editor with Console (v.0.0.7)
+# Code Editor with Console (v.0.0.8)
 
 A versatile and interactive code editor built with Vue.js, featuring live preview, console output, and theme customization.
 
@@ -8,6 +8,10 @@ A versatile and interactive code editor built with Vue.js, featuring live previe
 > **Attention!** Our website is available by domain ( [code-editor.pro](https://code-editor.pro/) ), if the site is unavailable for the first domain, then ( [click](code-editor-with-console.vercel.app) )
 
 <hr>
+
+## v.0.0.8
+- [x] Ace Editor is now responsible for performing the functions of the code editor. The last editor contained a lot of bugs, and I decided that the editor needed to be changed.
+- [x] Several elements that were not displayed correctly in the theme have been fixed.
 
 ## ✨ Features
 
