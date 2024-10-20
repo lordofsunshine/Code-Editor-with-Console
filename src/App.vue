@@ -1,46 +1,61 @@
 <template>
   <div :class="['flex flex-col body-bg h-screen', themeClass]">
-    <header class="flex flex-col sm:flex-row items-center justify-between h-auto sm:h-16 px-4 py-2 sm:py-0 border-b border-muted">
+    <header
+      class="flex flex-col sm:flex-row items-center justify-between h-auto sm:h-16 px-4 py-2 sm:py-0 border-b border-muted">
       <div class="flex items-center gap-4 mb-2 sm:mb-0">
         <a href="#" class="flex items-center gap-2 text-lg font-semibold">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6" />
+            <polyline points="8 6 2 12 8 18" />
+          </svg>
           <span>Code Editor</span>
         </a>
         <div class="flex items-center gap-4">
           <div class="relative">
             <button @click="saveCode" class="bg-transparent hover:bg-hover p-2 rounded-md">
-              <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"></path><path d="M7 3v4a1 1 0 0 0 1 1h7"></path></svg>
+              <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path
+                  d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z">
+                </path>
+                <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"></path>
+                <path d="M7 3v4a1 1 0 0 0 1 1h7"></path>
+              </svg>
               <span class="sr-only">Save</span>
             </button>
             <transition name="fade">
-              <div v-if="showSaveTooltip" class="absolute tooltip-bottom bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded">
+              <div v-if="showSaveTooltip"
+                class="absolute tooltip-bottom bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded">
                 Changes saved
               </div>
             </transition>
           </div>
           <button @click="downloadFiles" class="bg-transparent hover:bg-hover p-2 rounded-md">
-            <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4m4-5l5 5l5-5m-5 5V3"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24">
+              <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4m4-5l5 5l5-5m-5 5V3" />
+            </svg>
             <span class="sr-only">Download</span>
           </button>
           <div class="relative">
             <button @click="toggleThemeDropdown" class="bg-transparent hover:bg-hover p-2 rounded-md">
               <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 16 16">
                 <rect width="16" height="16" fill="none" />
-                <path fill="currentColor" d="M8 12a4 4 0 1 1 0-8a4 4 0 0 1 0 8m0-1.5a2.5 2.5 0 1 0 0-5a2.5 2.5 0 0 0 0 5m5.657-8.157a.75.75 0 0 1 0 1.061l-1.061 1.06a.749.749 0 0 1-1.275-.326a.75.75 0 0 1 .215-.734l1.06-1.06a.75.75 0 0 1 1.06 0Zm-9.193 9.193a.75.75 0 0 1 0 1.06l-1.06 1.061a.75.75 0 1 1-1.061-1.06l1.06-1.061a.75.75 0 0 1 1.061 0M8 0a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0V.75A.75.75 0 0 1 8 0M3 8a.75.75 0 0 1-.75.75H.75a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 3 8m13 0a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 16 8m-8 5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 8 13m3.536-1.464a.75.75 0 0 1 1.06 0l1.061 1.06a.75.75 0 0 1-1.06 1.061l-1.061-1.06a.75.75 0 0 1 0-1.061M2.343 2.343a.75.75 0 0 1 1.061 0l1.06 1.061a.75.75 0 0 1-.018 1.042a.75.75 0 0 1-1.042.018l-1.06-1.06a.75.75 0 0 1 0-1.06Z" />
+                <path fill="currentColor"
+                  d="M8 12a4 4 0 1 1 0-8a4 4 0 0 1 0 8m0-1.5a2.5 2.5 0 1 0 0-5a2.5 2.5 0 0 0 0 5m5.657-8.157a.75.75 0 0 1 0 1.061l-1.061 1.06a.749.749 0 0 1-1.275-.326a.75.75 0 0 1 .215-.734l1.06-1.06a.75.75 0 0 1 1.06 0Zm-9.193 9.193a.75.75 0 0 1 0 1.06l-1.06 1.061a.75.75 0 1 1-1.061-1.06l1.06-1.061a.75.75 0 0 1 1.061 0M8 0a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0V.75A.75.75 0 0 1 8 0M3 8a.75.75 0 0 1-.75.75H.75a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 3 8m13 0a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 16 8m-8 5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 8 13m3.536-1.464a.75.75 0 0 1 1.06 0l1.061 1.06a.75.75 0 0 1-1.06 1.061l-1.061-1.06a.75.75 0 0 1 0-1.061M2.343 2.343a.75.75 0 0 1 1.061 0l1.06 1.061a.75.75 0 0 1-.018 1.042a.75.75 0 0 1-1.042.018l-1.06-1.06a.75.75 0 0 1 0-1.06Z" />
               </svg>
               <span class="sr-only">Toggle theme</span>
             </button>
             <transition name="dropdown">
-              <div v-if="showThemeDropdown" class="absolute right-0 w-40 bg-dropdown shadow-lg mt-2 rounded-md overflow-hidden z-9999999">
+              <div v-if="showThemeDropdown"
+                class="absolute right-0 w-40 bg-dropdown shadow-lg mt-2 rounded-md overflow-hidden z-9999999">
                 <div class="px-2 py-1 border-b dropdown-text border-muted">Theme</div>
                 <div v-for="t in ['light', 'dark', 'system']" :key="t">
-                  <button 
-                    @click="setTheme(t)"
-                    :class="[
-                      'w-full text-left px-2 py-1 cursor-pointer hover:bg-hover flex items-center justify-between',
-                      { 'bg-selected text-primary font-medium': theme === t }
-                    ]"
-                  >
+                  <button @click="setTheme(t)" :class="[
+                    'w-full text-left px-2 py-1 cursor-pointer hover:bg-hover flex items-center justify-between',
+                    { 'bg-selected text-primary font-medium': theme === t }
+                  ]">
                     {{ t.charAt(0).toUpperCase() + t.slice(1) }}
                     <svg v-if="theme === t" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20">
                       <rect width="20" height="20" fill="none" />
@@ -70,24 +85,26 @@
             <button @click="toggleUploadDropdown" class="bg-transparent hover:bg-hover p-2 rounded-md">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                 <rect width="24" height="24" fill="none" />
-                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 17h18M3 12h18M3 7h18" />
+                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 17h18M3 12h18M3 7h18" />
               </svg>
               <span class="sr-only">Upload file</span>
             </button>
             <transition name="dropdown">
-              <div v-if="showUploadDropdown" class="absolute upload-dropdown right-0 w-40 bg-dropdown shadow-lg mt-2 rounded-md overflow-hidden z-10">
-                <button @click="triggerFileUpload" class="upload-btn w-full text-left px-2 py-1 cursor-pointer hover:bg-hover">Upload files</button>
+              <div v-if="showUploadDropdown"
+                class="absolute upload-dropdown right-0 w-40 bg-dropdown shadow-lg mt-2 rounded-md overflow-hidden z-10">
+                <button @click="triggerFileUpload"
+                  class="upload-btn w-full text-left px-2 py-1 cursor-pointer hover:bg-hover">Upload files</button>
               </div>
             </transition>
           </div>
-          <input type="file" ref="fileInput" @change="handleFileUpload" multiple style="display: none;" accept=".html,.css,.js">
+          <input type="file" ref="fileInput" @change="handleFileUpload" multiple style="display: none;"
+            accept=".html,.css,.js">
         </div>
         <div class="flex-1 overflow-auto dark-color">
           <div class="px-4 py-2">
-            <div v-for="file in files" :key="file.name"
-                 @click="setActiveFile(file.type)"
-                 :class="['flex items-center justify-between text-sm font-medium cursor-pointer p-2 rounded', 
-                          { 'bg-selected': activeFile === file.type }]">
+            <div v-for="file in files" :key="file.name" @click="setActiveFile(file.type)" :class="['flex items-center justify-between text-sm font-medium cursor-pointer p-2 rounded',
+              { 'bg-selected': activeFile === file.type }]">
               <span>{{ file.name }}</span>
               <span v-html="fileIcons[file.type]"></span>
             </div>
@@ -96,7 +113,7 @@
       </div>
       <div class="flex-1 flex flex-col overflow-hidden">
         <div class="flex-1 flex flex-col overflow-hidden relative md:flex-row">
-          <div class="flex-1 p-4 code-bg">
+          <div class="flex-1 code-bg">
             <div class="w-full h-full" ref="codeEditor"></div>
           </div>
           <div class="w-full md:w-1/2 border-t md:border-t-0 md:border-l border-muted">
@@ -106,8 +123,10 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24">
                   <rect width="24" height="24" fill="none" />
                   <g fill="none" fill-rule="evenodd">
-                    <path d="M24 0v24H0V0zM12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z" />
-                    <path fill="currentColor" d="M18.5 5.5H16a1.5 1.5 0 0 1 0-3h3A2.5 2.5 0 0 1 21.5 5v3a1.5 1.5 0 0 1-3 0zM8 5.5H5.5V8a1.5 1.5 0 1 1-3 0V5A2.5 2.5 0 0 1 5 2.5h3a1.5 1.5 0 1 1 0 3m0 13H5.5V16a1.5 1.5 0 0 0-3 0v3A2.5 2.5 0 0 0 5 21.5h3a1.5 1.5 0 0 0 0-3m8 0h2.5V16a1.5 1.5 0 0 1 3 0v3a2.5 2.5 0 0 1-2.5 2.5h-3a1.5 1.5 0 0 1 0-3" />
+                    <path
+                      d="M24 0v24H0V0zM12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z" />
+                    <path fill="currentColor"
+                      d="M18.5 5.5H16a1.5 1.5 0 0 1 0-3h3A2.5 2.5 0 0 1 21.5 5v3a1.5 1.5 0 0 1-3 0zM8 5.5H5.5V8a1.5 1.5 0 1 1-3 0V5A2.5 2.5 0 0 1 5 2.5h3a1.5 1.5 0 1 1 0 3m0 13H5.5V16a1.5 1.5 0 0 0-3 0v3A2.5 2.5 0 0 0 5 21.5h3a1.5 1.5 0 0 0 0-3m8 0h2.5V16a1.5 1.5 0 0 1 3 0v3a2.5 2.5 0 0 1-2.5 2.5h-3a1.5 1.5 0 0 1 0-3" />
                   </g>
                 </svg>
                 <span class="sr-only">Fullscreen Mode</span>
@@ -120,9 +139,11 @@
           <div class="flex items-center gap-4">
             <button @click="toggleConsole" class="flex items-center bg-transparent p-2 console-icon">
               Console
-              <svg :class="['ml-1 transform transition-transform', { 'rotate-180': showConsole }]" xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24">
+              <svg :class="['ml-1 transform transition-transform', { 'rotate-180': showConsole }]"
+                xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24">
                 <rect width="24" height="24" fill="none" />
-                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m7 10l5 5l5-5" />
+                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="m7 10l5 5l5-5" />
               </svg>
               <span class="sr-only">Toggle console</span>
             </button>
@@ -132,25 +153,30 @@
     </div>
     <transition name="slide-fade">
       <div v-if="showConsole" class="fixed bottom-0 left-0 right-0 bg-console border-t border-muted">
+
         <div class="flex items-center justify-between p-2 border-b border-muted">
           <button @click="toggleConsole" class="flex items-center bg-transparent p-2 console-icon">
             Console
-            <svg :class="['ml-1 transform transition-transform', { 'rotate-180': showConsole }]" xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24">
+            <svg :class="['ml-1 transform transition-transform', { 'rotate-180': showConsole }]"
+              xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24">
               <rect width="24" height="24" fill="none" />
-              <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m7 10l5 5l5-5" />
+              <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="m7 10l5 5l5-5" />
             </svg>
             <span class="sr-only">Toggle console</span>
           </button>
           <button @click="clearConsole" class="text-sm text-blue-500 hover:text-blue-600">Clear console</button>
         </div>
         <div class="h-48 overflow-auto p-2 font-mono text-sm">
-          <div v-for="(log, index) in consoleLogs" :key="index" :class="['mb-1', { 'text-red-500': log.type === 'error' }]">
+          <div v-for="(log, index) in consoleLogs" :key="index"
+            :class="['mb-1', { 'text-red-500': log.type === 'error' }]">
             {{ log.message }}
           </div>
         </div>
         <div class="flex items-center p-2 border-t border-muted">
           <span class="mr-2 text-gray-500">></span>
-          <input v-model="consoleInput" @keyup.enter="executeConsoleCommand" class="flex-1 bg-transparent outline-none" placeholder="Enter command...">
+          <input v-model="consoleInput" @keyup.enter="executeConsoleCommand" class="flex-1 bg-transparent outline-none"
+            placeholder="Enter command...">
         </div>
       </div>
     </transition>
@@ -159,24 +185,14 @@
 
 <script>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
-import * as monaco from 'monaco-editor';
-import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
-import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
-import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
-import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
-import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
+import ace from 'ace-builds';
+import 'ace-builds/src-noconflict/mode-html';
+import 'ace-builds/src-noconflict/mode-css';
+import 'ace-builds/src-noconflict/mode-javascript';
+import 'ace-builds/src-noconflict/theme-twilight';
+import 'ace-builds/src-noconflict/theme-github';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-
-self.MonacoEnvironment = {
-  getWorker(_, label) {
-    if (label === 'json') return new jsonWorker();
-    if (label === 'css' || label === 'scss' || label === 'less') return new cssWorker();
-    if (label === 'html' || label === 'handlebars' || label === 'razor') return new htmlWorker();
-    if (label === 'typescript' || label === 'javascript') return new tsWorker();
-    return new editorWorker();
-  }
-};
 
 const initialHtmlCode = `<!DOCTYPE html>
 <html lang="en">
@@ -205,6 +221,7 @@ body {
   align-items: center;
   overflow: visible;
   min-height: 100vh;
+  color: #fff;
 }
 
 .container {
@@ -315,13 +332,13 @@ export default {
 
     const themeClass = computed(() => `theme-${theme.value}`);
 
-    const getMonacoTheme = (themeValue) => {
+    const getAceTheme = (themeValue) => {
       if (themeValue === 'system') {
         return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-          ? 'vs-dark'
-          : 'vs-light';
+          ? 'ace/theme/twilight'
+          : 'ace/theme/github';
       }
-      return themeValue === 'dark' ? 'vs-dark' : 'vs-light';
+      return themeValue === 'dark' ? 'ace/theme/twilight' : 'ace/theme/github';
     };
 
     const applyTheme = (newTheme) => {
@@ -330,9 +347,9 @@ export default {
         appliedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       }
       document.documentElement.className = `theme-${appliedTheme}`;
-      const monacoTheme = appliedTheme === 'dark' ? 'vs-dark' : 'vs-light';
+      const aceTheme = getAceTheme(appliedTheme);
       if (editor) {
-        monaco.editor.setTheme(monacoTheme);
+        editor.setTheme(aceTheme);
       }
     };
 
@@ -345,51 +362,91 @@ export default {
 
     const updateEditorOptions = (fileType) => {
       if (editor) {
-        editor.updateOptions({
-          language: fileType,
-          wordWrap: fileType === 'css' ? 'on' : 'off',
-        });
+        editor.session.setMode(`ace/mode/${fileType}`);
+        editor.setOption('wrap', fileType === 'css');
       }
     };
 
     onMounted(() => {
-      const initialLanguage = getLanguageForFile(activeFile.value);
-      editor = monaco.editor.create(codeEditor.value, {
+      editor = ace.edit(codeEditor.value, {
         value: getContentByFileType(activeFile.value),
-        language: initialLanguage,
-        theme: getMonacoTheme(theme.value),
-        automaticLayout: true,
-        minimap: { enabled: false },
-        lineNumbers: 'off',
-        folding: false,
-        scrollBeyondLastLine: false,
-        renderLineHighlight: 'none',
-        hideCursorInOverviewRuler: true,
-        overviewRulerBorder: false,
-        overviewRulerLanes: 0,
-        fontFamily: '"Source Code Pro", monospace',
+        mode: `ace/mode/${activeFile.value}`,
+        theme: 'ace/theme/custom-dark',
         fontSize: 14,
-        lineDecorationsWidth: 0,
-        lineNumbersMinChars: 0,
-        glyphMargin: false,
-        renderWhitespace: 'none',
-        wordWrap: 'on',
-        contextmenu: true,
-        scrollbar: {
-          vertical: 'visible',
-          horizontal: 'visible',
-          useShadows: false,
-          verticalHasArrows: false,
-          horizontalHasArrows: false,
-          verticalScrollbarSize: 10,
-          horizontalScrollbarSize: 10,
-        },
-        fixedOverflowWidgets: true,
+        showPrintMargin: false,
+        highlightActiveLine: false,
+        showGutter: true,
+        wrap: true,
+        useWorker: false,
+        scrollPastEnd: 0.5,
+      });
+
+      editor.renderer.setScrollMargin(0, 0, 0, 0);
+      editor.renderer.setShowGutter(true);
+
+      const applyScrollbarStyles = (isDarkTheme) => {
+        const scrollbarBg = isDarkTheme ? '#1a1a1a' : '#f0f0f0';
+        const scrollbarColor = isDarkTheme ? '#3a3a3a' : '#c1c1c1';
+        const scrollbarHoverColor = isDarkTheme ? '#4a4a4a' : '#a1a1a1';
+
+        const style = document.createElement('style');
+        style.textContent = `
+          .ace_scrollbar {
+            width: 5px !important;
+            background-color: ${scrollbarBg} !important;
+          }
+          .ace_scrollbar-inner {
+            background-color: ${scrollbarColor} !important;
+            width: 5px !important;
+          }
+          .ace_scrollbar::-webkit-scrollbar {
+            width: 5px;
+          }
+          .ace_scrollbar::-webkit-scrollbar-track {
+            background: ${scrollbarBg};
+          }
+          .ace_scrollbar::-webkit-scrollbar-thumb {
+            background: ${scrollbarColor};
+          }
+          .ace_scrollbar::-webkit-scrollbar-thumb:hover {
+            background: ${scrollbarHoverColor};
+          }
+        `;
+
+        const oldStyle = document.getElementById('ace-scrollbar-style');
+        if (oldStyle) {
+          oldStyle.remove();
+        }
+
+        style.id = 'ace-scrollbar-style';
+        document.head.appendChild(style);
+      };
+
+      const setupEditor = (isDarkTheme) => {
+        editor = ace.edit(codeEditor.value, {
+          theme: isDarkTheme ? 'ace/theme/monokai' : 'ace/theme/github',
+        });
+
+        editor.renderer.setScrollMargin(0, 0, 0, 0);
+        editor.renderer.setShowGutter(true);
+
+        applyScrollbarStyles(isDarkTheme);
+      };
+
+      onMounted(() => {
+        const isDarkTheme = theme.value === 'dark';
+        setupEditor(isDarkTheme);
+      });
+
+      watch(theme, (newTheme) => {
+        const isDarkTheme = newTheme === 'dark';
+        applyScrollbarStyles(isDarkTheme);
+        editor.setTheme(isDarkTheme ? 'ace/theme/monokai' : 'ace/theme/github');
       });
 
       watch(activeFile, (newFile) => {
         const content = getContentByFileType(newFile);
-        editor.setValue(content);
+        editor.setValue(content, -1);
         updateEditorOptions(newFile);
       });
 
@@ -397,7 +454,7 @@ export default {
         setTheme(newTheme);
       });
 
-      editor.onDidChangeModelContent(() => {
+      editor.session.on('change', () => {
         const content = editor.getValue();
         updateContentByFileType(activeFile.value, content);
         updatePreviewFrame();
@@ -414,7 +471,7 @@ export default {
 
       window.addEventListener('resize', () => {
         if (editor) {
-          editor.layout();
+          editor.resize();
         }
       });
 
@@ -423,7 +480,7 @@ export default {
 
     onUnmounted(() => {
       if (editor) {
-        editor.dispose();
+        editor.destroy();
       }
     });
 
@@ -446,40 +503,33 @@ export default {
 
     const updatePreviewFrame = () => {
       const frameDoc = previewFrame.value.contentDocument;
-      if (!frameDoc.body) {
-        frameDoc.open();
-        frameDoc.write('<html><head></head><body></body></html>');
-        frameDoc.close();
-      }
-
-      let styleElement = frameDoc.head.querySelector('style');
-      if (!styleElement) {
-        styleElement = frameDoc.createElement('style');
-        frameDoc.head.appendChild(styleElement);
-      }
-      styleElement.textContent = cssCode.value;
-
-      frameDoc.body.innerHTML = htmlCode.value;
-
-      let scriptElement = frameDoc.querySelector('script');
-      if (!scriptElement) {
-        scriptElement = frameDoc.createElement('script');
-        frameDoc.body.appendChild(scriptElement);
-      }
-      scriptElement.textContent = `
-        (function(){
-          var oldLog = console.log;
-          console.log = function(...args) {
-            window.parent.postMessage({type: 'log', message: args.join(' ')}, '*');
-            oldLog.apply(console, args);
-          };
-          window.onerror = function(message, source, lineno, colno, error) {
-            window.parent.postMessage({type: 'error', message: message}, '*');
-            return false;
-          };
-        })();
-        ${jsCode.value}
-      `;
+      frameDoc.open();
+      frameDoc.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>${cssCode.value}</style>
+          </head>
+          <body>
+            ${htmlCode.value}
+            <script>
+              (function(){
+                var oldLog = console.log;
+                console.log = function(...args) {
+                  window.parent.postMessage({type: 'log', message: args.join(' ')}, '*');
+                  oldLog.apply(console, args);
+                };
+                window.onerror = function(message, source, lineno, colno, error) {
+                  window.parent.postMessage({type: 'error', message: message}, '*');
+                  return false;
+                };
+              })();
+              ${jsCode.value}
+            <\/script>
+          </body>
+        </html>
+      `);
+      frameDoc.close();
     };
 
     const executeConsoleCommand = () => {
@@ -552,29 +602,11 @@ export default {
       showUploadDropdown.value = false;
     };
 
-    const getLanguageForFile = (fileType) => {
-      switch (fileType) {
-        case 'html': return 'html';
-        case 'css': return 'css';
-        case 'js': return 'javascript';
-        default: return 'plaintext';
-      }
-    };
-
     const setActiveFile = (fileType) => {
       activeFile.value = fileType;
       if (editor) {
         const content = getContentByFileType(fileType);
-        const language = getLanguageForFile(fileType);
-
-        const oldModel = editor.getModel();
-        if (oldModel) {
-          oldModel.dispose();
-        }
-
-        const newModel = monaco.editor.createModel(content, language);
-        editor.setModel(newModel);
-
+        editor.setValue(content, -1);
         updateEditorOptions(fileType);
       }
     };
