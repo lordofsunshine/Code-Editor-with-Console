@@ -67,6 +67,10 @@ body {
   color: var(--text-primary);
 }
 
+.tool-background {
+  background: var(--bg-secondary) !important;
+}
+
 .bg-white {
   --bg-opacity: 1 !important;
   background-color: #fff !important;
