@@ -2,7 +2,7 @@
 
 A versatile and interactive code editor built with Vue.js, featuring live preview, console output, and theme customization.
 
-<img src="https://cdn.glitch.global/4fd6680f-dccd-4eae-8213-47230a51f7b6/3.jpg?v=1725551522546">
+<img alt="banner" src="https://cdn.glitch.global/e725dc7b-5566-4a26-a476-5a37c9e852fe/banner.jpg?v=1729436724009">
 
 > [!IMPORTANT]
 > **Attention!** Our website is available by domain ( [code-editor.pro](https://code-editor.pro/) ), if the site is unavailable for the first domain, then ( [click](code-editor-with-console.vercel.app) )
