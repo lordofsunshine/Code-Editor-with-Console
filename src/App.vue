@@ -26,7 +26,7 @@
             </button>
             <transition name="fade">
               <div v-if="showSaveTooltip"
-                class="absolute tooltip-bottom bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded">
+                class="absolute tool-background tooltip-bottom bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded">
                 Changes saved
               </div>
             </transition>
@@ -184,489 +184,489 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
-import ace from 'ace-builds';
-import 'ace-builds/src-noconflict/mode-html';
-import 'ace-builds/src-noconflict/mode-css';
-import 'ace-builds/src-noconflict/mode-javascript';
-import 'ace-builds/src-noconflict/theme-twilight';
-import 'ace-builds/src-noconflict/theme-github';
-import JSZip from 'jszip';
-import { saveAs } from 'file-saver';
+  import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+  import ace from 'ace-builds';
+  import 'ace-builds/src-noconflict/mode-html';
+  import 'ace-builds/src-noconflict/mode-css';
+  import 'ace-builds/src-noconflict/mode-javascript';
+  import 'ace-builds/src-noconflict/theme-twilight';
+  import 'ace-builds/src-noconflict/theme-github';
+  import JSZip from 'jszip';
+  import { saveAs } from 'file-saver';
 
-const initialHtmlCode = `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Code Editor</title>
-  </head>
-  <body>
-    <div class="container">
-      <h1 class="title">Code Editor</h1>
-      <a href="https://github.com/lordofsunshine/Code-Editor-with-Console" class="watermark">by lordofsunshine</a>
-    </div>
-  </body>
-</html>`;
+  const initialHtmlCode = `<!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <link rel="icon" href="/favicon.ico" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Code Editor</title>
+    </head>
+    <body>
+      <div class="container">
+        <h1 class="title">Code Editor</h1>
+        <a href="https://github.com/lordofsunshine/Code-Editor-with-Console" class="watermark">by lordofsunshine</a>
+      </div>
+    </body>
+  </html>`;
 
-const initialCssCode = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Pixelify+Sans:wght@400..700&display=swap');
+  const initialCssCode = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Pixelify+Sans:wght@400..700&display=swap');
 
-body {
-  font-family: "Bebas Neue", sans-serif;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: visible;
-  min-height: 100vh;
-  color: #fff;
-}
+  body {
+    font-family: "Bebas Neue", sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: visible;
+    min-height: 100vh;
+    color: #fff;
+  }
 
-.container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
 
-.title {
-  color: #5e5e5e;
-  font-size: 4rem;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-}
-
-.watermark {
-  font-family: "Pixelify Sans", sans-serif;
-  font-size: 1.5rem;
-  background: #1a1a1ade;
-  color: #fff;
-  padding: 0.5rem 1.5rem;
-  border-radius: 8px;
-  text-decoration: none;
-  transition: background-color 0.3s ease;
-}
-
-.watermark:hover {
-  background-color: #1b1b1b;
-}
-
-@media (max-width: 768px) {
   .title {
-    font-size: 3rem;
+    color: #5e5e5e;
+    font-size: 4rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
   }
 
   .watermark {
-    font-size: 1.2rem;
+    font-family: "Pixelify Sans", sans-serif;
+    font-size: 1.5rem;
+    background: #1a1a1ade;
+    color: #fff;
+    padding: 0.5rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
   }
-}`;
 
-const initialJsCode = `document.addEventListener('DOMContentLoaded', () => {
-  const watermark = document.querySelector('.watermark');
-  if (watermark) {
-    watermark.addEventListener('click', (e) => {
-      e.preventDefault();
-      alert('Thanks for using the Code Editor!');
-      window.open(e.target.href, '_blank');
-    });
+  .watermark:hover {
+    background-color: #1b1b1b;
   }
-});`;
 
-export default {
-  setup() {
-    const htmlCode = ref(localStorage.getItem('htmlCode') || initialHtmlCode);
-    const cssCode = ref(localStorage.getItem('cssCode') || initialCssCode);
-    const jsCode = ref(localStorage.getItem('jsCode') || initialJsCode);
-    const activeFile = ref('html');
-    const theme = ref(localStorage.getItem('theme') || 'dark');
-    const showThemeDropdown = ref(false);
-    const showUploadDropdown = ref(false);
-    const showConsole = ref(false);
-    const consoleLogs = ref([]);
-    const consoleInput = ref('');
-    const previewFrame = ref(null);
-    const showSaveTooltip = ref(false);
-    const codeEditor = ref(null);
-    const fileInput = ref(null);
-    let editor = null;
+  @media (max-width: 768px) {
+    .title {
+      font-size: 3rem;
+    }
 
-    const files = [
-      { name: 'index.html', type: 'html' },
-      { name: 'style.css', type: 'css' },
-      { name: 'script.js', type: 'js' }
-    ];
+    .watermark {
+      font-size: 1.2rem;
+    }
+  }`;
 
-    const fileIcons = {
-      html: `
-<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 256 256">
-  <rect width="256" height="256" fill="none" />
-  <g fill="none">
-    <rect width="256" height="256" fill="#e14e1d" rx="60" />
-    <path fill="#fff" d="m48 38l8.61 96.593h110.71l-3.715 41.43l-35.646 9.638l-35.579-9.624l-2.379-26.602H57.94l4.585 51.281l65.427 18.172l65.51-18.172l8.783-98.061H85.824l-2.923-32.71h122.238L208 38z" />
-    <path fill="#ebebeb" d="M128 38H48l8.61 96.593H128v-31.938H85.824l-2.923-32.71H128zm0 147.647l-.041.014l-35.579-9.624l-2.379-26.602H57.94l4.585 51.281l65.427 18.172l.049-.014z" />
-  </g>
-</svg>
-      `,
-      css: `
-       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 256 256">
-  <rect width="256" height="256" fill="none" />
-  <g fill="none">
-    <rect width="256" height="256" fill="#0277bd" rx="60" />
-    <path fill="#ebebeb" d="m53.753 102.651l2.862 31.942h71.481v-31.942zM128.095 38H48l2.904 31.942h77.191zm0 180.841v-33.233l-.14.037l-35.574-9.605l-2.274-25.476H58.042l4.475 50.154l65.431 18.164z" />
-    <path fill="#fff" d="m167.318 134.593l-3.708 41.426l-35.625 9.616v33.231l65.483-18.148l.48-5.397l7.506-84.092l.779-8.578L208 38h-80.015v31.942h45.009l-2.906 32.709h-42.103v31.942z" />
-  </g>
-</svg>
-      `,
-      js: `
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 256 256">
-  <rect width="256" height="256" fill="none" />
-  <g fill="none">
-    <rect width="256" height="256" fill="#f0db4f" rx="60" />
-    <path fill="#323330" d="m67.312 213.932l19.59-11.856c3.78 6.701 7.218 12.371 15.465 12.371c7.905 0 12.889-3.092 12.889-15.12v-81.798h24.058v82.138c0 24.917-14.606 36.259-35.916 36.259c-19.245 0-30.416-9.967-36.087-21.996m85.07-2.576l19.588-11.341c5.157 8.421 11.859 14.607 23.715 14.607c9.969 0 16.325-4.984 16.325-11.858c0-8.248-6.53-11.17-17.528-15.98l-6.013-2.579c-17.357-7.388-28.871-16.668-28.871-36.258c0-18.044 13.748-31.792 35.229-31.792c15.294 0 26.292 5.328 34.196 19.247l-18.731 12.029c-4.125-7.389-8.591-10.31-15.465-10.31c-7.046 0-11.514 4.468-11.514 10.31c0 7.217 4.468 10.139 14.778 14.608l6.014 2.577c20.449 8.765 31.963 17.699 31.963 37.804c0 21.654-17.012 33.51-39.867 33.51c-22.339 0-36.774-10.654-43.819-24.574" />
-  </g>
-</svg>
-      `
-    };
-
-    const themeClass = computed(() => `theme-${theme.value}`);
-
-    const getAceTheme = (themeValue) => {
-      if (themeValue === 'system') {
-        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-          ? 'ace/theme/twilight'
-          : 'ace/theme/github';
-      }
-      return themeValue === 'dark' ? 'ace/theme/twilight' : 'ace/theme/github';
-    };
-
-    const applyTheme = (newTheme) => {
-      let appliedTheme = newTheme;
-      if (newTheme === 'system') {
-        appliedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      }
-      document.documentElement.className = `theme-${appliedTheme}`;
-      const aceTheme = getAceTheme(appliedTheme);
-      if (editor) {
-        editor.setTheme(aceTheme);
-      }
-    };
-
-    const setTheme = (newTheme) => {
-      theme.value = newTheme;
-      showThemeDropdown.value = false;
-      applyTheme(newTheme);
-      localStorage.setItem('theme', newTheme);
-    };
-
-    const updateEditorOptions = (fileType) => {
-      if (editor) {
-        editor.session.setMode(`ace/mode/${fileType}`);
-        editor.setOption('wrap', fileType === 'css');
-      }
-    };
-
-    onMounted(() => {
-      editor = ace.edit(codeEditor.value, {
-        value: getContentByFileType(activeFile.value),
-        mode: `ace/mode/${activeFile.value}`,
-        theme: 'ace/theme/custom-dark',
-        fontSize: 14,
-        showPrintMargin: false,
-        highlightActiveLine: false,
-        showGutter: true,
-        wrap: true,
-        useWorker: false,
-        scrollPastEnd: 0.5,
+  const initialJsCode = `document.addEventListener('DOMContentLoaded', () => {
+    const watermark = document.querySelector('.watermark');
+    if (watermark) {
+      watermark.addEventListener('click', (e) => {
+        e.preventDefault();
+        alert('Thanks for using the Code Editor!');
+        window.open(e.target.href, '_blank');
       });
+    }
+  });`;
 
-      editor.renderer.setScrollMargin(0, 0, 0, 0);
-      editor.renderer.setShowGutter(true);
+  export default {
+    setup() {
+      const htmlCode = ref(localStorage.getItem('htmlCode') || initialHtmlCode);
+      const cssCode = ref(localStorage.getItem('cssCode') || initialCssCode);
+      const jsCode = ref(localStorage.getItem('jsCode') || initialJsCode);
+      const activeFile = ref('html');
+      const theme = ref(localStorage.getItem('theme') || 'dark');
+      const showThemeDropdown = ref(false);
+      const showUploadDropdown = ref(false);
+      const showConsole = ref(false);
+      const consoleLogs = ref([]);
+      const consoleInput = ref('');
+      const previewFrame = ref(null);
+      const showSaveTooltip = ref(false);
+      const codeEditor = ref(null);
+      const fileInput = ref(null);
+      let editor = null;
 
-      const applyScrollbarStyles = (isDarkTheme) => {
-        const scrollbarBg = isDarkTheme ? '#1a1a1a' : '#f0f0f0';
-        const scrollbarColor = isDarkTheme ? '#3a3a3a' : '#c1c1c1';
-        const scrollbarHoverColor = isDarkTheme ? '#4a4a4a' : '#a1a1a1';
+      const files = [
+        { name: 'index.html', type: 'html' },
+        { name: 'style.css', type: 'css' },
+        { name: 'script.js', type: 'js' }
+      ];
 
-        const style = document.createElement('style');
-        style.textContent = `
-          .ace_scrollbar {
-            width: 5px !important;
-            background-color: ${scrollbarBg} !important;
-          }
-          .ace_scrollbar-inner {
-            background-color: ${scrollbarColor} !important;
-            width: 5px !important;
-          }
-          .ace_scrollbar::-webkit-scrollbar {
-            width: 5px;
-          }
-          .ace_scrollbar::-webkit-scrollbar-track {
-            background: ${scrollbarBg};
-          }
-          .ace_scrollbar::-webkit-scrollbar-thumb {
-            background: ${scrollbarColor};
-          }
-          .ace_scrollbar::-webkit-scrollbar-thumb:hover {
-            background: ${scrollbarHoverColor};
-          }
-        `;
-
-        const oldStyle = document.getElementById('ace-scrollbar-style');
-        if (oldStyle) {
-          oldStyle.remove();
-        }
-
-        style.id = 'ace-scrollbar-style';
-        document.head.appendChild(style);
+      const fileIcons = {
+        html: `
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 256 256">
+    <rect width="256" height="256" fill="none" />
+    <g fill="none">
+      <rect width="256" height="256" fill="#e14e1d" rx="60" />
+      <path fill="#fff" d="m48 38l8.61 96.593h110.71l-3.715 41.43l-35.646 9.638l-35.579-9.624l-2.379-26.602H57.94l4.585 51.281l65.427 18.172l65.51-18.172l8.783-98.061H85.824l-2.923-32.71h122.238L208 38z" />
+      <path fill="#ebebeb" d="M128 38H48l8.61 96.593H128v-31.938H85.824l-2.923-32.71H128zm0 147.647l-.041.014l-35.579-9.624l-2.379-26.602H57.94l4.585 51.281l65.427 18.172l.049-.014z" />
+    </g>
+  </svg>
+        `,
+        css: `
+         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 256 256">
+    <rect width="256" height="256" fill="none" />
+    <g fill="none">
+      <rect width="256" height="256" fill="#0277bd" rx="60" />
+      <path fill="#ebebeb" d="m53.753 102.651l2.862 31.942h71.481v-31.942zM128.095 38H48l2.904 31.942h77.191zm0 180.841v-33.233l-.14.037l-35.574-9.605l-2.274-25.476H58.042l4.475 50.154l65.431 18.164z" />
+      <path fill="#fff" d="m167.318 134.593l-3.708 41.426l-35.625 9.616v33.231l65.483-18.148l.48-5.397l7.506-84.092l.779-8.578L208 38h-80.015v31.942h45.009l-2.906 32.709h-42.103v31.942z" />
+    </g>
+  </svg>
+        `,
+        js: `
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 256 256">
+    <rect width="256" height="256" fill="none" />
+    <g fill="none">
+      <rect width="256" height="256" fill="#f0db4f" rx="60" />
+      <path fill="#323330" d="m67.312 213.932l19.59-11.856c3.78 6.701 7.218 12.371 15.465 12.371c7.905 0 12.889-3.092 12.889-15.12v-81.798h24.058v82.138c0 24.917-14.606 36.259-35.916 36.259c-19.245 0-30.416-9.967-36.087-21.996m85.07-2.576l19.588-11.341c5.157 8.421 11.859 14.607 23.715 14.607c9.969 0 16.325-4.984 16.325-11.858c0-8.248-6.53-11.17-17.528-15.98l-6.013-2.579c-17.357-7.388-28.871-16.668-28.871-36.258c0-18.044 13.748-31.792 35.229-31.792c15.294 0 26.292 5.328 34.196 19.247l-18.731 12.029c-4.125-7.389-8.591-10.31-15.465-10.31c-7.046 0-11.514 4.468-11.514 10.31c0 7.217 4.468 10.139 14.778 14.608l6.014 2.577c20.449 8.765 31.963 17.699 31.963 37.804c0 21.654-17.012 33.51-39.867 33.51c-22.339 0-36.774-10.654-43.819-24.574" />
+    </g>
+  </svg>
+        `
       };
 
-      const setupEditor = (isDarkTheme) => {
+      const themeClass = computed(() => `theme-${theme.value}`);
+
+      const getAceTheme = (themeValue) => {
+        if (themeValue === 'system') {
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'ace/theme/twilight'
+            : 'ace/theme/github';
+        }
+        return themeValue === 'dark' ? 'ace/theme/twilight' : 'ace/theme/github';
+      };
+
+      const applyTheme = (newTheme) => {
+        let appliedTheme = newTheme;
+        if (newTheme === 'system') {
+          appliedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.className = `theme-${appliedTheme}`;
+        const aceTheme = getAceTheme(appliedTheme);
+        if (editor) {
+          editor.setTheme(aceTheme);
+        }
+      };
+
+      const setTheme = (newTheme) => {
+        theme.value = newTheme;
+        showThemeDropdown.value = false;
+        applyTheme(newTheme);
+        localStorage.setItem('theme', newTheme);
+      };
+
+      const updateEditorOptions = (fileType) => {
+        if (editor) {
+          editor.session.setMode(`ace/mode/${fileType}`);
+          editor.setOption('wrap', fileType === 'css');
+        }
+      };
+
+      onMounted(() => {
         editor = ace.edit(codeEditor.value, {
-          theme: isDarkTheme ? 'ace/theme/monokai' : 'ace/theme/github',
+          value: getContentByFileType(activeFile.value),
+          mode: `ace/mode/${activeFile.value}`,
+          theme: 'ace/theme/custom-dark',
+          fontSize: 14,
+          showPrintMargin: false,
+          highlightActiveLine: false,
+          showGutter: true,
+          wrap: true,
+          useWorker: false,
+          scrollPastEnd: 0.5,
         });
 
         editor.renderer.setScrollMargin(0, 0, 0, 0);
         editor.renderer.setShowGutter(true);
 
-        applyScrollbarStyles(isDarkTheme);
+        const applyScrollbarStyles = (isDarkTheme) => {
+          const scrollbarBg = isDarkTheme ? '#1a1a1a' : '#f0f0f0';
+          const scrollbarColor = isDarkTheme ? '#3a3a3a' : '#c1c1c1';
+          const scrollbarHoverColor = isDarkTheme ? '#4a4a4a' : '#a1a1a1';
+
+          const style = document.createElement('style');
+          style.textContent = `
+            .ace_scrollbar {
+              width: 5px !important;
+              background-color: ${scrollbarBg} !important;
+            }
+            .ace_scrollbar-inner {
+              background-color: ${scrollbarColor} !important;
+              width: 5px !important;
+            }
+            .ace_scrollbar::-webkit-scrollbar {
+              width: 5px;
+            }
+            .ace_scrollbar::-webkit-scrollbar-track {
+              background: ${scrollbarBg};
+            }
+            .ace_scrollbar::-webkit-scrollbar-thumb {
+              background: ${scrollbarColor};
+            }
+            .ace_scrollbar::-webkit-scrollbar-thumb:hover {
+              background: ${scrollbarHoverColor};
+            }
+          `;
+
+          const oldStyle = document.getElementById('ace-scrollbar-style');
+          if (oldStyle) {
+            oldStyle.remove();
+          }
+
+          style.id = 'ace-scrollbar-style';
+          document.head.appendChild(style);
+        };
+
+        const setupEditor = (isDarkTheme) => {
+          editor = ace.edit(codeEditor.value, {
+            theme: isDarkTheme ? 'ace/theme/monokai' : 'ace/theme/github',
+          });
+
+          editor.renderer.setScrollMargin(0, 0, 0, 0);
+          editor.renderer.setShowGutter(true);
+
+          applyScrollbarStyles(isDarkTheme);
+        };
+
+        onMounted(() => {
+          const isDarkTheme = theme.value === 'dark';
+          setupEditor(isDarkTheme);
+        });
+
+        watch(theme, (newTheme) => {
+          const isDarkTheme = newTheme === 'dark';
+          applyScrollbarStyles(isDarkTheme);
+          editor.setTheme(isDarkTheme ? 'ace/theme/monokai' : 'ace/theme/github');
+        });
+
+        watch(activeFile, (newFile) => {
+          const content = getContentByFileType(newFile);
+          editor.setValue(content, -1);
+          updateEditorOptions(newFile);
+        });
+
+        watch(theme, (newTheme) => {
+          setTheme(newTheme);
+        });
+
+        editor.session.on('change', () => {
+          const content = editor.getValue();
+          updateContentByFileType(activeFile.value, content);
+          updatePreviewFrame();
+        });
+
+        updatePreviewFrame();
+
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        mediaQuery.addListener(() => {
+          if (theme.value === 'system') {
+            applyTheme('system');
+          }
+        });
+
+        window.addEventListener('resize', () => {
+          if (editor) {
+            editor.resize();
+          }
+        });
+
+        setTheme(theme.value);
+      });
+
+      onUnmounted(() => {
+        if (editor) {
+          editor.destroy();
+        }
+      });
+
+      const getContentByFileType = (fileType) => {
+        switch (fileType) {
+          case 'html': return htmlCode.value;
+          case 'css': return cssCode.value;
+          case 'js': return jsCode.value;
+          default: return '';
+        }
       };
 
-      onMounted(() => {
-        const isDarkTheme = theme.value === 'dark';
-        setupEditor(isDarkTheme);
-      });
-
-      watch(theme, (newTheme) => {
-        const isDarkTheme = newTheme === 'dark';
-        applyScrollbarStyles(isDarkTheme);
-        editor.setTheme(isDarkTheme ? 'ace/theme/monokai' : 'ace/theme/github');
-      });
-
-      watch(activeFile, (newFile) => {
-        const content = getContentByFileType(newFile);
-        editor.setValue(content, -1);
-        updateEditorOptions(newFile);
-      });
-
-      watch(theme, (newTheme) => {
-        setTheme(newTheme);
-      });
-
-      editor.session.on('change', () => {
-        const content = editor.getValue();
-        updateContentByFileType(activeFile.value, content);
-        updatePreviewFrame();
-      });
-
-      updatePreviewFrame();
-
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      mediaQuery.addListener(() => {
-        if (theme.value === 'system') {
-          applyTheme('system');
+      const updateContentByFileType = (fileType, content) => {
+        switch (fileType) {
+          case 'html': htmlCode.value = content; break;
+          case 'css': cssCode.value = content; break;
+          case 'js': jsCode.value = content; break;
         }
-      });
+      };
 
-      window.addEventListener('resize', () => {
+      const updatePreviewFrame = () => {
+        const frameDoc = previewFrame.value.contentDocument;
+        frameDoc.open();
+        frameDoc.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <style>${cssCode.value}</style>
+            </head>
+            <body>
+              ${htmlCode.value}
+              <script>
+                (function(){
+                  var oldLog = console.log;
+                  console.log = function(...args) {
+                    window.parent.postMessage({type: 'log', message: args.join(' ')}, '*');
+                    oldLog.apply(console, args);
+                  };
+                  window.onerror = function(message, source, lineno, colno, error) {
+                    window.parent.postMessage({type: 'error', message: message}, '*');
+                    return false;
+                  };
+                })();
+                ${jsCode.value}
+              <\/script>
+            </body>
+          </html>
+        `);
+        frameDoc.close();
+      };
+
+      const executeConsoleCommand = () => {
+        if (!consoleInput.value.trim()) {
+          consoleLogs.value.push({ type: 'error', message: 'Please enter a command.' });
+          return;
+        }
+        try {
+          const result = previewFrame.value.contentWindow.eval(consoleInput.value);
+          consoleLogs.value.push({ type: 'log', message: String(result) });
+        } catch (error) {
+          consoleLogs.value.push({ type: 'error', message: error.message });
+        }
+        consoleInput.value = '';
+      };
+
+      const downloadFiles = async () => {
+        const zip = new JSZip();
+        zip.file('index.html', htmlCode.value);
+        zip.file('style.css', cssCode.value);
+        zip.file('script.js', jsCode.value);
+
+        const content = await zip.generateAsync({ type: 'blob' });
+        saveAs(content, 'project.zip');
+      };
+
+      const toggleThemeDropdown = () => {
+        showThemeDropdown.value = !showThemeDropdown.value;
+      };
+
+      const saveCode = () => {
+        localStorage.setItem('htmlCode', htmlCode.value);
+        localStorage.setItem('cssCode', cssCode.value);
+        localStorage.setItem('jsCode', jsCode.value);
+        showSaveTooltip.value = true;
+        setTimeout(() => {
+          showSaveTooltip.value = false;
+        }, 2000);
+      };
+
+      const toggleUploadDropdown = () => {
+        showUploadDropdown.value = !showUploadDropdown.value;
+      };
+
+      const triggerFileUpload = () => {
+        fileInput.value.click();
+      };
+
+      const handleFileUpload = (event) => {
+        const files = event.target.files;
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const content = e.target.result;
+            if (file.name.endsWith('.html')) {
+              htmlCode.value = content;
+              setActiveFile('html');
+            } else if (file.name.endsWith('.css')) {
+              cssCode.value = content;
+              setActiveFile('css');
+            } else if (file.name.endsWith('.js')) {
+              jsCode.value = content;
+              setActiveFile('js');
+            }
+            updatePreviewFrame();
+          };
+          reader.readAsText(file);
+        }
+        showUploadDropdown.value = false;
+      };
+
+      const setActiveFile = (fileType) => {
+        activeFile.value = fileType;
         if (editor) {
-          editor.resize();
+          const content = getContentByFileType(fileType);
+          editor.setValue(content, -1);
+          updateEditorOptions(fileType);
+        }
+      };
+
+      const toggleConsole = () => {
+        showConsole.value = !showConsole.value;
+      };
+
+      const clearConsole = () => {
+        consoleLogs.value = [];
+      };
+
+      const toggleFullscreen = () => {
+        if (!document.fullscreenElement) {
+          previewFrame.value.requestFullscreen();
+        } else {
+          document.exitFullscreen();
+        }
+      };
+
+      window.addEventListener('message', (event) => {
+        if (event.data && (event.data.type === 'log' || event.data.type === 'error')) {
+          consoleLogs.value.push(event.data);
         }
       });
 
-      setTheme(theme.value);
-    });
-
-    onUnmounted(() => {
-      if (editor) {
-        editor.destroy();
-      }
-    });
-
-    const getContentByFileType = (fileType) => {
-      switch (fileType) {
-        case 'html': return htmlCode.value;
-        case 'css': return cssCode.value;
-        case 'js': return jsCode.value;
-        default: return '';
-      }
-    };
-
-    const updateContentByFileType = (fileType, content) => {
-      switch (fileType) {
-        case 'html': htmlCode.value = content; break;
-        case 'css': cssCode.value = content; break;
-        case 'js': jsCode.value = content; break;
-      }
-    };
-
-    const updatePreviewFrame = () => {
-      const frameDoc = previewFrame.value.contentDocument;
-      frameDoc.open();
-      frameDoc.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <style>${cssCode.value}</style>
-          </head>
-          <body>
-            ${htmlCode.value}
-            <script>
-              (function(){
-                var oldLog = console.log;
-                console.log = function(...args) {
-                  window.parent.postMessage({type: 'log', message: args.join(' ')}, '*');
-                  oldLog.apply(console, args);
-                };
-                window.onerror = function(message, source, lineno, colno, error) {
-                  window.parent.postMessage({type: 'error', message: message}, '*');
-                  return false;
-                };
-              })();
-              ${jsCode.value}
-            <\/script>
-          </body>
-        </html>
-      `);
-      frameDoc.close();
-    };
-
-    const executeConsoleCommand = () => {
-      if (!consoleInput.value.trim()) {
-        consoleLogs.value.push({ type: 'error', message: 'Please enter a command.' });
-        return;
-      }
-      try {
-        const result = previewFrame.value.contentWindow.eval(consoleInput.value);
-        consoleLogs.value.push({ type: 'log', message: String(result) });
-      } catch (error) {
-        consoleLogs.value.push({ type: 'error', message: error.message });
-      }
-      consoleInput.value = '';
-    };
-
-    const downloadFiles = async () => {
-      const zip = new JSZip();
-      zip.file('index.html', htmlCode.value);
-      zip.file('style.css', cssCode.value);
-      zip.file('script.js', jsCode.value);
-
-      const content = await zip.generateAsync({ type: 'blob' });
-      saveAs(content, 'project.zip');
-    };
-
-    const toggleThemeDropdown = () => {
-      showThemeDropdown.value = !showThemeDropdown.value;
-    };
-
-    const saveCode = () => {
-      localStorage.setItem('htmlCode', htmlCode.value);
-      localStorage.setItem('cssCode', cssCode.value);
-      localStorage.setItem('jsCode', jsCode.value);
-      showSaveTooltip.value = true;
-      setTimeout(() => {
-        showSaveTooltip.value = false;
-      }, 2000);
-    };
-
-    const toggleUploadDropdown = () => {
-      showUploadDropdown.value = !showUploadDropdown.value;
-    };
-
-    const triggerFileUpload = () => {
-      fileInput.value.click();
-    };
-
-    const handleFileUpload = (event) => {
-      const files = event.target.files;
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const content = e.target.result;
-          if (file.name.endsWith('.html')) {
-            htmlCode.value = content;
-            setActiveFile('html');
-          } else if (file.name.endsWith('.css')) {
-            cssCode.value = content;
-            setActiveFile('css');
-          } else if (file.name.endsWith('.js')) {
-            jsCode.value = content;
-            setActiveFile('js');
-          }
-          updatePreviewFrame();
-        };
-        reader.readAsText(file);
-      }
-      showUploadDropdown.value = false;
-    };
-
-    const setActiveFile = (fileType) => {
-      activeFile.value = fileType;
-      if (editor) {
-        const content = getContentByFileType(fileType);
-        editor.setValue(content, -1);
-        updateEditorOptions(fileType);
-      }
-    };
-
-    const toggleConsole = () => {
-      showConsole.value = !showConsole.value;
-    };
-
-    const clearConsole = () => {
-      consoleLogs.value = [];
-    };
-
-    const toggleFullscreen = () => {
-      if (!document.fullscreenElement) {
-        previewFrame.value.requestFullscreen();
-      } else {
-        document.exitFullscreen();
-      }
-    };
-
-    window.addEventListener('message', (event) => {
-      if (event.data && (event.data.type === 'log' || event.data.type === 'error')) {
-        consoleLogs.value.push(event.data);
-      }
-    });
-
-    return {
-      htmlCode,
-      cssCode,
-      jsCode,
-      activeFile,
-      theme,
-      showThemeDropdown,
-      showUploadDropdown,
-      showConsole,
-      consoleLogs,
-      consoleInput,
-      previewFrame,
-      showSaveTooltip,
-      codeEditor,
-      fileInput,
-      files,
-      fileIcons,
-      themeClass,
-      getContentByFileType,
-      updateContentByFileType,
-      updatePreviewFrame,
-      executeConsoleCommand,
-      downloadFiles,
-      toggleThemeDropdown,
-      setTheme,
-      saveCode,
-      toggleUploadDropdown,
-      triggerFileUpload,
-      handleFileUpload,
-      setActiveFile,
-      toggleConsole,
-      clearConsole,
-      toggleFullscreen
-    };
-  }
-};
+      return {
+        htmlCode,
+        cssCode,
+        jsCode,
+        activeFile,
+        theme,
+        showThemeDropdown,
+        showUploadDropdown,
+        showConsole,
+        consoleLogs,
+        consoleInput,
+        previewFrame,
+        showSaveTooltip,
+        codeEditor,
+        fileInput,
+        files,
+        fileIcons,
+        themeClass,
+        getContentByFileType,
+        updateContentByFileType,
+        updatePreviewFrame,
+        executeConsoleCommand,
+        downloadFiles,
+        toggleThemeDropdown,
+        setTheme,
+        saveCode,
+        toggleUploadDropdown,
+        triggerFileUpload,
+        handleFileUpload,
+        setActiveFile,
+        toggleConsole,
+        clearConsole,
+        toggleFullscreen
+      };
+    }
+  };
 </script>
