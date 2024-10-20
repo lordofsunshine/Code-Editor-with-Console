@@ -58,7 +58,7 @@ yarn dev
 ## Dependencies
 
 - Vue.js
-- Monaco Editor
+- Ace Editor
 - JSZip
 - File Saver
 
