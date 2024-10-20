@@ -1,17 +1,17 @@
 {
-  "name": "vuejs-with-vite",
-  "version": "0.0.0",
+  "name": "code-editor",
+  "version": "0.0.8",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --port 4173"
   },
   "dependencies": {
-    "debounce": "^2.1.0",
+    "ace": "^1.3.0",
+    "ace-builds": "^1.36.2",
     "file-saver": "^2.0.5",
     "gsap": "^3.12.5",
     "jszip": "^3.10.1",
-    "monaco-editor": "^0.51.0",
     "vue": "^3.5.0"
   },
   "devDependencies": {
