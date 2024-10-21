@@ -185,7 +185,6 @@
 
 <script>
   import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
-  import { Analytics } from "@vercel/analytics/react"
   import ace from 'ace-builds';
   import 'ace-builds/src-noconflict/mode-html';
   import 'ace-builds/src-noconflict/mode-css';
