@@ -5,7 +5,7 @@ A versatile and interactive code editor built with Vue.js, featuring live previe
 <img alt="banner" src="https://cdn.glitch.global/e725dc7b-5566-4a26-a476-5a37c9e852fe/banner.jpg?v=1729436724009">
 
 > [!IMPORTANT]
-> **Attention!** Our website is available by domain ( [code-editor.pro](https://code-editor.pro/) ), if the site is unavailable for the first domain, then ( [click](code-editor-with-console.vercel.app) )
+> **Attention!** Our website is available by domain ( [code-editor.pro](https://code-editor.pro/) ), if the site is unavailable for the first domain, then ( [click](https://code-editor-with-console.vercel.app) )
 
 <hr>
 
