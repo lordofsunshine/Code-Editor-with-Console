@@ -1,20 +1,18 @@
-# Code Editor with Console (v.0.0.9)
+# Code Editor with Console (v.0.1.0)
 
 A versatile and interactive code editor built with Vue.js, featuring live preview, console output, and theme customization.
 
-<img alt="banner" src="https://cdn.glitch.global/57385596-405d-412a-a5cf-80f2f6b7167f/e14ec419-d6c6-414b-96e1-9294e0243091.image.png?v=1733040597143">
+<img alt="banner" src="https://cdn.glitch.global/512b4305-e0aa-4ab1-ab51-5bb22b63ccf8/4dc54432-9917-4530-812d-54f053671e4b.image.png?v=1733414125901">
 
 > [!IMPORTANT]
 > **Attention!** Our website is available by domain ( [code-editor.pro](https://code-editor.pro/) ), if the site is unavailable for the first domain, then ( [click](https://code-editor-with-console.vercel.app) )
 
 <hr>
 
-## v.0.0.9
-- [x] Updating the Code Editor interface. From header to footer itself! The code editor has now become a little more modern.
-- [x] Mobile adaptation has been improved and fixed.
-- [x] Code optimization. Some unused variables and functions have been removed, which makes the code cleaner and more efficient.
-- [x] Now the code is saved not in localstorage, but in Cookies! They are also pre-encrypted.
-- [x] Now you can switch between the Editor and Preview block! Now the code or preview mode can be viewed and written more conveniently.
+## v.0.1.0
+- [x] Introduced a feature to view your result on a separate website. Now, all changes in your code automatically synchronize with your personal site, allowing you to see the result in full-screen mode.
+- [x] Completed a full transition from local storage (localStorage) to the use of Cookie files for more reliable data preservation.
+- [x] Implemented cosmetic improvements to the interface, including updated icons and minor bug fixes.
 
 ## ✨ Features
 
@@ -31,11 +29,11 @@ A versatile and interactive code editor built with Vue.js, featuring live previe
 
 ## Mobile Adaptation
 
-<img alt="Banner two" width="500" src="https://cdn.glitch.global/57385596-405d-412a-a5cf-80f2f6b7167f/e7adc9e6-c176-4c89-b82c-6e5ecd0196ed-00-2xee68yoprghm.sisko.replit.dev_(Samsung%20Galaxy%20S8%2B).png?v=1733040951509">
+<img alt="Banner two" width="400" src="https://cdn.glitch.global/512b4305-e0aa-4ab1-ab51-5bb22b63ccf8/95869055-7f62-444a-8416-928c2d063ddb.image.png?v=1733414432512">
 
 ## Light Theme
 
-<img alt="Banner three" width="900" src="https://cdn.glitch.global/57385596-405d-412a-a5cf-80f2f6b7167f/a3e1165f-6015-4015-bba4-a4ef2252257e.image.png?v=1733041013989">
+<img alt="Banner three" width="900" src="https://cdn.glitch.global/512b4305-e0aa-4ab1-ab51-5bb22b63ccf8/95171798-e37b-47cb-ba6d-84dc8dd14aa9.image.png?v=1733414456785">
 
 <hr>
 
@@ -73,8 +71,11 @@ yarn dev
 ## Dependencies
 
 - Vue.js
-- Ace Editor
+- Ace
+- Ace Builds
 - JSZip
+- JS-Cookie
+- gsap
 - File Saver
 
 ## License
