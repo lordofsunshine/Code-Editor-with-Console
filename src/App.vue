@@ -100,10 +100,15 @@
         <div class="flex items-center justify-between h-12 px-4 border-b border-muted">
           <span class="text-xs uppercase tracking-wider file-title font-medium">Files</span>
           <div class="relative">
-            <button @click="toggleUploadDropdown" class="bg-transparent bg-navv bg-hover p-2 rounded-md">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 20 20">
-                <path fill="currentColor"
-                  d="M4 12a2 2 0 1 1 0-4a2 2 0 0 1 0 4m6 0a2 2 0 1 1 0-4a2 2 0 0 1 0 4m6 0a2 2 0 1 1 0-4a2 2 0 0 1 0 4" />
+            <button title="File Navbar" @click="toggleUploadDropdown"
+              class="bg-transparent bg-navv bg-hover p-2 rounded-md">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="lucide lucide-settings w-4 h-4">
+                <path
+                  d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z">
+                </path>
+                <circle cx="12" cy="12" r="3"></circle>
               </svg>
               <span class="sr-only">File Navbar</span>
             </button>
@@ -131,15 +136,17 @@
 
       <div class="flex-1 flex flex-col overflow-hidden">
         <div class="border-b border-muted">
-          <div class="flex">
-            <button v-for="view in ['editor', 'preview']" :key="view" @click="setActiveView(view)" :class="[
-              'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
-              activeView === view
-                ? 'border-white header-color text-white'
-                : 'border-transparent header-color-end text-gray-400 hover:text-gray-300'
-            ]">
-              {{ view.charAt(0).toUpperCase() + view.slice(1) }}
-            </button>
+          <div class="flex items-center justify-between">
+            <div class="flex">
+              <button v-for="view in ['editor', 'preview']" :key="view" @click="setActiveView(view)" :class="[
+                'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
+                activeView === view
+                  ? 'border-white header-color text-white'
+                  : 'border-transparent header-color-end text-gray-400 hover:text-gray-300'
+              ]">
+                {{ view.charAt(0).toUpperCase() + view.slice(1) }}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -148,9 +155,22 @@
             <div ref="editorContainer" class="w-full h-full"></div>
           </div>
           <div v-show="activeView === 'preview'" class="absolute inset-0">
+            <div class="absolute top-4 right-4 preview-btn">
+              <button v-if="activeView === 'preview'" @click="openPreviewInNewTab"
+                class="p-2 bg-transparent rounded-md transition-colors duration-200" title="Open in New Tab">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+              </button>
+            </div>
             <iframe ref="previewFrame" class="w-full h-full bg-white" src="about:blank" title="Preview"></iframe>
           </div>
         </div>
+
+
       </div>
     </div>
 
@@ -194,8 +214,8 @@
         </div>
         <div class="flex items-center p-2 border-t border-muted">
           <span class="mr-2 text-gray-500">></span>
-          <input v-model="consoleInput" @keyup.enter="executeConsoleCommand" class="flex-1 bg-transparent outline-none"
-            placeholder="Enter command...">
+          <input v-model="consoleInput" @keyup.enter="executeConsoleCommand"
+            class="flex-1 bg-transparent outline-none input-console" placeholder="Enter command...">
         </div>
       </div>
     </transition>
@@ -212,6 +232,7 @@ import 'ace-builds/src-noconflict/theme-twilight';
 import 'ace-builds/src-noconflict/theme-github';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import Cookies from 'js-cookie';
 
 export default {
   name: 'App',
@@ -220,7 +241,7 @@ export default {
     const previewFrame = ref(null);
     const activeFile = ref('html');
     const activeView = ref('editor');
-    const theme = ref(localStorage.getItem('theme') || 'dark');
+    const theme = ref(getCookie('theme') || 'dark');
     const showThemeDropdown = ref(false);
     const showUploadDropdown = ref(false);
     const showConsole = ref(false);
@@ -228,6 +249,7 @@ export default {
     const consoleInput = ref('');
     const showSaveTooltip = ref(false);
     const fileInput = ref(null);
+    const previewWindow = ref(null);
     let editor = null;
 
     const files = [
@@ -238,13 +260,13 @@ export default {
 
     const fileIcons = {
       html: `
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text h-4 w-4"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>
+<svg class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8.34247L15.6575 4H6C4.89543 4 4 4.89543 4 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 17H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><text x="12" y="13" font-size="6" fill="currentColor" text-anchor="middle" dominant-baseline="middle">HTML</text></svg>
       `,
       css: `
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text h-4 w-4"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>
+<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8.34247L15.6575 4H6C4.89543 4 4 4.89543 4 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 17H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><text x="12" y="13" font-size="6" fill="currentColor" text-anchor="middle" dominant-baseline="middle">CSS</text></svg>
       `,
       js: `
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text h-4 w-4"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>
+<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8.34247L15.6575 4H6C4.89543 4 4 4.89543 4 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 17H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><text x="12" y="13" font-size="6" fill="currentColor" text-anchor="middle" dominant-baseline="middle">JS</text></svg>
       `
     };
 
@@ -330,6 +352,20 @@ body {
 
     const themeClass = computed(() => `theme-${theme.value}`);
 
+    function getCookie(name) {
+      return Cookies.get(name);
+    }
+
+    function setCookie(name, value) {
+      const secure = window.location.protocol === 'https:';
+      Cookies.set(name, value, {
+        expires: 7,
+        secure: secure,
+        sameSite: 'strict',
+        path: '/'
+      });
+    }
+
     const getAceTheme = (themeValue) => {
       if (themeValue === 'system') {
         return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -355,7 +391,7 @@ body {
       theme.value = newTheme;
       showThemeDropdown.value = false;
       applyTheme(newTheme);
-      localStorage.setItem('theme', newTheme);
+      setCookie('theme', newTheme);
     };
 
     const updateEditorOptions = (fileType) => {
@@ -386,6 +422,9 @@ body {
       editor.on('change', () => {
         fileContents[activeFile.value].value = editor.getValue();
         updatePreviewFrame();
+        if (previewWindow.value && !previewWindow.value.closed) {
+          updateExternalPreview();
+        }
       });
     };
 
@@ -405,23 +444,42 @@ body {
           <body>
             ${fileContents.html.value}
             <script>
-        (function(){
-              var oldLog = console.log;
-              console.log = function(...args) {
-                window.parent.postMessage({type: 'log', message: args.join(' ')}, '*');
-                oldLog.apply(console, args);
-              };
-              window.onerror = function(message, source, lineno, colno, error) {
-                window.parent.postMessage({type: 'error', message: message}, '*');
-                return false;
-              };
-            })();
+              (function(){
+                var oldLog = console.log;
+                console.log = function(...args) {
+                  window.parent.postMessage({type: 'log', message: args.join(' ')}, '*');
+                  oldLog.apply(console, args);
+                };
+                window.onerror = function(message, source, lineno, colno, error) {
+                  window.parent.postMessage({type: 'error', message: message}, '*');
+                  return false;
+                };
+              })();
               ${fileContents.js.value}
             <\/script>
           </body>
         </html>
       `);
       frameDoc.close();
+    };
+
+    const updateExternalPreview = () => {
+      if (previewWindow.value && !previewWindow.value.closed) {
+        previewWindow.value.document.open();
+        previewWindow.value.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <style>${fileContents.css.value}</style>
+            </head>
+            <body>
+              ${fileContents.html.value}
+              <script>${fileContents.js.value}<\/script>
+            </body>
+          </html>
+        `);
+        previewWindow.value.document.close();
+      }
     };
 
     const setActiveFile = (type) => {
@@ -479,12 +537,12 @@ body {
     };
 
     const saveCode = () => {
-      const expirationDate = new Date();
-      expirationDate.setDate(expirationDate.getDate() + 7);
+      const csrfToken = Math.random().toString(36).substring(2);
+      setCookie('csrf_token', csrfToken);
 
-      document.cookie = `htmlCode=${encodeURIComponent(fileContents.html.value)}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Strict; Secure`;
-      document.cookie = `cssCode=${encodeURIComponent(fileContents.css.value)}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Strict; Secure`;
-      document.cookie = `jsCode=${encodeURIComponent(fileContents.js.value)}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Strict; Secure`;
+      setCookie('htmlCode', fileContents.html.value);
+      setCookie('cssCode', fileContents.css.value);
+      setCookie('jsCode', fileContents.js.value);
 
       showSaveTooltip.value = true;
       setTimeout(() => {
@@ -525,12 +583,6 @@ body {
     };
 
     const loadSavedCode = () => {
-      const getCookie = (name) => {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
-      };
-
       const htmlCode = getCookie('htmlCode');
       const cssCode = getCookie('cssCode');
       const jsCode = getCookie('jsCode');
@@ -543,6 +595,18 @@ body {
         editor.setValue(fileContents[activeFile.value].value, -1);
       }
       updatePreviewFrame();
+    };
+
+    const openPreviewInNewTab = () => {
+      if (previewWindow.value && !previewWindow.value.closed) {
+        previewWindow.value.focus();
+        updateExternalPreview();
+      } else {
+        previewWindow.value = window.open('', '_blank');
+        if (previewWindow.value) {
+          updateExternalPreview();
+        }
+      }
     };
 
     onMounted(() => {
@@ -577,6 +641,9 @@ body {
     onUnmounted(() => {
       if (editor) {
         editor.destroy();
+      }
+      if (previewWindow.value && !previewWindow.value.closed) {
+        previewWindow.value.close();
       }
     });
 
@@ -620,6 +687,7 @@ body {
       toggleUploadDropdown,
       triggerFileUpload,
       handleFileUpload,
+      openPreviewInNewTab,
     };
   }
 };
