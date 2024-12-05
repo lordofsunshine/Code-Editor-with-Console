@@ -331,28 +331,6 @@ button:focus-visible {
   text-overflow: ellipsis;
 }
 
-@media (max-width: 640px) {
-  body {
-    font-size: 14px;
-  }
-
-  .title {
-    font-size: 1.5rem;
-  }
-
-  .console-icon {
-    font-size: 14px;
-  }
-
-  .flex-1 {
-    flex-direction: column;
-  }
-
-  .files-block {
-    width: -webkit-fill-available;
-  }
-}
-
 .preloader {
   display: flex;
   justify-content: center;
