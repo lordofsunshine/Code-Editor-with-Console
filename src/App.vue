@@ -191,7 +191,7 @@
       </div>
     </footer>
 
-    <transition name="slide-fade">
+      <transition name="slide-fade">
       <div v-if="showConsole" class="fixed bottom-0 left-0 right-0 bg-console border-t border-muted">
         <div class="flex items-center justify-between p-2 border-b border-muted">
           <button @click="toggleConsole" class="flex items-center bg-transparent p-2 console-icon">
@@ -540,9 +540,17 @@ body {
       const csrfToken = Math.random().toString(36).substring(2);
       setCookie('csrf_token', csrfToken);
 
-      setCookie('htmlCode', fileContents.html.value);
-      setCookie('cssCode', fileContents.css.value);
-      setCookie('jsCode', fileContents.js.value);
+      const htmlContent = editor.getValue();
+      const cssContent = fileContents.css.value;
+      const jsContent = fileContents.js.value;
+
+      setCookie('htmlCode', htmlContent);
+      setCookie('cssCode', cssContent);
+      setCookie('jsCode', jsContent);
+
+      console.log('Saved HTML:', htmlContent);
+      console.log('Saved CSS:', cssContent);
+      console.log('Saved JS:', jsContent);
 
       showSaveTooltip.value = true;
       setTimeout(() => {
