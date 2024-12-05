@@ -7,16 +7,17 @@
   --bg-selected: #f1f3f5;
   --bg-dropdown: #ffffff;
   --bg-console: #f9f9f9;
+  --bg-preview: #ffffff94;
+  --bg-tooltip: #f5f5f5;
+  --bg-navv: #00000080;
+  --logo-background: #0000000d;
   --text-primary: #111827;
   --text-secondary: #4b5563;
   --border-color: #e5e7eb;
-  --bg-tooltip: #f5f5f5;
   --file-title: #00000080;
-  --bg-navv: #00000080;
   --white: #000000;
   --white-text: #ffffff;
   --dark: #000000;
-  --logo-background: #0000000d;
 }
 
 .theme-dark {
@@ -27,18 +28,19 @@
   --bg-selected: #161616;
   --bg-dropdown: #101010;
   --bg-console: #060606;
+  --bg-preview: #00000094;
+  --bg-navv: #ffffff80;
+  --logo-background: #ffffff0d;
+  --code-bg: #1e1e1e;
   --text-primary: #e5e7eb;
   --text-secondary: #9ca3af;
   --border-color: #1e1e1e;
   --dark-sidebar: #ccc;
-  --code-bg: #1e1e1e;
   --dark-sidebar-weight: 500;
   --file-title: #ffffff80;
-  --bg-navv: #ffffff80;
   --white: #ffffff;
   --white-text: #000000;
   --dark: #ffffff;
-  --logo-background: #ffffff0d;
 }
 
 body {
@@ -352,24 +354,73 @@ button:focus-visible {
 }
 
 .preloader {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: #000000eb;
-    backdrop-filter: blur(4px);
-    z-index: 9999;
-    transition: opacity 0.3s ease-out;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #000000eb;
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  transition: opacity 0.3s ease-out;
 }
+
 .preloader img {
-    width: 48px;
-    height: 48px;
+  width: 48px;
+  height: 48px;
 }
+
 .preloader.hidden {
-    opacity: 0;
-    pointer-events: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.preview-btn {
+  right: 0;
+  position: absolute;
+  z-index: 99999;
+  padding: 5px;
+  margin: 16px 30px;
+  background: var(--bg-preview);
+  backdrop-filter: blur(12px);
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.tab-flex {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  margin: 20px;
+  position: fixed;
+}
+
+.input-console {
+  font-family: "Source Code Pro", sans-serif;
+  font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .console-icon {
+    font-size: 14px;
+  }
+
+  .flex-1 {
+    flex-direction: column;
+  }
+
+  .files-block {
+    width: -webkit-fill-available;
+  }
 }
