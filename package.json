@@ -1,6 +1,6 @@
 {
   "name": "code-editor",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -11,6 +11,7 @@
     "ace-builds": "^1.36.2",
     "file-saver": "^2.0.5",
     "gsap": "^3.12.5",
+    "js-cookie": "^3.0.5",
     "jszip": "^3.10.1",
     "vue": "^3.5.0"
   },
