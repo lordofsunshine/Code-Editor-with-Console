@@ -1,18 +1,19 @@
-# Code Editor with Console (v.0.1.0)
+# ✍ Code Editor with Console (v.0.1.1)
 
 A versatile and interactive code editor built with Vue.js, featuring live preview, console output, and theme customization.
 
-<img alt="banner" src="https://cdn.glitch.global/512b4305-e0aa-4ab1-ab51-5bb22b63ccf8/4dc54432-9917-4530-812d-54f053671e4b.image.png?v=1733414125901">
+<img alt="banner" src="https://cdn.glitch.global/512b4305-e0aa-4ab1-ab51-5bb22b63ccf8/2c5a2a92-5ad3-4ce5-94d4-439485baf27b.image.png?v=1733928571650">
 
 > [!IMPORTANT]
 > **Attention!** Our website is available by domain ( [code-editor.pro](https://code-editor.pro/) ), if the site is unavailable for the first domain, then ( [click](https://code-editor-with-console.vercel.app) )
 
 <hr>
 
-## v.0.1.0
-- [x] Introduced a feature to view your result on a separate website. Now, all changes in your code automatically synchronize with your personal site, allowing you to see the result in full-screen mode.
-- [x] Completed a full transition from local storage (localStorage) to the use of Cookie files for more reliable data preservation.
-- [x] Implemented cosmetic improvements to the interface, including updated icons and minor bug fixes.
+## v.0.1.1
+- [x] New functions have been added: Code Formatting, Return/Canceling the action (rolling back the code).
+- [x] Updated the styles of all dropdowns, now they look even stronger.
+- [x] Now the code editor offers snippets when writing code, code completion and error display (screenshot) <img alt="banner" src="https://cdn.glitch.global/512b4305-e0aa-4ab1-ab51-5bb22b63ccf8/27637291-8a3b-4673-9679-0524a0d3c788.image.png?v=1733928757471">
+- [x] Now, when downloading a project, the site suggests naming your project. This is not necessary, in this case the site will sign the archive as *website.zip*.
 
 ## ✨ Features
 
@@ -29,11 +30,11 @@ A versatile and interactive code editor built with Vue.js, featuring live previe
 
 ## Mobile Adaptation
 
-<img alt="Banner two" width="400" src="https://cdn.glitch.global/512b4305-e0aa-4ab1-ab51-5bb22b63ccf8/95869055-7f62-444a-8416-928c2d063ddb.image.png?v=1733414432512">
+<img alt="Banner two" width="400" src="https://cdn.glitch.global/512b4305-e0aa-4ab1-ab51-5bb22b63ccf8/e18d7978-0eb1-40ac-b1fe-ccfe0b1ac9e8.image.png?v=1733929063305">
 
 ## Light Theme
 
-<img alt="Banner three" width="900" src="https://cdn.glitch.global/512b4305-e0aa-4ab1-ab51-5bb22b63ccf8/95171798-e37b-47cb-ba6d-84dc8dd14aa9.image.png?v=1733414456785">
+<img alt="Banner three" width="900" src="https://cdn.glitch.global/512b4305-e0aa-4ab1-ab51-5bb22b63ccf8/d64eac71-31e2-4b3b-a914-46e77b8663e8.image.png?v=1733929094113">
 
 <hr>
 
@@ -84,4 +85,4 @@ This project is open source and available under the [MIT License](https://github
 
 ## Credits
 
-Created by [lordofsunshine](https://github.com/lordofsunshine)
+Created and Designed by [lordofsunshine](https://github.com/lordofsunshine) 🎨
