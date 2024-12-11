@@ -11,7 +11,7 @@
           <span>Code Editor</span>
         </a>
         <div class="flex items-center gap-4">
-          <a title="GitHub Repository" href="https://github.com/lordofsunshine/Code-Editor-with-Console"
+          <a title="GitHub Repository" target="_blank" href="https://github.com/lordofsunshine/Code-Editor-with-Console"
             class="bg-transparent bg-hover p-2 rounded-md">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -23,7 +23,7 @@
             </svg>
             <span class="sr-only">GitHub</span>
           </a>
-          <button title="Download the Project" @click="downloadFiles" class="bg-transparent bg-hover p-2 rounded-md">
+          <button title="Download the Project" @click="openDownloadPopup" class="bg-transparent bg-hover p-2 rounded-md">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
               class="lucide lucide-download size-icon">
@@ -31,7 +31,7 @@
               <polyline points="7 10 12 15 17 10"></polyline>
               <line x1="12" x2="12" y1="15" y2="3"></line>
             </svg>
-            <span class="sr-only">Download</span>
+            <span class="sr-only">Download the Project</span>
           </button>
           <div class="relative">
             <button title="Save" @click="saveCode" class="bg-transparent bg-hover p-2 rounded-md">
@@ -100,7 +100,7 @@
         <div class="flex items-center justify-between h-12 px-4 border-b border-muted">
           <span class="text-xs uppercase tracking-wider file-title font-medium">Files</span>
           <div class="relative">
-            <button title="File Navbar" @click="toggleUploadDropdown"
+            <button title="Files SideBar" @click="toggleUploadDropdown"
               class="bg-transparent bg-navv bg-hover p-2 rounded-md">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -110,7 +110,7 @@
                 </path>
                 <circle cx="12" cy="12" r="3"></circle>
               </svg>
-              <span class="sr-only">File Navbar</span>
+              <span class="sr-only">Files SideBar</span>
             </button>
             <transition name="dropdown">
               <div v-if="showUploadDropdown"
@@ -169,8 +169,6 @@
             <iframe ref="previewFrame" class="w-full h-full bg-white" src="about:blank" title="Preview"></iframe>
           </div>
         </div>
-
-
       </div>
     </div>
 
@@ -179,7 +177,7 @@
         <div class="flex items-center gap-4">
           <button @click="toggleConsole" class="flex items-center bg-transparent p-2 console-icon">
             Console
-            <svg :class="['ml-1 transform transition-transform', { 'rotate-180': showConsole }]"
+            <svg :class="['ml-1 transformtransition-transform', { 'rotate-180': showConsole }]"
               xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24">
               <rect width="24" height="24" fill="none" />
               <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -188,10 +186,41 @@
             <span class="sr-only">Toggle console</span>
           </button>
         </div>
+        <div class="flex items-center gap-2">
+          <button @click="formatText" class="bg-transparent bg-hover p-1 rounded-md" title="Format Text">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="lucide lucide-align-left">
+              <line x1="21" x2="3" y1="6" y2="6"></line>
+              <line x1="15" x2="3" y1="12" y2="12"></line>
+              <line x1="17" x2="3" y1="18" y2="18"></line>
+            </svg>
+          </button>
+          <button @click="undo" :disabled="!canUndo"
+            :class="['bg-transparent bg-hover p-1 rounded-md transition-opacity duration-300', { 'opacity-50 cursor-not-allowed': !canUndo }]"
+            title="Undo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="lucide lucide-undo-2">
+              <path d="M9 14 4 9l5-5"></path>
+              <path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"></path>
+            </svg>
+          </button>
+          <button @click="redo" :disabled="!canRedo"
+            :class="['bg-transparent bg-hover p-1 rounded-md transition-opacity duration-300', { 'opacity-50 cursor-not-allowed': !canRedo }]"
+            title="Redo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="lucide lucide-redo-2">
+              <path d="m15 14 5-5-5-5"></path>
+              <path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13"></path>
+            </svg>
+          </button>
+        </div>
       </div>
     </footer>
 
-      <transition name="slide-fade">
+    <transition name="slide-fade">
       <div v-if="showConsole" class="fixed bottom-0 left-0 right-0 bg-console border-t border-muted">
         <div class="flex items-center justify-between p-2 border-b border-muted">
           <button @click="toggleConsole" class="flex items-center bg-transparent p-2 console-icon">
@@ -219,6 +248,38 @@
         </div>
       </div>
     </transition>
+
+    <transition name="fade">
+      <div v-if="showDownloadPopup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white download-popup p-6 w-96">
+          <h2 class="text-xl font-bold mb-4">Download Project</h2>
+          <input v-model="projectName" class="w-full px-3 py-2 border download-input mb-4"
+            placeholder="Enter project name...">
+          <div class="flex justify-end">
+            <button @click="cancelDownload" style="transition: 0.2s all"
+              class="px-4 py-2 text-gray-600 hover:text-gray-800 mr-2">Cancel</button>
+            <button @click="downloadProject" class="px-4 py-2 download-btn text-white rounded"><svg
+                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                  <path stroke-dasharray="2 4" stroke-dashoffset="6" d="M12 3c4.97 0 9 4.03 9 9c0 4.97 -4.03 9 -9 9">
+                    <animate attributeName="stroke-dashoffset" dur="0.63s" repeatCount="indefinite" values="6;0" />
+                  </path>
+                  <path stroke-dasharray="32" stroke-dashoffset="32"
+                    d="M12 21c-4.97 0 -9 -4.03 -9 -9c0 -4.97 4.03 -9 9 -9">
+                    <animate fill="freeze" attributeName="stroke-dashoffset" begin="0.105s" dur="0.42s" values="32;0" />
+                  </path>
+                  <path stroke-dasharray="10" stroke-dashoffset="10" d="M12 8v7.5">
+                    <animate fill="freeze" attributeName="stroke-dashoffset" begin="0.525s" dur="0.21s" values="10;0" />
+                  </path>
+                  <path stroke-dasharray="6" stroke-dashoffset="6" d="M12 15.5l3.5 -3.5M12 15.5l-3.5 -3.5">
+                    <animate fill="freeze" attributeName="stroke-dashoffset" begin="0.735s" dur="0.21s" values="6;0" />
+                  </path>
+                </g>
+              </svg> Download</button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -230,6 +291,8 @@ import 'ace-builds/src-noconflict/mode-css';
 import 'ace-builds/src-noconflict/mode-javascript';
 import 'ace-builds/src-noconflict/theme-twilight';
 import 'ace-builds/src-noconflict/theme-github';
+import 'ace-builds/src-noconflict/ext-language_tools';
+import 'ace-builds/src-noconflict/ext-beautify';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import Cookies from 'js-cookie';
@@ -250,6 +313,10 @@ export default {
     const showSaveTooltip = ref(false);
     const fileInput = ref(null);
     const previewWindow = ref(null);
+    const showDownloadPopup = ref(false);
+    const projectName = ref('');
+    const canUndo = ref(false);
+    const canRedo = ref(false);
     let editor = null;
 
     const files = [
@@ -272,82 +339,82 @@ export default {
 
     const fileContents = {
       html: ref(`<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Code Editor</title>
-  </head>
-  <body>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <link rel="icon" href="/favicon.ico" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Code Editor</title>
+    </head>
+    <body>
     <div class="container">
       <h1 class="title">Code Editor</h1>
       <a href="https://github.com/lordofsunshine/Code-Editor-with-Console" class="watermark">by lordofsunshine</a>
     </div>
-  </body>
-</html>`),
+    </body>
+    </html>`),
       css: ref(`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Pixelify+Sans:wght@400..700&display=swap');
 
 body {
-  font-family: "Bebas Neue", sans-serif;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: visible;
-  min-height: 100vh;
-  color: #fff;
-}
+    font-family: "Bebas Neue", sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: visible;
+    min-height: 100vh;
+    color: #fff;
+    }
 
 .container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    }
 
 .title {
-  color: #5e5e5e;
-  font-size: 4rem;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-}
+    color: #5e5e5e;
+    font-size: 4rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    }
 
 .watermark {
-  font-family: "Pixelify Sans", sans-serif;
-  font-size: 1.5rem;
-  background: #1a1a1ade;
-  color: #fff;
-  padding: 0.5rem 1.5rem;
-  border-radius: 8px;
-  text-decoration: none;
-  transition: background-color 0.3s ease;
-}
+    font-family: "Pixelify Sans", sans-serif;
+    font-size: 1.5rem;
+    background: #1a1a1ade;
+    color: #fff;
+    padding: 0.5rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+    }
 
 .watermark:hover {
-  background-color: #1b1b1b;
-}
+    background-color: #1b1b1b;
+    }
 
 @media (max-width: 768px) {
-  .title {
+    .title {
     font-size: 3rem;
-  }
+    }
 
-  .watermark {
+    .watermark {
     font-size: 1.2rem;
-  }
-}`),
+    }
+    }`),
       js: ref(`document.addEventListener('DOMContentLoaded', () => {
-  const watermark = document.querySelector('.watermark');
-  if (watermark) {
+    const watermark = document.querySelector('.watermark');
+    if (watermark) {
     watermark.addEventListener('click', (e) => {
       e.preventDefault();
       alert('Thanks for using the Code Editor!');
       window.open(e.target.href, '_blank');
-    });
-  }
-});`)
+      });
+     }
+    });`)
     };
 
     const themeClass = computed(() => `theme-${theme.value}`);
@@ -416,8 +483,11 @@ body {
         wrap: true,
         useWorker: false,
         scrollPastEnd: 0.5,
+        enableBasicAutocompletion: true,
+        enableLiveAutocompletion: true,
+        enableSnippets: true,
       });
-
+      fileContents[activeFile.value].session = editor.getSession();
       editor.setValue(fileContents[activeFile.value].value, -1);
       editor.on('change', () => {
         fileContents[activeFile.value].value = editor.getValue();
@@ -425,7 +495,9 @@ body {
         if (previewWindow.value && !previewWindow.value.closed) {
           updateExternalPreview();
         }
+        updateUndoRedoState();
       });
+      updateUndoRedoState();
     };
 
     const updatePreviewFrame = () => {
@@ -485,9 +557,13 @@ body {
     const setActiveFile = (type) => {
       activeFile.value = type;
       if (editor) {
-        editor.session.setMode(`ace/mode/${type}`);
-        editor.setValue(fileContents[type].value, -1);
+        if (!fileContents[type].session) {
+          fileContents[type].session = ace.createEditSession(fileContents[type].value);
+          fileContents[type].session.setMode(`ace/mode/${type}`);
+        }
+        editor.setSession(fileContents[type].session);
         updateEditorOptions(type);
+        updateUndoRedoState();
       }
     };
 
@@ -522,14 +598,27 @@ body {
       consoleInput.value = '';
     };
 
-    const downloadFiles = async () => {
+    const openDownloadPopup = () => {
+      showDownloadPopup.value = true;
+    };
+
+    const cancelDownload = () => {
+      showDownloadPopup.value = false;
+      projectName.value = '';
+    };
+
+    const downloadProject = async () => {
       const zip = new JSZip();
       zip.file('index.html', fileContents.html.value);
       zip.file('style.css', fileContents.css.value);
       zip.file('script.js', fileContents.js.value);
 
       const content = await zip.generateAsync({ type: 'blob' });
-      saveAs(content, 'project.zip');
+      const fileName = projectName.value.trim() ? `${projectName.value}.zip` : 'website.zip';
+      saveAs(content, fileName);
+
+      showDownloadPopup.value = false;
+      projectName.value = '';
     };
 
     const toggleThemeDropdown = () => {
@@ -540,17 +629,13 @@ body {
       const csrfToken = Math.random().toString(36).substring(2);
       setCookie('csrf_token', csrfToken);
 
-      const htmlContent = editor.getValue();
+      const htmlContent = fileContents.html.value;
       const cssContent = fileContents.css.value;
       const jsContent = fileContents.js.value;
 
       setCookie('htmlCode', htmlContent);
       setCookie('cssCode', cssContent);
       setCookie('jsCode', jsContent);
-
-      console.log('Saved HTML:', htmlContent);
-      console.log('Saved CSS:', cssContent);
-      console.log('Saved JS:', jsContent);
 
       showSaveTooltip.value = true;
       setTimeout(() => {
@@ -583,6 +668,9 @@ body {
             fileContents.js.value = content;
             setActiveFile('js');
           }
+          if (editor) {
+            editor.setValue(content, -1);
+          }
           updatePreviewFrame();
         };
         reader.readAsText(file);
@@ -614,6 +702,34 @@ body {
         if (previewWindow.value) {
           updateExternalPreview();
         }
+      }
+    };
+
+    const formatText = () => {
+      if (editor) {
+        const beautify = ace.require("ace/ext/beautify");
+        beautify.beautify(editor.session);
+      }
+    };
+
+    const updateUndoRedoState = () => {
+      if (editor && editor.session) {
+        canUndo.value = editor.session.getUndoManager().hasUndo();
+        canRedo.value = editor.session.getUndoManager().hasRedo();
+      }
+    };
+
+    const undo = () => {
+      if (editor && editor.session === fileContents[activeFile.value].session && canUndo.value) {
+        editor.undo();
+        updateUndoRedoState();
+      }
+    };
+
+    const redo = () => {
+      if (editor && editor.session === fileContents[activeFile.value].session && canRedo.value) {
+        editor.redo();
+        updateUndoRedoState();
       }
     };
 
@@ -656,10 +772,14 @@ body {
     });
 
     watch(activeFile, (newFile) => {
-      const content = fileContents[newFile].value;
       if (editor) {
-        editor.setValue(content, -1);
+        if (!fileContents[newFile].session) {
+          fileContents[newFile].session = ace.createEditSession(fileContents[newFile].value);
+          fileContents[newFile].session.setMode(`ace/mode/${newFile}`);
+        }
+        editor.setSession(fileContents[newFile].session);
         updateEditorOptions(newFile);
+        updateUndoRedoState();
       }
     });
 
@@ -683,12 +803,18 @@ body {
       files,
       fileIcons,
       themeClass,
+      showDownloadPopup,
+      projectName,
+      canUndo,
+      canRedo,
       setActiveFile,
       setActiveView,
       toggleConsole,
       clearConsole,
       executeConsoleCommand,
-      downloadFiles,
+      openDownloadPopup,
+      cancelDownload,
+      downloadProject,
       toggleThemeDropdown,
       setTheme,
       saveCode,
@@ -696,6 +822,9 @@ body {
       triggerFileUpload,
       handleFileUpload,
       openPreviewInNewTab,
+      formatText,
+      undo,
+      redo,
     };
   }
 };

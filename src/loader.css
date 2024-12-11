@@ -1,0 +1,88 @@
+.loader-container {
+    width: 120px;
+    height: 120px;
+    background-color: #1e1e1e;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.code-block {
+    width: 110px;
+    height: 80px;
+}
+
+.line {
+    height: 16px;
+    margin-bottom: 16px;
+    background-color: #3a3a3a;
+    border-radius: 4px;
+    animation: typing 1.5s infinite;
+}
+
+.line1 {
+    width: 100%;
+}
+
+.line2 {
+    width: 75%;
+}
+
+.line3 {
+    width: 50%;
+}
+
+.cursor {
+    position: absolute;
+    width: 12px;
+    height: 16px;
+    background-color: #61dafb;
+    border-radius: 2px;
+    animation: blink 0.7s infinite, move 4.5s infinite;
+}
+
+@keyframes typing {
+
+    0%,
+    100% {
+        opacity: 0.3;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+@keyframes move {
+    0% {
+        transform: translate(-60px, -30px);
+    }
+
+    30% {
+        transform: translate(40px, -30px);
+    }
+
+    60% {
+        transform: translate(60px, 30px);
+    }
+
+    90%,
+    100% {
+        transform: translate(-60px, 30px);
+    }
+}
