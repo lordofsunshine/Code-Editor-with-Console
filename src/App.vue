@@ -1,5 +1,4 @@
 <template>
-  <Analytics />
   <div :class="['flex flex-col body-bg h-screen', themeClass]">
     <header class="flex items-center justify-between h-16 px-4 border-b border-muted">
       <div class="flex items-center navv-flex gap-4">
@@ -297,7 +296,6 @@ import 'ace-builds/src-noconflict/ext-beautify';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import Cookies from 'js-cookie';
-import { inject } from "@vercel/analytics/vue";
 
 export default {
   name: 'App',
