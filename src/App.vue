@@ -1,4 +1,5 @@
 <template>
+  <Analytics />
   <div :class="['flex flex-col body-bg h-screen', themeClass]">
     <header class="flex items-center justify-between h-16 px-4 border-b border-muted">
       <div class="flex items-center navv-flex gap-4">
