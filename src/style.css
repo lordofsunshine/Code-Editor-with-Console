@@ -391,6 +391,7 @@ button:focus-visible {
 .download-input {
   background: var(--bg-dropdown) !important;
   border: 2px solid var(--bg-secondary);
+  color: var(--dark);
   border-radius: 4px;
   font-family: "Source Code Pro", sans-serif;
   font-size: 14px;
