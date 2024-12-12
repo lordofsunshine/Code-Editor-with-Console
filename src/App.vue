@@ -297,7 +297,7 @@ import 'ace-builds/src-noconflict/ext-beautify';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import Cookies from 'js-cookie';
-import { inject } from "@vercel/analytics";
+import { inject } from "@vercel/analytics/vue";
 
 export default {
   name: 'App',
