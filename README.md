@@ -1,28 +1,53 @@
-# ✍ Code Editor with Console (v.0.1.1)
+# ✍ Code Editor *with Console*
 
 A versatile and interactive code editor built with Vue.js, featuring live preview, console output, and theme customization.
 
-<img alt="banner" src="https://cdn.glitch.global/512b4305-e0aa-4ab1-ab51-5bb22b63ccf8/2c5a2a92-5ad3-4ce5-94d4-439485baf27b.image.png?v=1733928571650">
+<img alt="banner" src="https://cdn.glitch.global/512b4305-e0aa-4ab1-ab51-5bb22b63ccf8/bca8d74b-c565-488d-a581-2723f6037a48.image.png?v=1734166884285">
 
 > [!IMPORTANT]
-> **Attention!** Our website is available by domain ( [code-editor.pro](https://code-editor.pro/) ), if the site is unavailable for the first domain, then ( [click](https://code-editor-with-console.vercel.app) )
+> Our website **is available by domain** ( [code-editor.pro](https://code-editor.pro/) ), if the site is unavailable for the first domain, then ( [click](https://code-editor-with-console.vercel.app) )
 
 <hr>
 
-## v.0.1.1
-- [x] New functions have been added: Code Formatting, Return/Canceling the action (rolling back the code).
-- [x] Updated the styles of all dropdowns, now they look even stronger.
-- [x] Now the code editor offers snippets when writing code, code completion and error display (screenshot) <img alt="banner" src="https://cdn.glitch.global/512b4305-e0aa-4ab1-ab51-5bb22b63ccf8/27637291-8a3b-4673-9679-0524a0d3c788.image.png?v=1733928757471">
-- [x] Now, when downloading a project, the site suggests naming your project. This is not necessary, in this case the site will sign the archive as *website.zip*.
+# 🎉 **What's New: 0.1.2** 🎉
+
+### 🚀 Performance Boost & Eye Candy
+- [x] We've given our preloader a makeover and added some meta-tags (because who doesn't love a good meta-tag, right?). 
+- [x] The code editor now moves smoother than a buttered-up penguin on ice. 
+- [x] Buttons now have a subtle texture on hover, thanks to some box-shadow magic.
+
+### 💡 Tooltip
+- [x] Hover over buttons for tooltips that pop up faster than your cat when you open a can of tuna.
+- [ ] Sorry, mobile users, no hover for you. Your fingers aren't psychic... yet.
+
+### 🧹 Winter Cleaning for Our Code
+- [x] We've Marie Kondo'd our JavaScript and CSS. If it didn't spark joy, it's gone!
+- [x] CSS is now neatly organized with comments. It's so tidy, it would make your mom proud.
+
+### ⏰ Time-Stamped Console Logs
+- [x] Console logs now come with timestamps. Because even logs need to know what time it is!
+
+### 🔗 URL Magic
+- [x] Switching files now updates the URL.
+
+### 🍪 Farewell to Cookies
+- [x] We've said goodbye to cookies. It's a sad day for our sweet tooth, but a good day for your privacy.
+
+### 🐛 Bug Squashing
+- [x] Remember that pesky JavaScript code showing up in the Preview window? We've sent it packing to its own corner. Your code is now free from uninvited guests!
+
+So there you have it, folks! Our little code editor is growing up so fast. *wipes tear* They grow up so quickly, don't they?
+
+<hr>
 
 ## ✨ Features
 
-- Live HTML, CSS, and JavaScript editing
-- Real-time preview of your code
+- Real-time HTML, CSS, and JavaScript editing
+- Instant preview of your code
 - Built-in console for JavaScript output and error logging
 - Theme customization (Light, Dark, and System)
 - File management system
-- Code download functionality
+- Project download functionality
 - Fullscreen preview mode
 - Responsive design for various screen sizes
 
@@ -30,11 +55,11 @@ A versatile and interactive code editor built with Vue.js, featuring live previe
 
 ## Mobile Adaptation
 
-<img alt="Banner two" width="400" src="https://cdn.glitch.global/512b4305-e0aa-4ab1-ab51-5bb22b63ccf8/e18d7978-0eb1-40ac-b1fe-ccfe0b1ac9e8.image.png?v=1733929063305">
+<img alt="Banner two" width="340" src="https://cdn.glitch.global/512b4305-e0aa-4ab1-ab51-5bb22b63ccf8/4f7688fa-1fc6-4cac-af77-de577bb09925.image.png?v=1734166941249">
 
 ## Light Theme
 
-<img alt="Banner three" width="900" src="https://cdn.glitch.global/512b4305-e0aa-4ab1-ab51-5bb22b63ccf8/d64eac71-31e2-4b3b-a914-46e77b8663e8.image.png?v=1733929094113">
+<img alt="Banner three" width="900" src="https://cdn.glitch.global/512b4305-e0aa-4ab1-ab51-5bb22b63ccf8/e29a1bcd-2b3c-4604-a82d-050561e94caa.image.png?v=1734166969597">
 
 <hr>
 
@@ -72,12 +97,10 @@ yarn dev
 ## Dependencies
 
 - Vue.js
-- Ace
-- Ace Builds
+- Ace Editor
 - JSZip
-- JS-Cookie
-- gsap
 - File Saver
+- GSAP (GreenSock Animation Platform)
 
 ## License
 
