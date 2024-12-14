@@ -18,7 +18,7 @@ A versatile and interactive code editor built with Vue.js, featuring live previe
 
 ### 💡 Tooltip
 - [x] Hover over buttons for tooltips that pop up faster than your cat when you open a can of tuna.
-- [ ] Sorry, mobile users, no hover for you. Your fingers aren't psychic... yet.
+- [ ] Sorry, mobile users, no tooltip for you. Your fingers aren't psychic... yet.
 
 ### 🧹 Winter Cleaning for Our Code
 - [x] We've Marie Kondo'd our JavaScript and CSS. If it didn't spark joy, it's gone!
