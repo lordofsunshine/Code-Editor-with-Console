@@ -11,8 +11,9 @@
           <span>Code Editor</span>
         </a>
         <div class="flex items-center gap-4">
-          <a title="GitHub Repository" target="_blank" href="https://github.com/lordofsunshine/Code-Editor-with-Console"
-            class="bg-transparent bg-hover p-2 rounded-md">
+          <a target="_blank" href="https://github.com/lordofsunshine/Code-Editor-with-Console"
+            class="bg-transparent bg-hover p-2 rounded-md button-animation"
+            @mouseenter="showTooltip($event, 'GitHub Repository')" @mouseleave="hideTooltip">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
               class="lucide lucide-github size-icon">
@@ -23,7 +24,8 @@
             </svg>
             <span class="sr-only">GitHub</span>
           </a>
-          <button title="Download the Project" @click="openDownloadPopup" class="bg-transparent bg-hover p-2 rounded-md">
+          <button @click="openDownloadPopup" class="bg-transparent bg-hover p-2 rounded-md button-animation"
+            @mouseenter="showTooltip($event, 'Download the Project')" @mouseleave="hideTooltip">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
               class="lucide lucide-download size-icon">
@@ -34,7 +36,8 @@
             <span class="sr-only">Download the Project</span>
           </button>
           <div class="relative">
-            <button title="Save" @click="saveCode" class="bg-transparent bg-hover p-2 rounded-md">
+            <button @click="saveCode" class="bg-transparent bg-hover p-2 rounded-md button-animation"
+              @mouseenter="showTooltip($event, 'Save')" @mouseleave="hideTooltip">
               <svg class="size-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path
@@ -45,15 +48,10 @@
               </svg>
               <span class="sr-only">Save</span>
             </button>
-            <transition name="fade">
-              <div v-if="showSaveTooltip"
-                class="absolute tool-background tooltip-bottom bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded">
-                Changes saved
-              </div>
-            </transition>
           </div>
           <div class="relative">
-            <button title="Toggle theme" @click="toggleThemeDropdown" class="bg-transparent bg-hover p-2 rounded-md">
+            <button @click="toggleThemeDropdown" class="bg-transparent bg-hover p-2 rounded-md button-animation"
+              @mouseenter="showTooltip($event, 'Toggle theme')" @mouseleave="hideTooltip">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                 class="lucide lucide-sun size-icon">
@@ -73,9 +71,9 @@
               <div v-if="showThemeDropdown"
                 class="absolute right-0 w-40 bg-dropdown shadow-lg mt-2 rounded-md overflow-hidden z-9999999">
                 <div class="px-2 py-1 border-b dropdown-text border-muted">Theme</div>
-                <div v-for="t in ['light', 'dark', 'system']" :key="t">
+                <div v-for="t in themes" :key="t">
                   <button @click="setTheme(t)" :class="[
-                    'w-full text-left px-2 py-1 cursor-pointer bg-hover flex items-center justify-between',
+                    'w-full text-left px-2 py-1 cursor-pointer bg-hover flex items-center justify-between button-animation',
                     { 'bg-selected text-primary font-medium': theme === t }
                   ]">
                     {{ t.charAt(0).toUpperCase() + t.slice(1) }}
@@ -100,8 +98,8 @@
         <div class="flex items-center justify-between h-12 px-4 border-b border-muted">
           <span class="text-xs uppercase tracking-wider file-title font-medium">Files</span>
           <div class="relative">
-            <button title="Files SideBar" @click="toggleUploadDropdown"
-              class="bg-transparent bg-navv bg-hover p-2 rounded-md">
+            <button @click="toggleUploadDropdown" class="bg-transparent bg-navv bg-hover p-2 rounded-md button-animation"
+              @mouseenter="showTooltip($event, 'Files Sidebar')" @mouseleave="hideTooltip">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                 class="lucide lucide-settings w-4 h-4">
@@ -110,13 +108,14 @@
                 </path>
                 <circle cx="12" cy="12" r="3"></circle>
               </svg>
-              <span class="sr-only">Files SideBar</span>
+              <span class="sr-only">Files Sidebar</span>
             </button>
             <transition name="dropdown">
               <div v-if="showUploadDropdown"
                 class="absolute upload-dropdown right-0 w-40 bg-dropdown shadow-lg mt-2 rounded-md overflow-hidden z-10">
                 <button @click="triggerFileUpload"
-                  class="upload-btn w-full text-left px-2 py-1 cursor-pointer hover:bg-hover">Upload files</button>
+                  class="upload-btn w-full text-left px-2 py-1 cursor-pointer hover:bg-hover button-animation">Upload
+                  files</button>
               </div>
             </transition>
           </div>
@@ -125,7 +124,7 @@
         </div>
         <div class="flex-1 overflow-auto dark-color">
           <div class="width py-2">
-            <div v-for="file in files" :key="file.name" @click="setActiveFile(file.type)" :class="['flex items-center file-flex text-sm file-bg font-medium cursor-pointer p-block rounded',
+            <div v-for="file in files" :key="file.name" @click="setActiveFile(file.type)" :class="['flex items-center file-flex text-sm file-bg font-medium cursor-pointer p-block rounded button-animation',
               { 'bg-selected': activeFile === file.type }]">
               <span v-html="fileIcons[file.type]"></span>
               <span>{{ file.name }}</span>
@@ -139,7 +138,7 @@
           <div class="flex items-center justify-between">
             <div class="flex">
               <button v-for="view in ['editor', 'preview']" :key="view" @click="setActiveView(view)" :class="[
-                'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
+                'px-4 py-2 text-sm font-medium border-b-2 transition-colors button-animation',
                 activeView === view
                   ? 'border-white header-color text-white'
                   : 'border-transparent header-color-end text-gray-400 hover:text-gray-300'
@@ -157,7 +156,8 @@
           <div v-show="activeView === 'preview'" class="absolute inset-0">
             <div class="absolute top-4 right-4 preview-btn">
               <button v-if="activeView === 'preview'" @click="openPreviewInNewTab"
-                class="p-2 bg-transparent rounded-md transition-colors duration-200" title="Open in New Tab">
+                class="p-2 bg-transparent rounded-md transition-colors duration-200 button-animation"
+                @mouseenter="showTooltip($event, 'Open in New Tab')" @mouseleave="hideTooltip">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
@@ -175,9 +175,10 @@
     <footer class="border-t border-muted">
       <div class="flex items-center justify-between px-4 h-12">
         <div class="flex items-center gap-4">
-          <button @click="toggleConsole" class="flex items-center bg-transparent p-2 console-icon">
+          <button @click="toggleConsole" class="flex items-center bg-transparent p-2 console-icon button-animation"
+            @mouseenter="showTooltip($event, 'Toggle Console')" @mouseleave="hideTooltip">
             Console
-            <svg :class="['ml-1 transformtransition-transform', { 'rotate-180': showConsole }]"
+            <svg :class="['ml-1 transform transition-transform', { 'rotate-180': showConsole }]"
               xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24">
               <rect width="24" height="24" fill="none" />
               <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -187,7 +188,8 @@
           </button>
         </div>
         <div class="flex items-center gap-2">
-          <button @click="formatText" class="bg-transparent bg-hover p-1 rounded-md" title="Format Text">
+          <button @click="formatText" class="bg-transparent bg-hover p-1 rounded-md button-animation"
+            @mouseenter="showTooltip($event, 'Format Text')" @mouseleave="hideTooltip">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
               class="lucide lucide-align-left">
@@ -197,8 +199,8 @@
             </svg>
           </button>
           <button @click="undo" :disabled="!canUndo"
-            :class="['bg-transparent bg-hover p-1 rounded-md transition-opacity duration-300', { 'opacity-50 cursor-not-allowed': !canUndo }]"
-            title="Undo">
+            :class="['bg-transparent bg-hover p-1 rounded-md transition-opacity duration-300 button-animation', { 'opacity-50 cursor-not-allowed': !canUndo }]"
+            @mouseenter="showTooltip($event, 'Undo')" @mouseleave="hideTooltip">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
               class="lucide lucide-undo-2">
@@ -207,8 +209,8 @@
             </svg>
           </button>
           <button @click="redo" :disabled="!canRedo"
-            :class="['bg-transparent bg-hover p-1 rounded-md transition-opacity duration-300', { 'opacity-50 cursor-not-allowed': !canRedo }]"
-            title="Redo">
+            :class="['bg-transparent bg-hover p-1 rounded-md transition-opacity duration-300 button-animation', { 'opacity-50 cursor-not-allowed': !canRedo }]"
+            @mouseenter="showTooltip($event, 'Redo')" @mouseleave="hideTooltip">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
               class="lucide lucide-redo-2">
@@ -223,7 +225,7 @@
     <transition name="slide-fade">
       <div v-if="showConsole" class="fixed bottom-0 left-0 right-0 bg-console border-t border-muted">
         <div class="flex items-center justify-between p-2 border-b border-muted">
-          <button @click="toggleConsole" class="flex items-center bg-transparent p-2 console-icon">
+          <button @click="toggleConsole" class="flex items-center bg-transparent p-2 console-icon button-animation">
             Console
             <svg :class="['ml-1 transform transition-transform', { 'rotate-180': showConsole }]"
               xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24">
@@ -233,12 +235,13 @@
             </svg>
             <span class="sr-only">Toggle console</span>
           </button>
-          <button @click="clearConsole" class="text-sm text-blue-500 hover:text-blue-600">Clear console</button>
+          <button @click="clearConsole" class="text-sm text-blue-500 hover:text-blue-600 button-animation">Clear
+            console</button>
         </div>
         <div class="h-48 overflow-auto p-2 font-mono text-sm custom-scrollbar">
           <div v-for="(log, index) in consoleLogs" :key="index"
             :class="['mb-1', { 'text-red-500': log.type === 'error' }]">
-            {{ log.message }}
+            <span class="text-gray-500" style="opacity:.5">{{ log.timestamp }}</span> {{ log.message }}
           </div>
         </div>
         <div class="flex items-center p-2 border-t border-muted">
@@ -251,14 +254,14 @@
 
     <transition name="fade">
       <div v-if="showDownloadPopup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white download-popup p-6 w-96">
+        <div class="download-popup p-6 w-96">
           <h2 class="text-xl font-bold mb-4">Download Project</h2>
           <input v-model="projectName" class="w-full px-3 py-2 border download-input mb-4"
             placeholder="Enter project name...">
           <div class="flex justify-end">
             <button @click="cancelDownload" style="transition: 0.2s all"
-              class="px-4 py-2 text-gray-600 hover:text-gray-800 mr-2">Cancel</button>
-            <button @click="downloadProject" class="px-4 py-2 download-btn text-white rounded"><svg
+              class="px-4 py-2 text-gr hover:text-gray-800 mr-2 button-animation">Cancel</button>
+            <button @click="downloadProject" class="px-4 py-2 download-btn text-white rounded button-animation"><svg
                 xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                 <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
                   <path stroke-dasharray="2 4" stroke-dashoffset="6" d="M12 3c4.97 0 9 4.03 9 9c0 4.97 -4.03 9 -9 9">
@@ -280,6 +283,8 @@
         </div>
       </div>
     </transition>
+
+    <div ref="tooltip" class="tooltip"></div>
   </div>
 </template>
 
@@ -295,7 +300,6 @@ import 'ace-builds/src-noconflict/ext-language_tools';
 import 'ace-builds/src-noconflict/ext-beautify';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-import Cookies from 'js-cookie';
 
 export default {
   name: 'App',
@@ -304,7 +308,7 @@ export default {
     const previewFrame = ref(null);
     const activeFile = ref('html');
     const activeView = ref('editor');
-    const theme = ref(getCookie('theme') || 'dark');
+    const theme = ref(localStorage.getItem('theme') || 'dark');
     const showThemeDropdown = ref(false);
     const showUploadDropdown = ref(false);
     const showConsole = ref(false);
@@ -317,6 +321,7 @@ export default {
     const projectName = ref('');
     const canUndo = ref(false);
     const canRedo = ref(false);
+    const tooltip = ref(null);
     let editor = null;
 
     const files = [
@@ -326,36 +331,30 @@ export default {
     ];
 
     const fileIcons = {
-      html: `
-<svg class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8.34247L15.6575 4H6C4.89543 4 4 4.89543 4 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 17H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><text x="12" y="13" font-size="6" fill="currentColor" text-anchor="middle" dominant-baseline="middle">HTML</text></svg>
-      `,
-      css: `
-<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8.34247L15.6575 4H6C4.89543 4 4 4.89543 4 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 17H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><text x="12" y="13" font-size="6" fill="currentColor" text-anchor="middle" dominant-baseline="middle">CSS</text></svg>
-      `,
-      js: `
-<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8.34247L15.6575 4H6C4.89543 4 4 4.89543 4 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 17H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><text x="12" y="13" font-size="6" fill="currentColor" text-anchor="middle" dominant-baseline="middle">JS</text></svg>
-      `
+      html: `<svg class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8.34247L15.6575 4H6C4.89543 4 4 4.89543 4 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 17H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><text x="12" y="13" font-size="6" fill="currentColor" text-anchor="middle" dominant-baseline="middle">HTML</text></svg>`,
+      css: `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8.34247L15.6575 4H6C4.89543 4 4 4.89543 4 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 17H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><text x="12" y="13" font-size="6" fill="currentColor" text-anchor="middle" dominant-baseline="middle">CSS</text></svg>`,
+      js: `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8.34247L15.6575 4H6C4.89543 4 4 4.89543 4 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 17H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><text x="12" y="13" font-size="6" fill="currentColor" text-anchor="middle" dominant-baseline="middle">JS</text></svg>`
     };
 
     const fileContents = {
       html: ref(`<!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <link rel="icon" href="/favicon.ico" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Code Editor</title>
-    </head>
-    <body>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Code Editor</title>
+  </head>
+  <body>
     <div class="container">
       <h1 class="title">Code Editor</h1>
       <a href="https://github.com/lordofsunshine/Code-Editor-with-Console" class="watermark">by lordofsunshine</a>
     </div>
-    </body>
-    </html>`),
+  </body>
+  </html>`),
       css: ref(`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Pixelify+Sans:wght@400..700&display=swap');
 
-body {
+  body {
     font-family: "Bebas Neue", sans-serif;
     margin: 0;
     padding: 0;
@@ -365,23 +364,23 @@ body {
     overflow: visible;
     min-height: 100vh;
     color: #fff;
-    }
+  }
 
-.container {
+  .container {
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    }
+  }
 
-.title {
+  .title {
     color: #5e5e5e;
     font-size: 4rem;
     font-weight: 500;
     margin-bottom: 0.5rem;
-    }
+  }
 
-.watermark {
+  .watermark {
     font-family: "Pixelify Sans", sans-serif;
     font-size: 1.5rem;
     background: #1a1a1ade;
@@ -390,48 +389,37 @@ body {
     border-radius: 8px;
     text-decoration: none;
     transition: background-color 0.3s ease;
-    }
+  }
 
-.watermark:hover {
+  .watermark:hover {
     background-color: #1b1b1b;
-    }
+  }
 
-@media (max-width: 768px) {
+  @media (max-width: 768px) {
     .title {
-    font-size: 3rem;
+      font-size: 3rem;
     }
 
     .watermark {
-    font-size: 1.2rem;
+      font-size: 1.2rem;
+      padding: 0.4rem 1.2rem;
     }
-    }`),
+  }`),
       js: ref(`document.addEventListener('DOMContentLoaded', () => {
     const watermark = document.querySelector('.watermark');
     if (watermark) {
-    watermark.addEventListener('click', (e) => {
-      e.preventDefault();
-      alert('Thanks for using the Code Editor!');
-      window.open(e.target.href, '_blank');
+      watermark.addEventListener('click', (e) => {
+        e.preventDefault();
+        alert('Thanks for using the Code Editor!');
+        window.open(e.target.href, '_blank');
       });
-     }
-    });`)
+    }
+  });`)
     };
 
     const themeClass = computed(() => `theme-${theme.value}`);
 
-    function getCookie(name) {
-      return Cookies.get(name);
-    }
-
-    function setCookie(name, value) {
-      const secure = window.location.protocol === 'https:';
-      Cookies.set(name, value, {
-        expires: 7,
-        secure: secure,
-        sameSite: 'strict',
-        path: '/'
-      });
-    }
+    const themes = ['light', 'dark', 'system'];
 
     const getAceTheme = (themeValue) => {
       if (themeValue === 'system') {
@@ -458,7 +446,7 @@ body {
       theme.value = newTheme;
       showThemeDropdown.value = false;
       applyTheme(newTheme);
-      setCookie('theme', newTheme);
+      localStorage.setItem('theme', newTheme);
     };
 
     const updateEditorOptions = (fileType) => {
@@ -481,7 +469,7 @@ body {
         highlightActiveLine: false,
         showGutter: true,
         wrap: true,
-        useWorker: false,
+        useWorker: true,
         scrollPastEnd: 0.5,
         enableBasicAutocompletion: true,
         enableLiveAutocompletion: true,
@@ -508,37 +496,6 @@ body {
 
       frameDoc.open();
       frameDoc.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <style>${fileContents.css.value}</style>
-          </head>
-          <body>
-            ${fileContents.html.value}
-            <script>
-              (function(){
-                var oldLog = console.log;
-                console.log = function(...args) {
-                  window.parent.postMessage({type: 'log', message: args.join(' ')}, '*');
-                  oldLog.apply(console, args);
-                };
-                window.onerror = function(message, source, lineno, colno, error) {
-                  window.parent.postMessage({type: 'error', message: message}, '*');
-                  return false;
-                };
-              })();
-              ${fileContents.js.value}
-            <\/script>
-          </body>
-        </html>
-      `);
-      frameDoc.close();
-    };
-
-    const updateExternalPreview = () => {
-      if (previewWindow.value && !previewWindow.value.closed) {
-        previewWindow.value.document.open();
-        previewWindow.value.document.write(`
           <!DOCTYPE html>
           <html>
             <head>
@@ -546,10 +503,41 @@ body {
             </head>
             <body>
               ${fileContents.html.value}
+              <script>
+                (function() {
+                  var oldLog = console.log;
+                  console.log = function(...args) {
+                    window.parent.postMessage({type: 'log', message: args.join(' ')}, '*');
+                    oldLog.apply(console, args);
+                  };
+                  window.onerror = function(message, source, lineno, colno, error) {
+                    window.parent.postMessage({type: 'error', message: message}, '*');
+                    return false;
+                  };
+                })();
+              <\/script>
               <script>${fileContents.js.value}<\/script>
             </body>
           </html>
         `);
+      frameDoc.close();
+    };
+
+    const updateExternalPreview = () => {
+      if (previewWindow.value && !previewWindow.value.closed) {
+        previewWindow.value.document.open();
+        previewWindow.value.document.write(`
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <style>${fileContents.css.value}</style>
+              </head>
+              <body>
+                ${fileContents.html.value}
+                <script>${fileContents.js.value}<\/script>
+              </body>
+            </html>
+          `);
         previewWindow.value.document.close();
       }
     };
@@ -557,6 +545,9 @@ body {
     const setActiveFile = (type) => {
       activeFile.value = type;
       if (editor) {
+        if (!fileContents[type].value.trim()) {
+          fileContents[type].value = ' ';
+        }
         if (!fileContents[type].session) {
           fileContents[type].session = ace.createEditSession(fileContents[type].value);
           fileContents[type].session.setMode(`ace/mode/${type}`);
@@ -565,6 +556,9 @@ body {
         updateEditorOptions(type);
         updateUndoRedoState();
       }
+      const url = new URL(window.location);
+      url.searchParams.set('file', type);
+      window.history.pushState({}, '', url);
     };
 
     const setActiveView = (view) => {
@@ -591,9 +585,9 @@ body {
 
       try {
         const result = previewFrame.value.contentWindow.eval(consoleInput.value);
-        consoleLogs.value.push({ type: 'log', message: String(result) });
+        consoleLogs.value.push({ type: 'log', message: String(result), timestamp: new Date().toLocaleTimeString() });
       } catch (error) {
-        consoleLogs.value.push({ type: 'error', message: error.message });
+        consoleLogs.value.push({ type: 'error', message: error.message, timestamp: new Date().toLocaleTimeString() });
       }
       consoleInput.value = '';
     };
@@ -626,16 +620,9 @@ body {
     };
 
     const saveCode = () => {
-      const csrfToken = Math.random().toString(36).substring(2);
-      setCookie('csrf_token', csrfToken);
-
-      const htmlContent = fileContents.html.value;
-      const cssContent = fileContents.css.value;
-      const jsContent = fileContents.js.value;
-
-      setCookie('htmlCode', htmlContent);
-      setCookie('cssCode', cssContent);
-      setCookie('jsCode', jsContent);
+      localStorage.setItem('htmlCode', fileContents.html.value);
+      localStorage.setItem('cssCode', fileContents.css.value);
+      localStorage.setItem('jsCode', fileContents.js.value);
 
       showSaveTooltip.value = true;
       setTimeout(() => {
@@ -679,9 +666,9 @@ body {
     };
 
     const loadSavedCode = () => {
-      const htmlCode = getCookie('htmlCode');
-      const cssCode = getCookie('cssCode');
-      const jsCode = getCookie('jsCode');
+      const htmlCode = localStorage.getItem('htmlCode');
+      const cssCode = localStorage.getItem('cssCode');
+      const jsCode = localStorage.getItem('jsCode');
 
       if (htmlCode) fileContents.html.value = htmlCode;
       if (cssCode) fileContents.css.value = cssCode;
@@ -733,10 +720,70 @@ body {
       }
     };
 
+    let tooltipTimer;
+
+    const showTooltip = (event, text) => {
+      clearTimeout(tooltipTimer);
+
+      tooltipTimer = setTimeout(() => {
+        if (tooltip.value) {
+          const rect = event.target.getBoundingClientRect();
+          const viewportWidth = window.innerWidth;
+          const viewportHeight = window.innerHeight;
+
+          tooltip.value.textContent = text;
+          tooltip.value.style.opacity = '0';
+          tooltip.value.style.display = 'block';
+
+          const tooltipRect = tooltip.value.getBoundingClientRect();
+
+          let left = rect.left + (rect.width - tooltipRect.width) / 2;
+          let top = rect.bottom + 10;
+
+          if (left < 0) {
+            left = 0;
+          } else if (left + tooltipRect.width > viewportWidth) {
+            left = viewportWidth - tooltipRect.width;
+          }
+
+          if (top + tooltipRect.height > viewportHeight) {
+            top = rect.top - tooltipRect.height - 10;
+          }
+
+          tooltip.value.style.left = `${left}px`;
+          tooltip.value.style.top = `${top}px`;
+
+          tooltip.value.style.opacity = '1';
+        }
+      }, 1000);
+    };
+
+    const hideTooltip = () => {
+      clearTimeout(tooltipTimer);
+
+      if (tooltip.value) {
+        tooltip.value.style.opacity = '0';
+        setTimeout(() => {
+          tooltip.value.style.display = 'none';
+        }, 300);
+      }
+    };
+
+    const handleButtonClick = (event) => {
+      const button = event.currentTarget;
+      button.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        button.style.transform = 'scale(1)';
+      }, 200);
+    };
+
     onMounted(() => {
       window.addEventListener('message', (event) => {
         if (event.data && (event.data.type === 'log' || event.data.type === 'error')) {
-          consoleLogs.value.push(event.data);
+          consoleLogs.value.push({
+            ...event.data,
+            timestamp: new Date().toLocaleTimeString()
+          });
         }
       });
 
@@ -760,6 +807,14 @@ body {
       });
 
       setTheme(theme.value);
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const fileFromUrl = urlParams.get('file');
+      if (fileFromUrl && ['html', 'css', 'js'].includes(fileFromUrl)) {
+        setActiveFile(fileFromUrl);
+      } else {
+        setActiveFile('html');
+      }
     });
 
     onUnmounted(() => {
@@ -793,6 +848,7 @@ body {
       activeFile,
       activeView,
       theme,
+      themes,
       showThemeDropdown,
       showUploadDropdown,
       showConsole,
@@ -807,6 +863,7 @@ body {
       projectName,
       canUndo,
       canRedo,
+      tooltip,
       setActiveFile,
       setActiveView,
       toggleConsole,
@@ -825,6 +882,9 @@ body {
       formatText,
       undo,
       redo,
+      showTooltip,
+      hideTooltip,
+      handleButtonClick
     };
   }
 };
