@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" href="/favicon.png" />
     <link
       href="https://unpkg.com/tailwindcss@1.9.6/dist/tailwind.min.css"
       rel="stylesheet"
@@ -11,33 +11,69 @@
     <link href="./src/loader.css" rel="stylesheet" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Code Editor</title>
+    <meta
+      name="description"
+      content="An online code editor for HTML, CSS, and JavaScript with live preview and console."
+    />
+    <meta
+      name="keywords"
+      content="code editor, HTML, CSS, JavaScript, live preview, web development"
+    />
+    <meta name="author" content="Your Name or Company Name" />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://code-editor.pro/" />
+    <meta property="og:title" content="Code Editor" />
+    <meta
+      property="og:description"
+      content="An online code editor for HTML, CSS, and JavaScript with live preview and console."
+    />
+    <meta property="og:image" content="/favicon.png" />
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://code-editor.pro/" />
+    <meta property="twitter:title" content="Code Editor" />
+    <meta
+      property="twitter:description"
+      content="An online code editor for HTML, CSS, and JavaScript with live preview and console."
+    />
+    <meta property="twitter:image" content="/favicon.png" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
   </head>
   <body>
     <div class="preloader" id="preloader">
-    <div class="loader-container">
+      <div class="loader-container">
         <div class="code-block">
-            <div class="line line1"></div>
-            <div class="line line2"></div>
-            <div class="line line3"></div>
+          <div class="line line1"></div>
+          <div class="line line2"></div>
+          <div class="line line3"></div>
         </div>
         <div class="cursor"></div>
-    </div>
+      </div>
     </div>
     <div id="app"></div>
     <noscript>Enable JavaScript in your browser!</noscript>
-    <script type="module" src="/src/main.js"></script>
   </body>
+  <script type="module" src="/src/main.js"></script>
   <script>
-      window.addEventListener("load", function () {
-        const preloader = document.getElementById("preloader");
+    window.addEventListener("load", function () {
+      const preloader = document.getElementById("preloader");
+      setTimeout(() => {
+        preloader.classList.add("hidden");
         setTimeout(() => {
-          preloader.classList.add("hidden");
-          setTimeout(() => {
-            preloader.remove();
-          }, 1000);
+          preloader.remove();
         }, 1000);
-      });
+      }, 1000);
+    });
   </script>
-  <script> window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+  <script>
+    window.va =
+      window.va ||
+      function () {
+        (window.vaq = window.vaq || []).push(arguments);
+      };
+  </script>
   <script defer src="/_vercel/insights/script.js"></script>
 </html>
