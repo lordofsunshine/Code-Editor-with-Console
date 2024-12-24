@@ -2,14 +2,14 @@
   <div :class="['flex flex-col body-bg h-screen', themeClass]">
     <header class="flex items-center justify-between h-16 px-4 border-b border-muted">
       <div class="flex items-center navv-flex gap-4">
-        <a href="#" class="flex items-center px-3 gap-2 logo-bg font-semibold">
+        <div class="flex items-center px-3 gap-2 logo-bg font-semibold cursor-grab">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
             stroke-linejoin="round">
             <polyline points="16 18 22 12 16 6" />
             <polyline points="8 6 2 12 8 18" />
           </svg>
           <span>Code Editor</span>
-        </a>
+        </div>
         <div class="flex items-center gap-4">
           <a target="_blank" href="https://github.com/lordofsunshine/Code-Editor-with-Console"
             class="bg-transparent bg-hover p-2 rounded-md button-animation"
@@ -72,10 +72,8 @@
                 class="absolute right-0 w-40 bg-dropdown shadow-lg mt-2 rounded-md overflow-hidden z-9999999">
                 <div class="px-2 py-1 border-b dropdown-text border-muted">Theme</div>
                 <div v-for="t in themes" :key="t">
-                  <button @click="setTheme(t)" :class="[
-                    'w-full text-left px-2 py-1 cursor-pointer bg-hover flex items-center justify-between button-animation',
-                    { 'bg-selected text-primary font-medium': theme === t }
-                  ]">
+                  <button @click="setTheme(t)"
+                    :class="['w-full text-left px-2 py-1 cursor-pointer bg-hover flex items-center justify-between button-animation', { 'bg-selected text-primary font-medium': theme === t }]">
                     {{ t.charAt(0).toUpperCase() + t.slice(1) }}
                     <svg v-if="theme === t" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20">
                       <rect width="20" height="20" fill="none" />
@@ -92,7 +90,6 @@
         </div>
       </div>
     </header>
-
     <div class="flex flex-1 overflow-hidden">
       <div class="flex flex-col w-64 border-r border-muted files-block">
         <div class="flex items-center justify-between h-12 px-4 border-b border-muted">
@@ -124,31 +121,25 @@
         </div>
         <div class="flex-1 overflow-auto dark-color">
           <div class="width py-2">
-            <div v-for="file in files" :key="file.name" @click="setActiveFile(file.type)" :class="['flex items-center file-flex text-sm file-bg font-medium cursor-pointer p-block rounded button-animation',
-              { 'bg-selected': activeFile === file.type }]">
+            <div v-for="file in files" :key="file.name" @click="setActiveFile(file.type)"
+              :class="['flex items-center file-flex text-sm file-bg font-medium cursor-pointer p-block rounded button-animation', { 'bg-selected': activeFile === file.type }]">
               <span v-html="fileIcons[file.type]"></span>
               <span>{{ file.name }}</span>
             </div>
           </div>
         </div>
       </div>
-
       <div class="flex-1 flex flex-col overflow-hidden">
         <div class="border-b border-muted">
           <div class="flex items-center justify-between">
             <div class="flex">
-              <button v-for="view in ['editor', 'preview']" :key="view" @click="setActiveView(view)" :class="[
-                'px-4 py-2 text-sm font-medium border-b-2 transition-colors button-animation',
-                activeView === view
-                  ? 'border-white header-color text-white'
-                  : 'border-transparent header-color-end text-gray-400 hover:text-gray-300'
-              ]">
+              <button v-for="view in ['editor', 'preview']" :key="view" @click="setActiveView(view)"
+                :class="['px-4 py-2 text-sm font-medium border-b-2 transition-colors button-animation', activeView === view ? 'border-white header-color text-white' : 'border-transparent header-color-end text-gray-400 hover:text-gray-300']">
                 {{ view.charAt(0).toUpperCase() + view.slice(1) }}
               </button>
             </div>
           </div>
         </div>
-
         <div class="flex-1 relative">
           <div v-show="activeView === 'editor'" class="absolute inset-0 code-bg">
             <div ref="editorContainer" class="w-full h-full"></div>
@@ -166,24 +157,25 @@
                 </svg>
               </button>
             </div>
-            <iframe ref="previewFrame" class="w-full h-full bg-white" src="about:blank" title="Preview"></iframe>
+            <iframe ref="previewFrame" class="w-full h-full bg-white" src="about:blank"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              title="Preview"></iframe>
           </div>
         </div>
       </div>
     </div>
-
     <footer class="border-t border-muted">
       <div class="flex items-center justify-between px-4 h-12">
         <div class="flex items-center gap-4">
-          <button @click="toggleConsole" class="flex items-center bg-transparent p-2 console-icon button-animation"
+          <button @click="toggleConsole" class="flex items-center bg-transparent gap-1 p-2 console-icon button-animation"
             @mouseenter="showTooltip($event, 'Toggle Console')" @mouseleave="hideTooltip">
-            Console
             <svg :class="['ml-1 transform transition-transform', { 'rotate-180': showConsole }]"
-              xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24">
-              <rect width="24" height="24" fill="none" />
-              <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="m7 10l5 5l5-5" />
+              xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="lucide lucide-chevron-down h-4 w-4 transition-transform -rotate-90">
+              <path d="m6 9 6 6 6-6"></path>
             </svg>
+            Console
             <span class="sr-only">Toggle console</span>
           </button>
         </div>
@@ -221,671 +213,87 @@
         </div>
       </div>
     </footer>
-
     <transition name="slide-fade">
       <div v-if="showConsole" class="fixed bottom-0 left-0 right-0 bg-console border-t border-muted">
         <div class="flex items-center justify-between p-2 border-b border-muted">
-          <button @click="toggleConsole" class="flex items-center bg-transparent p-2 console-icon button-animation">
-            Console
+          <button @click="toggleConsole" @mouseenter="showTooltip($event, 'Toggle Console')" @mouseleave="hideTooltip"
+            class="flex items-center bg-transparent gap-1 p-2 console-icon button-animation">
             <svg :class="['ml-1 transform transition-transform', { 'rotate-180': showConsole }]"
-              xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24">
-              <rect width="24" height="24" fill="none" />
-              <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="m7 10l5 5l5-5" />
+              xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="lucide lucide-chevron-down h-4 w-4 transition-transform rotate-0">
+              <path d="m6 9 6 6 6-6"></path>
             </svg>
+            Console
             <span class="sr-only">Toggle console</span>
           </button>
           <button @click="clearConsole" class="text-sm text-blue-500 hover:text-blue-600 button-animation">Clear
             console</button>
         </div>
-        <div class="h-48 overflow-auto p-2 font-mono text-sm custom-scrollbar">
-          <div v-for="(log, index) in consoleLogs" :key="index"
-            :class="['mb-1', { 'text-red-500': log.type === 'error' }]">
-            <span class="text-gray-500" style="opacity:.5">{{ log.timestamp }}</span> {{ log.message }}
-          </div>
-        </div>
-        <div class="flex items-center p-2 border-t border-muted">
-          <span class="mr-2 text-gray-500">></span>
-          <input v-model="consoleInput" @keyup.enter="executeConsoleCommand"
-            class="flex-1 bg-transparent outline-none input-console" placeholder="Enter command...">
-        </div>
-      </div>
-    </transition>
-
-    <transition name="fade">
-      <div v-if="showDownloadPopup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="download-popup p-6 w-96">
-          <h2 class="text-xl font-bold mb-4">Download Project</h2>
-          <input v-model="projectName" class="w-full px-3 py-2 border download-input mb-4"
-            placeholder="Enter project name...">
-          <div class="flex justify-end">
-            <button @click="cancelDownload" style="transition: 0.2s all"
-              class="px-4 py-2 text-gr hover:text-gray-800 mr-2 button-animation">Cancel</button>
-            <button @click="downloadProject" class="px-4 py-2 download-btn text-white rounded button-animation"><svg
-                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-                  <path stroke-dasharray="2 4" stroke-dashoffset="6" d="M12 3c4.97 0 9 4.03 9 9c0 4.97 -4.03 9 -9 9">
-                    <animate attributeName="stroke-dashoffset" dur="0.63s" repeatCount="indefinite" values="6;0" />
-                  </path>
-                  <path stroke-dasharray="32" stroke-dashoffset="32"
-                    d="M12 21c-4.97 0 -9 -4.03 -9 -9c0 -4.97 4.03 -9 9 -9">
-                    <animate fill="freeze" attributeName="stroke-dashoffset" begin="0.105s" dur="0.42s" values="32;0" />
-                  </path>
-                  <path stroke-dasharray="10" stroke-dashoffset="10" d="M12 8v7.5">
-                    <animate fill="freeze" attributeName="stroke-dashoffset" begin="0.525s" dur="0.21s" values="10;0" />
-                  </path>
-                  <path stroke-dasharray="6" stroke-dashoffset="6" d="M12 15.5l3.5 -3.5M12 15.5l-3.5 -3.5">
-                    <animate fill="freeze" attributeName="stroke-dashoffset" begin="0.735s" dur="0.21s" values="6;0" />
-                  </path>
-                </g>
-              </svg> Download</button>
-          </div>
+        <div class="h-48 overflow-auto p-2 font-mono text-sm whitespace-pre custom-scrollbar">
+          <div v-for="(log, index) in consoleLogs" :key="index" :class="['mb-1', getMessageTypeClass(log.type)]">
+            <span class="select-none text-gray-500 mr-2">{{ log.timestamp }}</span>
+            <template v-if="log.command">
+              <span class="select-none text-gray-400">></span> {{ log.command }}
+            </template>
+            <template v-else>
+              <span v-if="log.type === 'error'" class="select-none text-red-500">ERROR: </span>
+              <span v-else-if="log.type === 'warn'" class="select-none text-yellow-500">WARNING: </span>
+              <span v-else-if="log.type === 'info'" class="select-none text-blue-500">INFO: </span>
+            <span v-else-if="log.type === 'success'" class="select-none text-green-500">SUCCESS: </span>
+            {{ log.message }}
+          </template>
         </div>
       </div>
-    </transition>
-
-    <div ref="tooltip" class="tooltip"></div>
-  </div>
-</template>
+      <div class="flex items-center p-2 border-t border-muted">
+        <span class="text-gray-500 mr-2">></span>
+        <input v-model="consoleInput" @keyup.enter="executeConsoleCommand"
+          class="flex-1 bg-transparent outline-none input-console" placeholder="Enter command...">
+      </div>
+    </div>
+  </transition>
+  <transition name="fade">
+    <div v-if="showDownloadPopup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="download-popup p-6 w-96">
+        <h2 class="text-xl font-bold mb-4">Download Project</h2>
+        <input v-model="projectName" class="w-full px-3 py-2 border download-input mb-4"
+          placeholder="Enter project name...">
+        <div class="flex justify-end">
+          <button @click="cancelDownload" style="transition: 0.2s all"
+            class="px-4 py-2 text-gr hover:text-gray-800 mr-2 button-animation">Cancel</button>
+          <button @click="downloadProject" class="px-4 py-2 download-btn text-white rounded button-animation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <path stroke-dasharray="2 4" stroke-dashoffset="6" d="M12 3c4.97 0 9 4.03 9 9c0 4.97 -4.03 9 -9 9">
+                  <animate attributeName="stroke-dashoffset" dur="0.63s" repeatCount="indefinite" values="6;0" />
+                </path>
+                <path stroke-dasharray="32" stroke-dashoffset="32"
+                  d="M12 21c-4.97 0 -9 -4.03 -9 -9c0 -4.97 4.03 -9 9 -9">
+                  <animate fill="freeze" attributeName="stroke-dashoffset" begin="0.105s" dur="0.42s" values="32;0" />
+                </path>
+                <path stroke-dasharray="10" stroke-dashoffset="10" d="M12 8v7.5">
+                  <animate fill="freeze" attributeName="stroke-dashoffset" begin="0.525s" dur="0.21s" values="10;0" />
+                </path>
+                <path stroke-dasharray="6" stroke-dashoffset="6" d="M12 15.5l3.5 -3.5M12 15.5l-3.5 -3.5">
+                  <animate fill="freeze" attributeName="stroke-dashoffset" begin="0.735s" dur="0.21s" values="6;0" />
+                </path>
+              </g>
+            </svg> Download
+          </button>
+        </div>
+      </div>
+    </div>
+  </transition>
+  <div ref="tooltip" class="tooltip"></div>
+</div></template>
 
 <script>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
-import ace from 'ace-builds';
-import 'ace-builds/src-noconflict/mode-html';
-import 'ace-builds/src-noconflict/mode-css';
-import 'ace-builds/src-noconflict/mode-javascript';
-import 'ace-builds/src-noconflict/theme-twilight';
-import 'ace-builds/src-noconflict/theme-github';
-import 'ace-builds/src-noconflict/ext-language_tools';
-import 'ace-builds/src-noconflict/ext-beautify';
-import JSZip from 'jszip';
-import { saveAs } from 'file-saver';
+import { useCodeEditor } from './Editor/useCodeEditor.js';
 
 export default {
   name: 'App',
   setup() {
-    const editorContainer = ref(null);
-    const previewFrame = ref(null);
-    const activeFile = ref('html');
-    const activeView = ref('editor');
-    const theme = ref(localStorage.getItem('theme') || 'dark');
-    const showThemeDropdown = ref(false);
-    const showUploadDropdown = ref(false);
-    const showConsole = ref(false);
-    const consoleLogs = ref([]);
-    const consoleInput = ref('');
-    const showSaveTooltip = ref(false);
-    const fileInput = ref(null);
-    const previewWindow = ref(null);
-    const showDownloadPopup = ref(false);
-    const projectName = ref('');
-    const canUndo = ref(false);
-    const canRedo = ref(false);
-    const tooltip = ref(null);
-    let editor = null;
-
-    const files = [
-      { name: 'index.html', type: 'html' },
-      { name: 'style.css', type: 'css' },
-      { name: 'script.js', type: 'js' }
-    ];
-
-    const fileIcons = {
-      html: `<svg class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8.34247L15.6575 4H6C4.89543 4 4 4.89543 4 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 17H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><text x="12" y="13" font-size="6" fill="currentColor" text-anchor="middle" dominant-baseline="middle">HTML</text></svg>`,
-      css: `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8.34247L15.6575 4H6C4.89543 4 4 4.89543 4 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 17H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><text x="12" y="13" font-size="6" fill="currentColor" text-anchor="middle" dominant-baseline="middle">CSS</text></svg>`,
-      js: `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8.34247L15.6575 4H6C4.89543 4 4 4.89543 4 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 17H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><text x="12" y="13" font-size="6" fill="currentColor" text-anchor="middle" dominant-baseline="middle">JS</text></svg>`
-    };
-
-    const fileContents = {
-      html: ref(`<!DOCTYPE html>
-  <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Code Editor</title>
-  </head>
-  <body>
-    <div class="container">
-      <h1 class="title">Code Editor</h1>
-      <a href="https://github.com/lordofsunshine/Code-Editor-with-Console" class="watermark">by lordofsunshine</a>
-    </div>
-  </body>
-  </html>`),
-      css: ref(`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Pixelify+Sans:wght@400..700&display=swap');
-
-  body {
-    font-family: "Bebas Neue", sans-serif;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: visible;
-    min-height: 100vh;
-    color: #fff;
-  }
-
-  .container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-
-  .title {
-    color: #5e5e5e;
-    font-size: 4rem;
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-  }
-
-  .watermark {
-    font-family: "Pixelify Sans", sans-serif;
-    font-size: 1.5rem;
-    background: #1a1a1ade;
-    color: #fff;
-    padding: 0.5rem 1.5rem;
-    border-radius: 8px;
-    text-decoration: none;
-    transition: background-color 0.3s ease;
-  }
-
-  .watermark:hover {
-    background-color: #1b1b1b;
-  }
-
-  @media (max-width: 768px) {
-    .title {
-      font-size: 3rem;
-    }
-
-    .watermark {
-      font-size: 1.2rem;
-      padding: 0.4rem 1.2rem;
-    }
-  }`),
-      js: ref(`document.addEventListener('DOMContentLoaded', () => {
-    const watermark = document.querySelector('.watermark');
-    if (watermark) {
-      watermark.addEventListener('click', (e) => {
-        e.preventDefault();
-        alert('Thanks for using the Code Editor!');
-        window.open(e.target.href, '_blank');
-      });
-    }
-  });`)
-    };
-
-    const themeClass = computed(() => `theme-${theme.value}`);
-
-    const themes = ['light', 'dark', 'system'];
-
-    const getAceTheme = (themeValue) => {
-      if (themeValue === 'system') {
-        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-          ? 'ace/theme/twilight'
-          : 'ace/theme/github';
-      }
-      return themeValue === 'dark' ? 'ace/theme/twilight' : 'ace/theme/github';
-    };
-
-    const applyTheme = (newTheme) => {
-      let appliedTheme = newTheme;
-      if (newTheme === 'system') {
-        appliedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      }
-      document.documentElement.className = `theme-${appliedTheme}`;
-      const aceTheme = getAceTheme(appliedTheme);
-      if (editor) {
-        editor.setTheme(aceTheme);
-      }
-    };
-
-    const setTheme = (newTheme) => {
-      theme.value = newTheme;
-      showThemeDropdown.value = false;
-      applyTheme(newTheme);
-      localStorage.setItem('theme', newTheme);
-    };
-
-    const updateEditorOptions = (fileType) => {
-      if (editor) {
-        editor.session.setMode(`ace/mode/${fileType}`);
-        editor.setOption('wrap', fileType === 'css');
-      }
-    };
-
-    const initEditor = () => {
-      if (!editorContainer.value) return;
-
-      ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/');
-
-      editor = ace.edit(editorContainer.value, {
-        mode: `ace/mode/${activeFile.value}`,
-        theme: getAceTheme(theme.value),
-        fontSize: 14,
-        showPrintMargin: false,
-        highlightActiveLine: false,
-        showGutter: true,
-        wrap: true,
-        useWorker: true,
-        scrollPastEnd: 0.5,
-        enableBasicAutocompletion: true,
-        enableLiveAutocompletion: true,
-        enableSnippets: true,
-      });
-      fileContents[activeFile.value].session = editor.getSession();
-      editor.setValue(fileContents[activeFile.value].value, -1);
-      editor.on('change', () => {
-        fileContents[activeFile.value].value = editor.getValue();
-        updatePreviewFrame();
-        if (previewWindow.value && !previewWindow.value.closed) {
-          updateExternalPreview();
-        }
-        updateUndoRedoState();
-      });
-      updateUndoRedoState();
-    };
-
-    const updatePreviewFrame = () => {
-      if (!previewFrame.value) return;
-
-      const frameDoc = previewFrame.value.contentDocument;
-      if (!frameDoc) return;
-
-      frameDoc.open();
-      frameDoc.write(`
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <style>${fileContents.css.value}</style>
-            </head>
-            <body>
-              ${fileContents.html.value}
-              <script>
-                (function() {
-                  var oldLog = console.log;
-                  console.log = function(...args) {
-                    window.parent.postMessage({type: 'log', message: args.join(' ')}, '*');
-                    oldLog.apply(console, args);
-                  };
-                  window.onerror = function(message, source, lineno, colno, error) {
-                    window.parent.postMessage({type: 'error', message: message}, '*');
-                    return false;
-                  };
-                })();
-              <\/script>
-              <script>${fileContents.js.value}<\/script>
-            </body>
-          </html>
-        `);
-      frameDoc.close();
-    };
-
-    const updateExternalPreview = () => {
-      if (previewWindow.value && !previewWindow.value.closed) {
-        previewWindow.value.document.open();
-        previewWindow.value.document.write(`
-            <!DOCTYPE html>
-            <html>
-              <head>
-                <style>${fileContents.css.value}</style>
-              </head>
-              <body>
-                ${fileContents.html.value}
-                <script>${fileContents.js.value}<\/script>
-              </body>
-            </html>
-          `);
-        previewWindow.value.document.close();
-      }
-    };
-
-    const setActiveFile = (type) => {
-      activeFile.value = type;
-      if (editor) {
-        if (!fileContents[type].value.trim()) {
-          fileContents[type].value = ' ';
-        }
-        if (!fileContents[type].session) {
-          fileContents[type].session = ace.createEditSession(fileContents[type].value);
-          fileContents[type].session.setMode(`ace/mode/${type}`);
-        }
-        editor.setSession(fileContents[type].session);
-        updateEditorOptions(type);
-        updateUndoRedoState();
-      }
-      const url = new URL(window.location);
-      url.searchParams.set('file', type);
-      window.history.pushState({}, '', url);
-    };
-
-    const setActiveView = (view) => {
-      activeView.value = view;
-      nextTick(() => {
-        if (view === 'editor' && !editor) {
-          initEditor();
-        } else if (view === 'preview') {
-          updatePreviewFrame();
-        }
-      });
-    };
-
-    const toggleConsole = () => {
-      showConsole.value = !showConsole.value;
-    };
-
-    const clearConsole = () => {
-      consoleLogs.value = [];
-    };
-
-    const executeConsoleCommand = () => {
-      if (!previewFrame.value || !previewFrame.value.contentWindow) return;
-
-      try {
-        const result = previewFrame.value.contentWindow.eval(consoleInput.value);
-        consoleLogs.value.push({ type: 'log', message: String(result), timestamp: new Date().toLocaleTimeString() });
-      } catch (error) {
-        consoleLogs.value.push({ type: 'error', message: error.message, timestamp: new Date().toLocaleTimeString() });
-      }
-      consoleInput.value = '';
-    };
-
-    const openDownloadPopup = () => {
-      showDownloadPopup.value = true;
-    };
-
-    const cancelDownload = () => {
-      showDownloadPopup.value = false;
-      projectName.value = '';
-    };
-
-    const downloadProject = async () => {
-      const zip = new JSZip();
-      zip.file('index.html', fileContents.html.value);
-      zip.file('style.css', fileContents.css.value);
-      zip.file('script.js', fileContents.js.value);
-
-      const content = await zip.generateAsync({ type: 'blob' });
-      const fileName = projectName.value.trim() ? `${projectName.value}.zip` : 'website.zip';
-      saveAs(content, fileName);
-
-      showDownloadPopup.value = false;
-      projectName.value = '';
-    };
-
-    const toggleThemeDropdown = () => {
-      showThemeDropdown.value = !showThemeDropdown.value;
-    };
-
-    const saveCode = () => {
-      localStorage.setItem('htmlCode', fileContents.html.value);
-      localStorage.setItem('cssCode', fileContents.css.value);
-      localStorage.setItem('jsCode', fileContents.js.value);
-
-      showSaveTooltip.value = true;
-      setTimeout(() => {
-        showSaveTooltip.value = false;
-      }, 2000);
-    };
-
-    const toggleUploadDropdown = () => {
-      showUploadDropdown.value = !showUploadDropdown.value;
-    };
-
-    const triggerFileUpload = () => {
-      fileInput.value.click();
-    };
-
-    const handleFileUpload = (event) => {
-      const files = event.target.files;
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const content = e.target.result;
-          if (file.name.endsWith('.html')) {
-            fileContents.html.value = content;
-            setActiveFile('html');
-          } else if (file.name.endsWith('.css')) {
-            fileContents.css.value = content;
-            setActiveFile('css');
-          } else if (file.name.endsWith('.js')) {
-            fileContents.js.value = content;
-            setActiveFile('js');
-          }
-          if (editor) {
-            editor.setValue(content, -1);
-          }
-          updatePreviewFrame();
-        };
-        reader.readAsText(file);
-      }
-      showUploadDropdown.value = false;
-    };
-
-    const loadSavedCode = () => {
-      const htmlCode = localStorage.getItem('htmlCode');
-      const cssCode = localStorage.getItem('cssCode');
-      const jsCode = localStorage.getItem('jsCode');
-
-      if (htmlCode) fileContents.html.value = htmlCode;
-      if (cssCode) fileContents.css.value = cssCode;
-      if (jsCode) fileContents.js.value = jsCode;
-
-      if (editor) {
-        editor.setValue(fileContents[activeFile.value].value, -1);
-      }
-      updatePreviewFrame();
-    };
-
-    const openPreviewInNewTab = () => {
-      if (previewWindow.value && !previewWindow.value.closed) {
-        previewWindow.value.focus();
-        updateExternalPreview();
-      } else {
-        previewWindow.value = window.open('', '_blank');
-        if (previewWindow.value) {
-          updateExternalPreview();
-        }
-      }
-    };
-
-    const formatText = () => {
-      if (editor) {
-        const beautify = ace.require("ace/ext/beautify");
-        beautify.beautify(editor.session);
-      }
-    };
-
-    const updateUndoRedoState = () => {
-      if (editor && editor.session) {
-        canUndo.value = editor.session.getUndoManager().hasUndo();
-        canRedo.value = editor.session.getUndoManager().hasRedo();
-      }
-    };
-
-    const undo = () => {
-      if (editor && editor.session === fileContents[activeFile.value].session && canUndo.value) {
-        editor.undo();
-        updateUndoRedoState();
-      }
-    };
-
-    const redo = () => {
-      if (editor && editor.session === fileContents[activeFile.value].session && canRedo.value) {
-        editor.redo();
-        updateUndoRedoState();
-      }
-    };
-
-    let tooltipTimer;
-
-    const showTooltip = (event, text) => {
-      clearTimeout(tooltipTimer);
-
-      tooltipTimer = setTimeout(() => {
-        if (tooltip.value) {
-          const rect = event.target.getBoundingClientRect();
-          const viewportWidth = window.innerWidth;
-          const viewportHeight = window.innerHeight;
-
-          tooltip.value.textContent = text;
-          tooltip.value.style.opacity = '0';
-          tooltip.value.style.display = 'block';
-
-          const tooltipRect = tooltip.value.getBoundingClientRect();
-
-          let left = rect.left + (rect.width - tooltipRect.width) / 2;
-          let top = rect.bottom + 10;
-
-          if (left < 0) {
-            left = 0;
-          } else if (left + tooltipRect.width > viewportWidth) {
-            left = viewportWidth - tooltipRect.width;
-          }
-
-          if (top + tooltipRect.height > viewportHeight) {
-            top = rect.top - tooltipRect.height - 10;
-          }
-
-          tooltip.value.style.left = `${left}px`;
-          tooltip.value.style.top = `${top}px`;
-
-          tooltip.value.style.opacity = '1';
-        }
-      }, 1000);
-    };
-
-    const hideTooltip = () => {
-      clearTimeout(tooltipTimer);
-
-      if (tooltip.value) {
-        tooltip.value.style.opacity = '0';
-        setTimeout(() => {
-          tooltip.value.style.display = 'none';
-        }, 300);
-      }
-    };
-
-    const handleButtonClick = (event) => {
-      const button = event.currentTarget;
-      button.style.transform = 'scale(0.95)';
-      setTimeout(() => {
-        button.style.transform = 'scale(1)';
-      }, 200);
-    };
-
-    onMounted(() => {
-      window.addEventListener('message', (event) => {
-        if (event.data && (event.data.type === 'log' || event.data.type === 'error')) {
-          consoleLogs.value.push({
-            ...event.data,
-            timestamp: new Date().toLocaleTimeString()
-          });
-        }
-      });
-
-      nextTick(() => {
-        initEditor();
-        updatePreviewFrame();
-        loadSavedCode();
-      });
-
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      mediaQuery.addListener(() => {
-        if (theme.value === 'system') {
-          applyTheme('system');
-        }
-      });
-
-      window.addEventListener('resize', () => {
-        if (editor) {
-          editor.resize();
-        }
-      });
-
-      setTheme(theme.value);
-
-      const urlParams = new URLSearchParams(window.location.search);
-      const fileFromUrl = urlParams.get('file');
-      if (fileFromUrl && ['html', 'css', 'js'].includes(fileFromUrl)) {
-        setActiveFile(fileFromUrl);
-      } else {
-        setActiveFile('html');
-      }
-    });
-
-    onUnmounted(() => {
-      if (editor) {
-        editor.destroy();
-      }
-      if (previewWindow.value && !previewWindow.value.closed) {
-        previewWindow.value.close();
-      }
-    });
-
-    watch(activeFile, (newFile) => {
-      if (editor) {
-        if (!fileContents[newFile].session) {
-          fileContents[newFile].session = ace.createEditSession(fileContents[newFile].value);
-          fileContents[newFile].session.setMode(`ace/mode/${newFile}`);
-        }
-        editor.setSession(fileContents[newFile].session);
-        updateEditorOptions(newFile);
-        updateUndoRedoState();
-      }
-    });
-
-    watch(theme, (newTheme) => {
-      setTheme(newTheme);
-    });
-
-    return {
-      editorContainer,
-      previewFrame,
-      activeFile,
-      activeView,
-      theme,
-      themes,
-      showThemeDropdown,
-      showUploadDropdown,
-      showConsole,
-      consoleLogs,
-      consoleInput,
-      showSaveTooltip,
-      fileInput,
-      files,
-      fileIcons,
-      themeClass,
-      showDownloadPopup,
-      projectName,
-      canUndo,
-      canRedo,
-      tooltip,
-      setActiveFile,
-      setActiveView,
-      toggleConsole,
-      clearConsole,
-      executeConsoleCommand,
-      openDownloadPopup,
-      cancelDownload,
-      downloadProject,
-      toggleThemeDropdown,
-      setTheme,
-      saveCode,
-      toggleUploadDropdown,
-      triggerFileUpload,
-      handleFileUpload,
-      openPreviewInNewTab,
-      formatText,
-      undo,
-      redo,
-      showTooltip,
-      hideTooltip,
-      handleButtonClick
-    };
+    return useCodeEditor();
   }
 };
 </script>
