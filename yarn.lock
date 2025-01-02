@@ -28,10 +28,10 @@
     "@babel/helper-validator-identifier" "^7.24.7"
     to-fast-properties "^2.0.0"
 
-"@esbuild/linux-x64@0.18.11":
+"@esbuild/win32-x64@0.18.11":
   version "0.18.11"
-  resolved "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.18.11.tgz"
-  integrity sha512-xcncej+wF16WEmIwPtCHi0qmx1FweBqgsRtEL1mSHLFR6/mb3GEZfLQnx+pUDfRDEM4DQF8dpXIW7eDOZl1IbA==
+  resolved "https://registry.npmjs.org/@esbuild/win32-x64/-/win32-x64-0.18.11.tgz"
+  integrity sha512-rQI4cjLHd2hGsM1LqgDI7oOCYbQ6IBOVsX9ejuRMSze0GqXUG2ekwiKkiBU1pRGSeCqFFHxTrcEydB2Hyoz9CA==
 
 "@jridgewell/sourcemap-codec@^1.5.0":
   version "1.5.0"

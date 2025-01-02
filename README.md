@@ -9,9 +9,7 @@ A versatile and interactive code editor built with Vue.js, featuring live previe
 
 <hr>
 
-# 🎄 **What's New: v.0.1.3 (refactoring)** 🎄
-
-- [x] ***02.01.25:*** Massive code refactoring.
+# 🎄 **What's New: 0.1.3** 🎄
 
 - [x] Now, if you've written something in the code editor and try to close the tab, you'll be prompted to save the project (of course, you can decline if you wish).
 - [x] The "Open in New tab" function has been improved. Now you can view the site with a real URL instead of about:blank, and you can even reload the page.
