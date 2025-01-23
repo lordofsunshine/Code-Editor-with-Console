@@ -1,7 +1,6 @@
 {
   "name": "code-editor",
   "version": "0.1.4",
-  "main": "src/main.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
