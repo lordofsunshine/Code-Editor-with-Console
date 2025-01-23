@@ -2,23 +2,21 @@
 
 A versatile and interactive code editor built with Vue.js, featuring live preview, console output, and theme customization.
 
-<img alt="banner" src="https://cdn.glitch.global/64e004e3-d81d-4b3a-9fb1-c899982de83f/0bd33cc5-b86a-4e5a-b941-1ff844a127ec.image.png?v=1735054266748">
+<img alt="Banner" src="https://cdn.glitch.global/76e885ee-9eed-4908-917e-590dfd34f4bd/image.png?v=1737659070990">
 
 > [!NOTE]
 > Our website **is available by domain** ( [code-editor.pro](https://code-editor.pro/) ), if the site is unavailable for the first domain, then ( [click](https://code-editor-with-console.vercel.app) )
 
 <hr>
 
-# 🎄 **What's New: 0.1.3** 🎄
+# 🌑 **What's New: 0.1.4** 🌑
 
-- [x] Now, if you've written something in the code editor and try to close the tab, you'll be prompted to save the project (of course, you can decline if you wish).
-- [x] The "Open in New tab" function has been improved. Now you can view the site with a real URL instead of about:blank, and you can even reload the page.
-- [x] We've fixed the syntax highlighting for JavaScript code. It now works correctly.
-- [x] We've updated the console: the console is now highlighted! Each log will be labeled as SUCCESS, INFO, ERROR, or WARN and will be marked with the corresponding color. The console now also has **COMMANDS**: enter the command `editor help` in the code editor's terminal and see for yourself!
-- [x] Numerous bugs have been fixed, including issues related to object positioning and other aspects. The editor's code is now split into two files: App.vue and all its JavaScript code.
+- [x] Instead of auto-updating the code, which often produced many errors during coding, we've implemented a Run button that displays your results and code changes when clicked.
+- [x] Our editor has undergone a redesign, including rearrangement of elements and updated animations. The style and design are changing, and I'm trying to keep them updated as well. =)
+- [x] The code editor is now fully compatible with mobile devices. Due to the expanded functionality of the editor, we had to create a special menu with all the functions so that you can write code even from your phone!
+- [x] Various minor elements have been added to the site. Errors in the editor have been fixed, such as incorrect code formatting.
 
-**Happy upcoming New Year 2025!** And I'd like to boast a bit: the project already weighs 30MB and contains over a thousand lines of code. 👀
-
+**We are also preparing for the File Creation feature.** We are already trying to implement it, but it will take more time and effort, so we've released this seemingly small update, which is quite significant for the future of the code editor. For example, in the address bar, the value */?file=script.js* now includes the full file name with its format. :D
 <hr>
 
 ## ✨ Features
@@ -37,7 +35,7 @@ A versatile and interactive code editor built with Vue.js, featuring live previe
 
 ## Mobile Adaptation
 
-<img alt="Banner two" width="340" src="https://cdn.glitch.global/64e004e3-d81d-4b3a-9fb1-c899982de83f/299f61c8-605e-4730-992e-275e0fc926d2.image.png?v=1735054309402">
+<img alt="Banner two" width="340" src="https://cdn.glitch.global/4ae4fbec-cbe7-491c-b8b9-57879c9f0e5d/123.png?v=1737649215845">
 
 ## Commands
 
@@ -45,7 +43,7 @@ A versatile and interactive code editor built with Vue.js, featuring live previe
 
 ## Light Theme
 
-<img alt="Banner three" width="900" src="https://cdn.glitch.global/64e004e3-d81d-4b3a-9fb1-c899982de83f/3fc1ccb5-498b-4ea6-a7a7-978245bae3c8.image.png?v=1735054338819">
+<img alt="Banner three" width="900" src="https://cdn.glitch.global/4ae4fbec-cbe7-491c-b8b9-57879c9f0e5d/c5b69499-abfb-4533-8c9b-95c2cb8472f7.image.png?v=1737649251679">
 
 <hr>
 
@@ -87,6 +85,7 @@ yarn dev
 - JSZip
 - File Saver
 - GSAP (GreenSock Animation Platform)
+- Canvas Confetti
 
 ## License
 
