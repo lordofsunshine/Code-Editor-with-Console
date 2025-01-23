@@ -17,6 +17,9 @@ A versatile and interactive code editor built with Vue.js, featuring live previe
 - [x] Various minor elements have been added to the site. Errors in the editor have been fixed, such as incorrect code formatting.
 
 **We are also preparing for the File Creation feature.** We are already trying to implement it, but it will take more time and effort, so we've released this seemingly small update, which is quite significant for the future of the code editor. For example, in the address bar, the value */?file=script.js* now includes the full file name with its format. :D
+
+> [!WARNING]
+> Please, in order for the update to fully initialize, **please clear the Cookies in the editor**, first making sure that you have saved your previous code.
 <hr>
 
 ## ✨ Features
