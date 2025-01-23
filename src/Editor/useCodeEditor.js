@@ -9,6 +9,8 @@ import "ace-builds/src-noconflict/ext-language_tools";
 import "ace-builds/src-noconflict/ext-beautify";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import confetti from "canvas-confetti";
+import { runConfetti } from "./confetti.js";
 
 export function useCodeEditor() {
   const editorContainer = ref(null);
@@ -34,7 +36,7 @@ export function useCodeEditor() {
 
   const editorTheme = ref(localStorage.getItem("editorTheme") || "dark");
   const editorFontSize = ref(
-    parseInt(localStorage.getItem("editorFontSize") || "14"),
+    Number.parseInt(localStorage.getItem("editorFontSize") || "14"),
   );
   const editorAutocomplete = ref(
     localStorage.getItem("editorAutocomplete") !== "false",
@@ -43,6 +45,10 @@ export function useCodeEditor() {
     localStorage.getItem("editorLineNumbers") !== "false",
   );
   const editorWrap = ref(localStorage.getItem("editorWrap") !== "false");
+
+  const currentLanguage = ref("HTML");
+  const currentEncoding = ref("UTF-8");
+  const lastSaved = ref(null);
 
   const files = [
     { name: "index.html", type: "html" },
@@ -60,85 +66,221 @@ export function useCodeEditor() {
     html: ref(`<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <link rel="icon" href="/favicon.ico" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Code Editor</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Modern Code Editor - Write, Edit, and Preview Code in Real-time">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <title>Modern Code Editor</title>
 </head>
 <body>
-  <div class="container">
-  <div class="card">
-    <h1 class="title">Code Editor</h1>
-    <a href="https://github.com/lordofsunshine/Code-Editor-with-Console" class="credits">by lordofsunshine</a>
-  </div>
-  </div>
+    <main class="container">
+        <div class="hero">
+            <h1 class="title">Welcome to Code Editor</h1>
+            <p class="subtitle">A modern, lightweight code editor for web development</p>
+            
+            <div class="features">
+                <div class="feature-card">
+                    <span class="feature-icon">⚡</span>
+                    <h2>Fast & Responsive</h2>
+                    <p>Edit code in real-time with instant preview</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">🎨</span>
+                    <h2>Beautiful UI</h2>
+                    <p>Clean and modern interface for better coding experience</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">🚀</span>
+                    <h2>Easy to Use</h2>
+                    <p>Simple yet powerful features for developers</p>
+                </div>
+            </div>
+        </div>
+    </main>
 </body>
 </html>`),
-    css: ref(`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Pixelify+Sans:wght@400..700&display=swap');
+
+    css: ref(`:root {
+    --primary-color: #ffffff;
+    --secondary-color: #d1d1d1;
+    --background: #000000;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --shadow-color: rgba(0, 0, 0, 0.8);
+}
+
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
 body {
-  font-family: "Bebas Neue", sans-serif;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: visible;
-  min-height: 100vh;
-  color: #fff;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--background);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
 }
 
 .container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
+    width: min(90%, 1200px);
+    margin-inline: auto;
+    padding: 2rem;
 }
 
-.card {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  padding: 1.6rem 2.9rem;
-  border-radius: 0.5rem;
-  background: #5757570f;
+.hero {
+    text-align: center;
+    animation: fadeIn 0.8s ease-out;
 }
 
 .title {
-  color: #5e5e5e;
-  font-size: 4rem;
-  font-weight: 500;
-  margin: 0;
+    font-size: clamp(2rem, 5vw, 4rem);
+    font-weight: 800;
+    background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    color: transparent;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
 }
 
-.credits {
-  font-family: "Pixelify Sans", sans-serif;
-  font-size: 1.3rem;
-  background: #1a1a1a;
-  color: #575757;
-  padding: 0.5rem 1.5rem;
-  border-radius: 0.3rem;
-  text-decoration: none;
-  width: -webkit-fill-available;
-  transition: background-color 0.3s ease;
+.subtitle {
+    color: var(--text-secondary);
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    margin-bottom: 3rem;
 }
 
-.credits:hover {
-  background-color: #0c0c0c;
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin: 3rem 0;
+}
+
+.feature-card {
+    background: linear-gradient(145deg, #111111, #000000);
+    padding: 2rem;
+    border-radius: 1rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 25px 50px -12px var(--shadow-color);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #ffffff, transparent);
+    animation: shimmer 2s infinite linear;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: inline-block;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+}
+
+.feature-card h2 {
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.feature-card p {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
 }
 
 @media (max-width: 768px) {
-  .title {
-    font-size: 3rem;
-  }
+    .features {
+        grid-template-columns: 1fr;
+    }
+    
+    .feature-card {
+        padding: 1.5rem;
+    }
+}
+`),
 
-  .watermark {
-    font-size: 1.2rem;
-    padding: 0.4rem 1.2rem;
-  }
-}`),
-    js: ref(``),
+    js: ref(`document.addEventListener('DOMContentLoaded', () => {
+    const features = document.querySelectorAll('.feature-card')
+    
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px'
+    }
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1'
+                entry.target.style.transform = 'translateY(0)'
+                observer.unobserve(entry.target)
+            }
+        })
+    }, observerOptions)
+    
+    features.forEach(feature => {
+        feature.style.opacity = '0'
+        feature.style.transform = 'translateY(20px)'
+        feature.style.transition = 'all 0.6s ease-out'
+        observer.observe(feature)
+    })
+
+    features.forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect()
+            const x = e.clientX - rect.left
+            const y = e.clientY - rect.top
+
+            card.style.setProperty('--x', \`\${x}px\`)
+            card.style.setProperty('--y', \`\${y}px\`)
+        })
+    })
+
+    console.log(
+        '%cWelcome to Code Editor! 🚀',
+        'color: #ffffff; font-size: 24px; font-weight: bold; text-shadow: 0 0 10px rgba(255,255,255,0.5);'
+    )
+})`),
   };
 
   const themeClass = computed(() => `theme-${theme.value}`);
@@ -335,24 +477,27 @@ body {
   };
 
   const updatePreviewFrame = () => {
-    if (!previewFrame.value) return;
+    if (previewError.value) {
+      previewError.value = null;
+    }
 
-    const frameDoc = previewFrame.value.contentDocument;
-    if (!frameDoc) return;
+    const combinedHTML = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>${fileContents.css.value}</style>
+        </head>
+        <body>
+          ${fileContents.html.value}
+          <script>${fileContents.js.value}</script>
+        </body>
+      </html>
+    `;
 
-    const content = createPreviewContent();
-    frameDoc.open();
-    frameDoc.write(content);
-    frameDoc.close();
-
-    previewFrame.value.style.pointerEvents = "auto";
-
-    previewFrame.value.setAttribute(
-      "allow",
-      "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
-    );
-
-    previewFrame.value.removeAttribute("sandbox");
+    if (previewFrame.value) {
+      previewFrame.value.srcdoc = combinedHTML;
+    }
   };
 
   const openPreviewInNewTab = () => {
@@ -373,10 +518,8 @@ body {
 
   const setActiveFile = (type) => {
     activeFile.value = type;
+    previewError.value = null;
     if (editor) {
-      if (!fileContents[type].value.trim()) {
-        fileContents[type].value = " ";
-      }
       if (!fileContents[type].session) {
         fileContents[type].session = ace.createEditSession(
           fileContents[type].value,
@@ -390,8 +533,9 @@ body {
       updateUndoRedoState();
     }
     const url = new URL(window.location);
-    url.searchParams.set("file", type);
+    url.searchParams.set("file", files.find((file) => file.type === type).name);
     window.history.pushState({}, "", url);
+    updateLanguageAndEncoding();
   };
 
   const setActiveView = (view) => {
@@ -473,7 +617,7 @@ body {
         break;
       case "fontsize":
         if (args.length > 0 && !isNaN(args[0])) {
-          const fontSize = parseInt(args[0]);
+          const fontSize = Number.parseInt(args[0]);
           if (fontSize >= 8 && fontSize <= 30) {
             editorFontSize.value = fontSize;
             editor.setFontSize(fontSize);
@@ -601,6 +745,9 @@ body {
     localStorage.setItem("jsCode", fileContents.js.value);
     hasUnsavedChanges.value = false;
 
+    lastSaved.value = new Date();
+    localStorage.setItem("lastSavedTime", lastSaved.value.toISOString());
+
     showSaveTooltip.value = true;
     setTimeout(() => {
       showSaveTooltip.value = false;
@@ -674,6 +821,11 @@ body {
     }
     updatePreviewFrame();
     hasUnsavedChanges.value = false;
+
+    const savedTime = localStorage.getItem("lastSavedTime");
+    if (savedTime) {
+      lastSaved.value = new Date(savedTime);
+    }
   };
 
   const formatText = () => {
@@ -769,6 +921,269 @@ body {
     }, 200);
   };
 
+  const hasRunOnce = ref(false);
+
+  const runCode = () => {
+    previewError.value = null;
+    updatePreviewFrame();
+    setActiveView("preview");
+
+    if (!hasRunOnce.value) {
+      runConfetti();
+      hasRunOnce.value = true;
+      localStorage.setItem("hasRunOnce", "true");
+    }
+  };
+
+  const toggleTheme = () => {
+    const themes = ["light", "dark", "system"];
+    const currentIndex = themes.indexOf(theme.value);
+    const nextIndex = (currentIndex + 1) % themes.length;
+    setTheme(themes[nextIndex]);
+  };
+
+  const updateLanguageAndEncoding = () => {
+    const fileExtensions = {
+      html: "HTML",
+      css: "CSS",
+      js: "JavaScript",
+    };
+    currentLanguage.value = fileExtensions[activeFile.value] || "Unknown";
+    currentEncoding.value = "UTF-8";
+  };
+
+  const formatLastSaved = computed(() => {
+    if (!lastSaved.value) return "never";
+
+    const date = new Date(lastSaved.value);
+    if (isNaN(date.getTime())) return "never";
+
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - date) / 1000);
+
+    if (diffInSeconds < 60) {
+      return "just now";
+    } else if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `${minutes} ${minutes === 1 ? "minute" : "minutes"} ago`;
+    } else if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `${hours} ${hours === 1 ? "hour" : "hours"} ago`;
+    } else {
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+  });
+
+  const isMobileMenuOpen = ref(false);
+
+  const toggleMobileMenu = (event) => {
+    if (event) {
+      event.stopPropagation();
+    }
+
+    isMobileMenuOpen.value = !isMobileMenuOpen.value;
+
+    if (isMobileMenuOpen.value) {
+      document.body.style.overflow = "hidden";
+      document.addEventListener("click", handleClickOutside);
+    } else {
+      document.body.style.overflow = "";
+      document.removeEventListener("click", handleClickOutside);
+    }
+  };
+
+  const handleClickOutside = (event) => {
+    const mobileMenu = document.querySelector(".mobile-menu-content");
+    const hamburgerButton = document.querySelector(".mobile-menu-button");
+
+    if (
+      mobileMenu &&
+      !mobileMenu.contains(event.target) &&
+      hamburgerButton &&
+      !hamburgerButton.contains(event.target)
+    ) {
+      toggleMobileMenu();
+    }
+  };
+
+  const runCodeMobile = () => {
+    runCode();
+    toggleMobileMenu();
+  };
+
+  const formatTextMobile = () => {
+    formatText();
+    toggleMobileMenu();
+  };
+
+  const undoMobile = () => {
+    undo();
+    toggleMobileMenu();
+  };
+
+  const redoMobile = () => {
+    redo();
+    toggleMobileMenu();
+  };
+
+  const saveCodeMobile = () => {
+    saveCode();
+    toggleMobileMenu();
+  };
+
+  const toggleThemeMobile = () => {
+    toggleTheme();
+    toggleMobileMenu();
+  };
+
+  const toggleThemeOnly = () => {
+    toggleTheme();
+  };
+
+  const previewError = ref(null);
+
+  const handleFileFromUrl = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const fileFromUrl = urlParams.get("file");
+
+    if (fileFromUrl) {
+      const fileType = files.find((file) => file.name === fileFromUrl)?.type;
+      if (fileType) {
+        setActiveFile(fileType);
+        previewError.value = null;
+      } else {
+        setActiveView("preview");
+        previewError.value = {
+          title: "File Not Found",
+          message: `The requested file "${fileFromUrl}" does not exist or was not found.`,
+          icon: "🔍",
+        };
+        fileContents.html.value = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        .error-container {
+            font-family: system-ui, -apple-system, sans-serif;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000000;
+            margin: 0;
+            padding: 1rem;
+        }
+        
+        .error-card {
+            background: linear-gradient(145deg, #111111, #000000);
+            padding: 3rem;
+            border-radius: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+            text-align: center;
+            animation: slideIn 0.5s ease-out;
+            max-width: 90%;
+            width: 450px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .error-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #ffffff, #808080, #404040);
+            animation: shimmer 2s linear infinite;
+        }
+        
+        .error-icon {
+            font-size: 4.5rem;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+            animation: bounce 2s ease infinite;
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
+        }
+        
+        .error-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #ffffff, #d1d1d1);
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.025em;
+        }
+        
+        .error-message {
+            color: #a0a0a0;
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                transform: translateY(-15px) scale(1.1);
+            }
+        }
+        
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+        
+        .error-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top right, 
+                                      rgba(255, 255, 255, 0.1),
+                                      transparent 300px);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="error-container">
+    <div class="error-card">
+        <span class="error-icon">${previewError.value.icon}</span>
+        <h1 class="error-title">${previewError.value.title}</h1>
+        <p class="error-message">${previewError.value.message}</p>
+    </div>
+</body>
+</html>`;
+      }
+    } else {
+      setActiveFile("html");
+    }
+  };
+
   onMounted(() => {
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme) {
@@ -803,6 +1218,7 @@ body {
       initEditor();
       updatePreviewFrame();
       loadSavedCode();
+      handleFileFromUrl();
     });
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -832,8 +1248,18 @@ body {
 
     const urlParams = new URLSearchParams(window.location.search);
     const fileFromUrl = urlParams.get("file");
-    if (fileFromUrl && ["html", "css", "js"].includes(fileFromUrl)) {
-      setActiveFile(fileFromUrl);
+    if (fileFromUrl) {
+      const fileType = files.find((file) => file.name === fileFromUrl)?.type;
+      if (fileType) {
+        setActiveFile(fileType);
+      } else {
+        setActiveView("preview");
+        consoleLogs.value.push({
+          type: "error",
+          message: "The requested file does not exist or was not found.",
+          timestamp: new Date().toLocaleTimeString(),
+        });
+      }
     } else {
       setActiveFile("html");
     }
@@ -847,7 +1273,7 @@ body {
 
     const savedFontSize = localStorage.getItem("fontSize");
     if (savedFontSize && editor) {
-      editor.setFontSize(parseInt(savedFontSize));
+      editor.setFontSize(Number.parseInt(savedFontSize));
     }
 
     const savedAutocomplete = localStorage.getItem("autocomplete");
@@ -868,6 +1294,9 @@ body {
     if (savedWrap !== null && editor) {
       editor.setOption("wrap", savedWrap === "true");
     }
+    hasRunOnce.value = localStorage.getItem("hasRunOnce") === "true";
+
+    updateLanguageAndEncoding();
   });
 
   onUnmounted(() => {
@@ -877,6 +1306,7 @@ body {
     if (previewWindow.value && !previewWindow.value.closed) {
       previewWindow.value.close();
     }
+    document.removeEventListener("click", handleClickOutside);
   });
 
   watch(activeFile, (newFile) => {
@@ -893,6 +1323,7 @@ body {
       updateEditorOptions(newFile);
       updateUndoRedoState();
     }
+    updateLanguageAndEncoding();
   });
 
   watch(theme, (newTheme) => {
@@ -932,6 +1363,12 @@ body {
     localStorage.setItem("editorWrap", newValue);
     if (editor) {
       editor.setOption("wrap", newValue);
+    }
+  });
+
+  watch(previewError, (newValue) => {
+    if (!newValue) {
+      updatePreviewFrame();
     }
   });
 
@@ -985,5 +1422,21 @@ body {
     editorAutocomplete,
     editorLineNumbers,
     editorWrap,
+    runCode,
+    toggleTheme,
+    currentLanguage,
+    currentEncoding,
+    lastSaved,
+    formatLastSaved,
+    isMobileMenuOpen,
+    toggleMobileMenu,
+    runCodeMobile,
+    formatTextMobile,
+    undoMobile,
+    redoMobile,
+    saveCodeMobile,
+    toggleThemeMobile,
+    toggleThemeOnly,
+    previewError,
   };
 }
