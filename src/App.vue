@@ -262,7 +262,7 @@
         <div class="flex items-center p-2 border-t border-muted">
           <span class="text-gray-500 mr-2">></span>
           <input v-model="consoleInput" @keyup.enter="executeConsoleCommand"
-            class="flex-1 bg-transparent outline-none input-console" placeholder="Enter command...">
+            class="flex-1 bg-transparent outline-none input-console" placeholder="Enter command... ( editor help )">
         </div>
       </div>
     </transition>
