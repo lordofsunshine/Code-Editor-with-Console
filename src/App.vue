@@ -20,15 +20,17 @@
               <span class="sr-only">Download</span>
             </button>
             <div class="relative">
-              <button @click="saveCode" class="bg-transparent bg-hover p-2 rounded-md button-animation"
-                @mouseenter="showTooltip($event, 'Save')" @mouseleave="hideTooltip">
+              <button @click="saveCode" class="bg-transparent bg-hover p-2 rounded-md button-animation save-button"
+                :class="{ 'saved': justSaved }">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-icon">
-                  <path
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="size-icon save-icon">
+                  <path class="save-path"
                     d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z">
                   </path>
-                  <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"></path>
-                  <path d="M7 3v4a1 1 0 0 0 1 1h7"></path>
+                  <path class="save-path" d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"></path>
+                  <path class="save-path" d="M7 3v4a1 1 0 0 0 1 1h7"></path>
+                  <path class="check-path" d="M20 6L9 17l-5-5" style="display: none;"></path>
                 </svg>
                 <span class="sr-only">Save</span>
               </button>
@@ -50,10 +52,17 @@
                   <path d="m6.34 17.66-1.41 1.41"></path>
                   <path d="m19.07 4.93-1.41 1.41"></path>
                 </svg>
+                <svg v-else-if="theme === 'dark'" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" class="lucide lucide-moon size-icon">
+                  <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+                </svg>
                 <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  class="lucide lucide-moon size-icon">
-                  <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+                  class="lucide lucide-monitor size-icon">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                  <line x1="8" y1="21" x2="16" y2="21"></line>
+                  <line x1="12" y1="17" x2="12" y2="21"></line>
                 </svg>
                 <span class="sr-only">Toggle theme</span>
               </button>
@@ -161,10 +170,12 @@
           </div>
         </div>
         <div class="flex-1 relative">
-          <div v-show="activeView === 'editor'" class="absolute inset-0 code-bg">
+          <div v-show="activeView === 'editor'" class="absolute inset-0 code-bg editor"
+            :style="{ opacity: activeView === 'editor' ? 1 : 0 }">
             <div ref="editorContainer" class="w-full h-full"></div>
           </div>
-          <div v-show="activeView === 'preview'" class="absolute inset-0">
+          <div v-show="activeView === 'preview'" class="absolute inset-0 preview"
+            :style="{ opacity: activeView === 'preview' ? 1 : 0 }">
             <div class="absolute top-4 right-4 preview-btn">
               <button v-if="activeView === 'preview'" @click="openPreviewInNewTab"
                 class="p-2 bg-transparent rounded-md transition-colors duration-200 button-animation"
@@ -198,17 +209,16 @@
             Console
             <span class="sr-only">Toggle console</span>
           </button>
-          <div class="flex items-center gap-3 footer-text">
-            <span>{{ currentLanguage }}</span>
-            <span>{{ currentEncoding }}</span>
-            <div class="flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="lucide lucide-clock h-3 w-3">
+          <div class="footer-text">
+            <span class="file-type">{{ activeFile.toUpperCase() }}</span>
+            <span class="encoding">UTF-8</span>
+            <div class="save-info">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
-              <span>Last saved {{ formatLastSaved }}</span>
+              <span>Last saved {{ lastSaved ? getLastSavedText(lastSaved) : 'never' }}</span>
             </div>
           </div>
         </div>
@@ -227,8 +237,12 @@
             Console
             <span class="sr-only">Toggle console</span>
           </button>
-          <button @click="clearConsole" class="text-sm text-blue-500 hover:text-blue-600 button-animation">Clear
-            console</button>
+          <button @click="clearConsole" :class="[
+            'text-sm clear-console-btn button-animation',
+            consoleLogs.length === 0 ? 'disabled' : 'text-blue-500 hover:text-blue-600'
+          ]" :disabled="consoleLogs.length === 0">
+            Clear console
+          </button>
         </div>
         <div class="h-48 overflow-auto p-2 font-mono text-sm whitespace-pre custom-scrollbar">
           <div v-for="(log, index) in consoleLogs" :key="index" :class="['mb-1', getMessageTypeClass(log.type)]">
@@ -343,9 +357,16 @@
                 <path d="m6.34 17.66-1.41 1.41"></path>
                 <path d="m19.07 4.93-1.41 1.41"></path>
               </svg>
+              <svg v-else-if="theme === 'dark'" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+              </svg>
               <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
               </svg>
               <span>Theme</span>
             </button>

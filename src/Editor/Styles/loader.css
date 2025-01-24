@@ -7,9 +7,10 @@
     left: 0;
     width: 100%;
     height: 100%;
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(8px);
+    background-color: rgba(0, 0, 0, 0.9);
     z-index: 9999;
-    transition: opacity 0.3s ease-out;
+    transition: opacity 0.5s ease-out;
 }
 
 .preloader.hidden {
@@ -18,49 +19,29 @@
 }
 
 .loader-container {
-    width: 120px;
-    height: 120px;
-    background-color: #1e1e1e;
-    border-radius: 10px;
+    width: 80px;
+    height: 80px;
+    background-color: #ffffff;
+    border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+    animation: rotate 1.5s infinite linear;
+    transition: transform 0.5s ease-out;
+}
+
+.loader-container.hidden {
+    transform: translateY(-100vh);
 }
 
 .code-block {
-    width: 110px;
-    height: 80px;
-}
-
-.line {
-    height: 16px;
-    margin-bottom: 16px;
-    background-color: #3a3a3a;
-    border-radius: 4px;
-    animation: typing 1.5s infinite;
-}
-
-.line1 {
-    width: 100%;
-}
-
-.line2 {
-    width: 75%;
-}
-
-.line3 {
-    width: 50%;
-}
-
-.cursor {
-    position: absolute;
-    width: 12px;
-    height: 16px;
-    background-color: #61dafb;
-    border-radius: 2px;
-    animation: blink 0.7s infinite, move 4.5s infinite;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 noscript {
@@ -73,44 +54,58 @@ noscript {
 }
 
 @keyframes typing {
-
-    0%,
-    100% {
-        opacity: 0.3;
+    0% {
+        opacity: 0.2;
     }
 
     50% {
         opacity: 1;
     }
+
+    100% {
+        opacity: 0.2;
+    }
 }
 
 @keyframes blink {
-
-    0%,
-    100% {
+    0% {
         opacity: 0;
     }
 
     50% {
         opacity: 1;
     }
+
+    100% {
+        opacity: 0;
+    }
 }
 
 @keyframes move {
     0% {
-        transform: translate(-60px, -30px);
+        transform: translate(-30px, -15px);
     }
 
     30% {
-        transform: translate(40px, -30px);
+        transform: translate(20px, -15px);
     }
 
     60% {
-        transform: translate(60px, 30px);
+        transform: translate(30px, 15px);
     }
 
     90%,
     100% {
-        transform: translate(-60px, 30px);
+        transform: translate(-30px, 15px);
+    }
+}
+
+@keyframes rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
     }
 }

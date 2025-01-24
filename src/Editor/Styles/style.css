@@ -481,8 +481,59 @@ input::placeholder {
 }
 
 .footer-text {
-  font-size: 11px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  font-size: 0.75rem;
   color: var(--text-secondary);
+  padding: 0 8px;
+  height: 24px;
+}
+
+.footer-text .file-type,
+.footer-text .encoding {
+  flex-shrink: 0;
+  padding: 0 4px;
+  font-weight: 500;
+}
+
+.footer-text .save-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.footer-text .save-info svg {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+}
+
+.footer-text .save-info span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.footer-text>*:not(:last-child)::after {
+  content: '•';
+  margin: 0 6px;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+@media (max-width: 380px) {
+  .footer-text>*:not(:last-child)::after {
+    margin: 0 4px;
+  }
+
+  .footer-text {
+    padding: 0 4px;
+  }
 }
 
 .tooltip {
@@ -958,6 +1009,11 @@ input::placeholder {
   }
 }
 
+.mobile-run-button:hover {
+  background-color: var(--code-bg);
+  color: var(--dark);
+}
+
 .mobile-menu-container {
   position: fixed;
   top: 0;
@@ -995,4 +1051,88 @@ input::placeholder {
   width: 100%;
   background-color: var(--text-primary);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.clear-console-btn {
+  transition: all 0.3s ease;
+}
+
+.clear-console-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: var(--text-secondary) !important;
+}
+
+.clear-console-btn:not(.disabled):hover {
+  transform: translateY(-1px);
+}
+
+.clear-console-btn:not(.disabled):active {
+  transform: translateY(0);
+}
+
+.save-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.save-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: var(--text-primary);
+  opacity: 0.2;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease-out, height 0.6s ease-out, opacity 0.6s ease-out;
+}
+
+.save-button.saved::after {
+  width: 150%;
+  height: 150%;
+  opacity: 0;
+}
+
+.save-button.saved .save-path {
+  animation: fadeOut 0.3s forwards;
+}
+
+.save-button.saved .check-path {
+  display: block !important;
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+  animation: drawCheck 0.4s 0.3s forwards;
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes drawCheck {
+  from {
+    stroke-dashoffset: 30;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.save-icon {
+  position: relative;
+  z-index: 1;
+}
+
+.editor,
+.preview {
+  transition: opacity 0.3s ease-in-out;
+}
+
+[v-cloak] {
+  display: none;
 }

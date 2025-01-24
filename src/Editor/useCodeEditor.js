@@ -32,6 +32,7 @@ export function useCodeEditor() {
   const canRedo = ref(false);
   const tooltip = ref(null);
   const hasUnsavedChanges = ref(false);
+  const justSaved = ref(false);
   let editor = null;
 
   const editorTheme = ref(localStorage.getItem("editorTheme") || "dark");
@@ -352,12 +353,22 @@ body {
 
   const updateEditorOptions = (fileType) => {
     if (editor) {
-      editor
-        .getSession()
-        .setMode(`ace/mode/${fileType === "js" ? "javascript" : fileType}`);
+      const session = editor.getSession();
+      session.setMode(
+        `ace/mode/${fileType === "js" ? "javascript" : fileType}`,
+      );
+
+      if (fileType === "css") {
+        session.setOption("useWorker", false);
+      } else {
+        session.setOption("useWorker", false);
+      }
+
       editor.setOption("wrap", editorWrap.value);
     }
   };
+
+  const isInitialLoad = ref(true);
 
   const initEditor = () => {
     if (!editorContainer.value) return;
@@ -387,101 +398,25 @@ body {
       .setMode(
         `ace/mode/${activeFile.value === "js" ? "javascript" : activeFile.value}`,
       );
+
+    if (fileContents[activeFile.value].value) {
+      editor.setValue(fileContents[activeFile.value].value, -1);
+    }
+
     fileContents[activeFile.value].session = editor.getSession();
-    editor.setValue(fileContents[activeFile.value].value, -1);
 
     editor.on("change", () => {
       fileContents[activeFile.value].value = editor.getValue();
       hasUnsavedChanges.value = true;
-      updatePreviewFrame();
-      if (previewWindow.value && !previewWindow.value.closed) {
-        updateExternalPreview();
-      }
       updateUndoRedoState();
     });
 
     updateUndoRedoState();
-
-    consoleLogs.value.push({
-      type: "info",
-      message: "Console initialized. List of all commands: editor help",
-      timestamp: new Date().toLocaleTimeString(),
-    });
+    updatePreviewFrame();
   };
 
   const createPreviewContent = () => {
-    const content = `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="UTF-8">
-            <style>${fileContents.css.value}</style>
-            <script>
-              window.addEventListener('error', function(event) {
-                window.parent.postMessage({
-                  type: 'error',
-                  message: event.message
-                }, '*');
-                return false;
-              });
-
-              (function() {
-                const originalConsole = {
-                  log: console.log,
-                  error: console.error,
-                  warn: console.warn,
-                  info: console.info
-                };
-
-                console.log = function(...args) {
-                  window.parent.postMessage({
-                    type: 'success',
-                    message: args.join(' ')
-                  }, '*');
-                  originalConsole.log.apply(console, args);
-                };
-
-                console.error = function(...args) {
-                  window.parent.postMessage({
-                    type: 'error',
-                    message: args.join(' ')
-                  }, '*');
-                  originalConsole.error.apply(console, args);
-                };
-
-                console.warn = function(...args) {
-                  window.parent.postMessage({
-                    type: 'warn',
-                    message: args.join(' ')
-                  }, '*');
-                  originalConsole.warn.apply(console, args);
-                };
-
-                console.info = function(...args) {
-                  window.parent.postMessage({
-                    type: 'info',
-                    message: args.join(' ')
-                  }, '*');
-                  originalConsole.info.apply(console, args);
-                };
-              })();
-            <\/script>
-          </head>
-          <body>
-            ${fileContents.html.value}
-            <script>${fileContents.js.value}<\/script>
-          </body>
-        </html>
-      `;
-    return content;
-  };
-
-  const updatePreviewFrame = () => {
-    if (previewError.value) {
-      previewError.value = null;
-    }
-
-    const combinedHTML = `
+    return `
       <!DOCTYPE html>
       <html>
         <head>
@@ -490,14 +425,48 @@ body {
         </head>
         <body>
           ${fileContents.html.value}
-          <script>${fileContents.js.value}</script>
+          <script>
+            window.onerror = function(msg, url, lineNo, columnNo, error) {
+              window.parent.postMessage({
+                type: 'error',
+                message: msg
+              }, '*');
+              return false;
+            };
+
+            ${fileContents.js.value}
+          </script>
+        </body>
+      </html>
+    `;
+  };
+
+  const updatePreviewFrame = () => {
+    if (!previewFrame.value) return;
+
+    const htmlContent = fileContents.html.value;
+    const cssContent = fileContents.css.value;
+    const jsContent = fileContents.js.value;
+
+    const content = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>${cssContent}</style>
+        </head>
+        <body>
+          ${htmlContent}
+          <script>${jsContent}</script>
         </body>
       </html>
     `;
 
-    if (previewFrame.value) {
-      previewFrame.value.srcdoc = combinedHTML;
-    }
+    const previewDocument =
+      previewFrame.value.contentDocument ||
+      previewFrame.value.contentWindow.document;
+    previewDocument.open();
+    previewDocument.write(content);
+    previewDocument.close();
   };
 
   const openPreviewInNewTab = () => {
@@ -518,7 +487,6 @@ body {
 
   const setActiveFile = (type) => {
     activeFile.value = type;
-    previewError.value = null;
     if (editor) {
       if (!fileContents[type].session) {
         fileContents[type].session = ace.createEditSession(
@@ -543,8 +511,6 @@ body {
     nextTick(() => {
       if (view === "editor" && !editor) {
         initEditor();
-      } else if (view === "preview") {
-        updatePreviewFrame();
       }
     });
   };
@@ -752,6 +718,11 @@ body {
     setTimeout(() => {
       showSaveTooltip.value = false;
     }, 2000);
+
+    justSaved.value = true;
+    setTimeout(() => {
+      justSaved.value = false;
+    }, 1500);
   };
 
   const toggleUploadDropdown = () => {
@@ -798,7 +769,6 @@ body {
         if (editor) {
           editor.setValue(content, -1);
         }
-        updatePreviewFrame();
       };
       reader.readAsText(file);
     });
@@ -819,7 +789,6 @@ body {
     if (editor) {
       editor.setValue(fileContents[activeFile.value].value, -1);
     }
-    updatePreviewFrame();
     hasUnsavedChanges.value = false;
 
     const savedTime = localStorage.getItem("lastSavedTime");
@@ -924,14 +893,28 @@ body {
   const hasRunOnce = ref(false);
 
   const runCode = () => {
-    previewError.value = null;
-    updatePreviewFrame();
-    setActiveView("preview");
+    if (!editor) return;
 
-    if (!hasRunOnce.value) {
-      runConfetti();
-      hasRunOnce.value = true;
-      localStorage.setItem("hasRunOnce", "true");
+    try {
+      clearConsole();
+
+      fileContents[activeFile.value].value = editor.getValue();
+
+      activeView.value = "preview";
+
+      if (!hasRunOnce.value) {
+        runConfetti();
+        hasRunOnce.value = true;
+        localStorage.setItem("hasRunOnce", "true");
+      }
+
+      updatePreviewFrame();
+    } catch (error) {
+      consoleLogs.value.push({
+        type: "error",
+        message: error.message,
+        timestamp: new Date().toLocaleTimeString(),
+      });
     }
   };
 
@@ -950,6 +933,26 @@ body {
     };
     currentLanguage.value = fileExtensions[activeFile.value] || "Unknown";
     currentEncoding.value = "UTF-8";
+  };
+
+  const getLastSavedText = (date) => {
+    if (!date) return "never";
+
+    const now = new Date();
+    const diff = now - date;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) {
+      return `${days}d`;
+    } else if (hours > 0) {
+      return `${hours}h`;
+    } else if (minutes > 0) {
+      return `${minutes}m`;
+    } else {
+      return "now";
+    }
   };
 
   const formatLastSaved = computed(() => {
@@ -1184,6 +1187,9 @@ body {
     }
   };
 
+  let lastError = null;
+  let lastErrorTime = 0;
+
   onMounted(() => {
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme) {
@@ -1216,7 +1222,6 @@ body {
 
     nextTick(() => {
       initEditor();
-      updatePreviewFrame();
       loadSavedCode();
       handleFileFromUrl();
     });
@@ -1297,6 +1302,24 @@ body {
     hasRunOnce.value = localStorage.getItem("hasRunOnce") === "true";
 
     updateLanguageAndEncoding();
+
+    window.addEventListener("message", (event) => {
+      if (event.data && event.data.type === "error") {
+        const currentTime = Date.now();
+        if (
+          lastError !== event.data.message ||
+          currentTime - lastErrorTime > 1000
+        ) {
+          lastError = event.data.message;
+          lastErrorTime = currentTime;
+          consoleLogs.value.push({
+            type: "error",
+            message: event.data.message,
+            timestamp: new Date().toLocaleTimeString(),
+          });
+        }
+      }
+    });
   });
 
   onUnmounted(() => {
@@ -1307,6 +1330,7 @@ body {
       previewWindow.value.close();
     }
     document.removeEventListener("click", handleClickOutside);
+    window.removeEventListener("message", () => {});
   });
 
   watch(activeFile, (newFile) => {
@@ -1438,5 +1462,9 @@ body {
     toggleThemeMobile,
     toggleThemeOnly,
     previewError,
+    getLastSavedText,
+    initEditor,
+    justSaved,
+    hasRunOnce,
   };
 }
