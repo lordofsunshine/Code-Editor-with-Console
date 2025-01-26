@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://code-editor.pro/</loc>
+    <lastmod>2023-10-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://code-editor.pro/about</loc>
+    <lastmod>2023-10-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://code-editor.pro/contact</loc>
+    <lastmod>2023-10-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <!-- Add more URLs as needed -->
+</urlset> 

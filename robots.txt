@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /private/
+Disallow: /temp/
+Allow: /
+Sitemap: https://code-editor.pro/sitemap.xml 
