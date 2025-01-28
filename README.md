@@ -2,7 +2,7 @@
 
 A versatile and interactive code editor built with Vue.js, featuring live preview, console output, and theme customization.
 
-<img alt="Banner" src="https://cdn.glitch.global/76e885ee-9eed-4908-917e-590dfd34f4bd/image.png?v=1737659070990">
+<img alt="Banner" src="https://cdn.glitch.global/4ae4fbec-cbe7-491c-b8b9-57879c9f0e5d/9ec9a6e8-3b7b-4305-9657-9d7c75685dfe.image.png?v=1738080588866">
 
 > [!NOTE]
 > Our website **is available by domain** ( [code-editor.pro](https://code-editor.pro/) ), if the site is unavailable for the first domain, then ( [click](https://code-editor-with-console.vercel.app) )
@@ -36,21 +36,7 @@ A versatile and interactive code editor built with Vue.js, featuring live previe
 - Commands
 - Project download functionality
 - Fullscreen preview mode
-- Responsive design for various screen sizes
-
-<hr>
-
-## Mobile Adaptation
-
-<img alt="Banner two" width="340" src="https://cdn.glitch.global/4ae4fbec-cbe7-491c-b8b9-57879c9f0e5d/123.png?v=1737649215845">
-
-## Commands
-
-<img alt="Banner three" src="https://cdn.glitch.global/64e004e3-d81d-4b3a-9fb1-c899982de83f/44a3ba2e-be51-451e-a441-b5c2c17009fe.image.png?v=1735054435710">
-
-## Light Theme
-
-<img alt="Banner three" width="900" src="https://cdn.glitch.global/4ae4fbec-cbe7-491c-b8b9-57879c9f0e5d/c5b69499-abfb-4533-8c9b-95c2cb8472f7.image.png?v=1737649251679">
+- Responsive design for various screen sizes.
 
 <hr>
 
@@ -93,6 +79,20 @@ yarn dev
 - File Saver
 - GSAP (GreenSock Animation Platform)
 - Canvas Confetti
+
+<hr>
+
+## Mobile Adaptation
+
+<img alt="Banner two" width="340" src="https://cdn.glitch.global/4ae4fbec-cbe7-491c-b8b9-57879c9f0e5d/code-editor.pro__file%3Dstyle.css(Samsung%20Galaxy%20S8%2B).png?v=1738080609945">
+
+## Commands
+
+<img alt="Banner three" src="https://cdn.glitch.global/64e004e3-d81d-4b3a-9fb1-c899982de83f/44a3ba2e-be51-451e-a441-b5c2c17009fe.image.png?v=1735054435710">
+
+## Light Theme
+
+<img alt="Banner three" width="900" src="https://cdn.glitch.global/4ae4fbec-cbe7-491c-b8b9-57879c9f0e5d/2ccb7746-e401-45dc-bf56-914f3a651bd6.image.png?v=1738080630338">
 
 ## License
 
