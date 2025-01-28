@@ -37,6 +37,7 @@
             </div>
             <div class="relative">
               <button @click="toggleTheme"
+                data-dropdown="theme"
                 class="bg-transparent bg-hover p-2 rounded-md button-animation theme-toggle-icon"
                 @mouseenter="showTooltip($event, 'Toggle theme')" @mouseleave="hideTooltip">
                 <svg v-if="theme === 'light'" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
@@ -124,26 +125,12 @@
         <div class="flex items-center justify-between h-12 px-4 border-b border-muted">
           <span class="text-xs uppercase tracking-wider file-title font-medium">Explorer</span>
           <div class="relative">
-            <button @click="toggleUploadDropdown" class="bg-transparent bg-navv bg-hover p-2 rounded-md button-animation"
-              @mouseenter="showTooltip($event, 'Explorer Menu')" @mouseleave="hideTooltip">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="lucide lucide-settings w-4 h-4">
-                <path
-                  d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z">
-                </path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-              <span class="sr-only">Explorer Actions</span>
+            <button @click="triggerFileUpload"
+              class="bg-transparent px-3 py-1.5 rounded-md upload-button text-sm font-medium"
+              @mouseenter="showTooltip($event, 'Upload Files')" 
+              @mouseleave="hideTooltip">
+              Upload
             </button>
-            <transition name="dropdown">
-              <div v-if="showUploadDropdown"
-                class="absolute upload-dropdown right-0 w-40 bg-dropdown shadow-lg mt-2 rounded-md overflow-hidden z-10">
-                <button @click="triggerFileUpload"
-                  class="upload-btn w-full text-left px-2 py-1 cursor-pointer hover:bg-hover button-animation">Upload
-                  file</button>
-              </div>
-            </transition>
           </div>
           <input type="file" ref="fileInput" @change="handleFileUpload" multiple style="display: none;"
             accept=".html,.css,.js">
@@ -211,7 +198,16 @@
           </button>
           <div class="footer-text">
             <span class="file-type">{{ activeFile.toUpperCase() }}</span>
-            <span class="encoding">UTF-8</span>
+            <span class="encoding flex items-center gap-1">
+              <template v-if="isDetectingEncoding">
+                <svg class="animate-spin h-3 w-3 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Detecting...</span>
+              </template>
+              <span v-else>{{ currentEncoding }}</span>
+            </span>
             <div class="save-info">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -266,23 +262,47 @@
         </div>
       </div>
     </transition>
-    <transition name="fade">
-      <div v-if="showDownloadPopup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="download-popup p-6 w-96">
-          <h2 class="text-xl font-bold mb-4">Download Project</h2>
-          <input v-model="projectName" class="w-full px-3 py-2 border download-input mb-4" placeholder="myproject1234...">
-          <div class="flex justify-start">
-            <button @click="cancelDownload" style="font-size: 14px;transition: 0.2s all"
-              class="px-4 py-2 text-gr hover:text-gray-700 mr-2 button-animation">Cancel</button>
-            <button @click="downloadProject" class="px-4 py-2 download-btn text-white rounded button-animation">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="lucide lucide-cloud-download h-4 w-4">
-                <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
-                <path d="M12 12v9"></path>
-                <path d="m8 17 4 4 4-4"></path>
-              </svg> Download
-            </button>
+    <transition name="modal">
+      <div v-if="showDownloadPopup" class="modal-backdrop">
+        <div class="modern-popup" @click.stop>
+          <div class="glass-effect"></div>
+          <div class="modern-popup-content">
+            <div class="modern-popup-header">
+              <h2>Download Project</h2>
+              <button @click="cancelDownload" class="close-btn" aria-label="Close">
+                <svg width="20" height="20" viewBox="0 0 20 20">
+                  <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+            
+            <div class="modern-popup-body">
+              <div class="input-wrapper">
+                <label for="projectName">Project Name</label>
+                <input 
+                  v-model="projectName"
+                  id="projectName"
+                  type="text"
+                  placeholder="Enter project name..."
+                  @keyup.enter="downloadProject"
+                  class="modern-input"
+                >
+              </div>
+            </div>
+
+            <div class="modern-popup-footer">
+              <button 
+                @click="handleDownload" 
+                :disabled="!projectName"
+                class="download-btn"
+                :class="{ 'disabled': !projectName }"
+              >
+                <span>Download</span>
+                <svg width="16" height="16" viewBox="0 0 16 16" class="download-icon">
+                  <path d="M8 2v8m0 0l-3-3m3 3l3-3m-7.5 6h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -303,73 +323,119 @@
             </button>
           </div>
           <div class="mobile-menu-items">
-            <button @click="runCodeMobile" class="mobile-menu-item mobile-run-button">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="6 3 20 12 6 21 6 3"></polygon>
-              </svg>
-              <span>Run</span>
-            </button>
-            <button @click="formatTextMobile" class="mobile-menu-item">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="21" x2="3" y1="6" y2="6"></line>
-                <line x1="15" x2="3" y1="12" y2="12"></line>
-                <line x1="17" x2="3" y1="18" y2="18"></line>
-              </svg>
-              <span>Format</span>
-            </button>
-            <button @click="undoMobile" :disabled="!canUndo" class="mobile-menu-item">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 14 4 9l5-5"></path>
-                <path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"></path>
-              </svg>
-              <span>Undo</span>
-            </button>
-            <button @click="redoMobile" :disabled="!canRedo" class="mobile-menu-item">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m15 14 5-5-5-5"></path>
-                <path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13"></path>
-              </svg>
-              <span>Redo</span>
-            </button>
-            <button @click="saveCodeMobile" class="mobile-menu-item">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                <polyline points="7 3 7 8 15 8"></polyline>
-              </svg>
-              <span>Save</span>
-            </button>
-            <button @click="toggleThemeOnly" class="mobile-menu-item">
-              <svg v-if="theme === 'light'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="4"></circle>
-                <path d="M12 2v2"></path>
-                <path d="M12 20v2"></path>
-                <path d="m4.93 4.93 1.41 1.41"></path>
-                <path d="m17.66 17.66 1.41 1.41"></path>
-                <path d="M2 12h2"></path>
-                <path d="M20 12h2"></path>
-                <path d="m6.34 17.66-1.41 1.41"></path>
-                <path d="m19.07 4.93-1.41 1.41"></path>
-              </svg>
-              <svg v-else-if="theme === 'dark'" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
-              </svg>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                <line x1="8" y1="21" x2="16" y2="21"></line>
-                <line x1="12" y1="17" x2="12" y2="21"></line>
-              </svg>
-              <span>Theme</span>
-            </button>
+            <!-- Основные действия -->
+            <div class="mobile-menu-section">
+              <div class="mobile-menu-section-title">Actions</div>
+              <button @click="runCodeMobile" class="mobile-menu-item mobile-run-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="6 3 20 12 6 21 6 3"></polygon>
+                </svg>
+                <span>Run</span>
+              </button>
+              <button @click="saveCodeMobile" class="mobile-menu-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                <span>Save</span>
+              </button>
+              <button @click="openDownloadPopupMobile" class="mobile-menu-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" x2="12" y1="15" y2="3"></line>
+                </svg>
+                <span>Download</span>
+              </button>
+            </div>
+
+            <!-- Редактирование -->
+            <div class="mobile-menu-section">
+              <div class="mobile-menu-section-title">Edit</div>
+              <button @click="formatTextMobile" class="mobile-menu-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="21" x2="3" y1="6" y2="6"></line>
+                  <line x1="15" x2="3" y1="12" y2="12"></line>
+                  <line x1="17" x2="3" y1="18" y2="18"></line>
+                </svg>
+                <span>Format</span>
+              </button>
+              <button @click="undoMobile" :disabled="!canUndo" class="mobile-menu-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 14 4 9l5-5"></path>
+                  <path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"></path>
+                </svg>
+                <span>Undo</span>
+              </button>
+              <button @click="redoMobile" :disabled="!canRedo" class="mobile-menu-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m15 14 5-5-5-5"></path>
+                  <path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13"></path>
+                </svg>
+                <span>Redo</span>
+              </button>
+            </div>
+
+            <!-- Настройки -->
+            <div class="mobile-menu-section">
+              <div class="mobile-menu-section-title">Settings</div>
+              <button @click="toggleThemeOnly" class="mobile-menu-item">
+                <template v-if="theme === 'light'">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <path d="M12 2v2"></path>
+                    <path d="M12 20v2"></path>
+                    <path d="m4.93 4.93 1.41 1.41"></path>
+                    <path d="m17.66 17.66 1.41 1.41"></path>
+                    <path d="M2 12h2"></path>
+                    <path d="M20 12h2"></path>
+                    <path d="m6.34 17.66-1.41 1.41"></path>
+                    <path d="m19.07 4.93-1.41 1.41"></path>
+                  </svg>
+                </template>
+                <template v-else-if="theme === 'dark'">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+                  </svg>
+                </template>
+                <template v-else>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" x2="16" y1="21" y2="21"></line>
+                    <line x1="12" x2="12" y1="17" y2="21"></line>
+                  </svg>
+                </template>
+                <span>Theme</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+    <!-- Error Popup -->
+    <transition name="slide-fade">
+      <div v-if="showErrorPopup" class="error-popup" :class="{ hiding: isErrorPopupHiding }">
+        <div class="error-popup-content">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" 
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+            class="error-popup-icon">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <div class="error-popup-message">
+            {{ errorMessage }}
           </div>
         </div>
       </div>

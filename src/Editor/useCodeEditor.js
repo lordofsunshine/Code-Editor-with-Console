@@ -19,7 +19,6 @@ export function useCodeEditor() {
   const activeView = ref("editor");
   const theme = ref(localStorage.getItem("theme") || "dark");
   const showThemeDropdown = ref(false);
-  const showUploadDropdown = ref(false);
   const showConsole = ref(false);
   const consoleLogs = ref([]);
   const consoleInput = ref("");
@@ -48,7 +47,8 @@ export function useCodeEditor() {
   const editorWrap = ref(localStorage.getItem("editorWrap") !== "false");
 
   const currentLanguage = ref("HTML");
-  const currentEncoding = ref("UTF-8");
+  const currentEncoding = ref("Detecting...");
+  const isDetectingEncoding = ref(false);
   const lastSaved = ref(null);
 
   const files = [
@@ -685,20 +685,44 @@ body {
     projectName.value = "";
   };
 
-  const downloadProject = async () => {
-    const zip = new JSZip();
-    zip.file("index.html", fileContents.html.value);
-    zip.file("style.css", fileContents.css.value);
-    zip.file("script.js", fileContents.js.value);
+  const handleDownload = async () => {
+    if (!projectName.value) return;
 
-    const content = await zip.generateAsync({ type: "blob" });
-    const fileName = projectName.value.trim()
-      ? `${projectName.value}.zip`
-      : "website.zip";
-    saveAs(content, fileName);
+    try {
+      const zip = new JSZip();
+      
+      const projectFolder = zip.folder(projectName.value);
+      
+      projectFolder.file('index.html', fileContents.html.value || '');
+      projectFolder.file('styles.css', fileContents.css.value || '');
+      projectFolder.file('script.js', fileContents.js.value || '');
 
-    showDownloadPopup.value = false;
-    projectName.value = "";
+      const content = await zip.generateAsync({
+        type: 'blob',
+        compression: 'DEFLATE',
+        compressionOptions: {
+          level: 9
+        }
+      });
+
+      const url = window.URL.createObjectURL(content);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${projectName.value}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+      
+      setTimeout(() => {
+        showDownloadPopup.value = false;
+        projectName.value = '';
+      }, 300);
+
+    } catch (error) {
+      console.error('Error creating zip:', error);
+    }
   };
 
   const toggleThemeDropdown = () => {
@@ -725,12 +749,25 @@ body {
     }, 1500);
   };
 
-  const toggleUploadDropdown = () => {
-    showUploadDropdown.value = !showUploadDropdown.value;
-  };
-
   const triggerFileUpload = () => {
     fileInput.value.click();
+  };
+
+  const showErrorPopup = ref(false);
+  const isErrorPopupHiding = ref(false);
+  const errorMessage = ref('');
+
+  const showError = (message) => {
+    errorMessage.value = message;
+    showErrorPopup.value = true;
+    isErrorPopupHiding.value = false;
+
+    setTimeout(() => {
+      isErrorPopupHiding.value = true;
+      setTimeout(() => {
+        showErrorPopup.value = false;
+      }, 500);
+    }, 5000);
   };
 
   const handleFileUpload = (event) => {
@@ -743,11 +780,7 @@ body {
     );
 
     if (invalidFiles.length > 0) {
-      consoleLogs.value.push({
-        type: "error",
-        message: `Invalid file type(s): ${invalidFiles.map((f) => f.name).join(", ")}. Only .html, .css, and .js files are supported.`,
-        timestamp: new Date().toLocaleTimeString(),
-      });
+      showError(`Invalid file type(s): ${invalidFiles.map((f) => f.name).join(", ")}. Only .html, .css, and .js files are supported.`);
       event.target.value = "";
       return;
     }
@@ -773,7 +806,6 @@ body {
       reader.readAsText(file);
     });
 
-    showUploadDropdown.value = false;
     event.target.value = "";
   };
 
@@ -1001,16 +1033,11 @@ body {
   };
 
   const handleClickOutside = (event) => {
-    const mobileMenu = document.querySelector(".mobile-menu-content");
-    const hamburgerButton = document.querySelector(".mobile-menu-button");
-
-    if (
-      mobileMenu &&
-      !mobileMenu.contains(event.target) &&
-      hamburgerButton &&
-      !hamburgerButton.contains(event.target)
-    ) {
-      toggleMobileMenu();
+    const isThemeDropdown = event.target.closest('.theme-dropdown');
+    const isThemeButton = event.target.closest('[data-dropdown="theme"]');
+    
+    if (!isThemeDropdown && !isThemeButton) {
+      showThemeDropdown.value = false;
     }
   };
 
@@ -1045,7 +1072,15 @@ body {
   };
 
   const toggleThemeOnly = () => {
-    toggleTheme();
+    if (theme.value === 'light') {
+      theme.value = 'dark';
+    } else if (theme.value === 'dark') {
+      theme.value = 'system';
+    } else {
+      theme.value = 'light';
+    }
+    localStorage.setItem('theme', theme.value);
+    isMobileMenuOpen.value = false;
   };
 
   const previewError = ref(null);
@@ -1320,6 +1355,9 @@ body {
         }
       }
     });
+
+    document.addEventListener('click', handleClickOutside);
+    setupEncodingDetection();
   });
 
   onUnmounted(() => {
@@ -1396,6 +1434,95 @@ body {
     }
   });
 
+  const detectEncoding = async (text) => {
+    isDetectingEncoding.value = true;
+    currentEncoding.value = 'Detecting...';
+
+    try {
+      const firstBytes = new Uint8Array(Buffer.from(text)).slice(0, 4);
+      
+      if (firstBytes[0] === 0xEF && firstBytes[1] === 0xBB && firstBytes[2] === 0xBF) {
+        currentEncoding.value = 'UTF-8 with BOM';
+        return;
+      }
+      
+      if (firstBytes[0] === 0xFE && firstBytes[1] === 0xFF) {
+        currentEncoding.value = 'UTF-16 BE';
+        return;
+      }
+      
+      if (firstBytes[0] === 0xFF && firstBytes[1] === 0xFE) {
+        currentEncoding.value = 'UTF-16 LE';
+        return;
+      }
+      
+      if (firstBytes[0] === 0x00 && firstBytes[1] === 0x00 && firstBytes[2] === 0xFE && firstBytes[3] === 0xFF) {
+        currentEncoding.value = 'UTF-32 BE';
+        return;
+      }
+      
+      if (firstBytes[0] === 0xFF && firstBytes[1] === 0xFE && firstBytes[2] === 0x00 && firstBytes[3] === 0x00) {
+        currentEncoding.value = 'UTF-32 LE';
+        return;
+      }
+
+      const isValidUTF8 = (str) => {
+        try {
+          const decoder = new TextDecoder('utf-8', { fatal: true });
+          decoder.decode(new TextEncoder().encode(str));
+          return true;
+        } catch {
+          return false;
+        }
+      };
+
+      const hasExtendedAscii = /[\x80-\xFF]/.test(text);
+      const hasMultibyteSequences = /[\u0080-\uffff]/.test(text);
+      
+      if (!hasExtendedAscii && !hasMultibyteSequences) {
+        currentEncoding.value = 'ASCII';
+      } else if (isValidUTF8(text)) {
+        currentEncoding.value = 'UTF-8';
+      } else {
+        const cyrillicPattern = /[а-яА-Я]/;
+        const latinPattern = /[a-zA-Z]/;
+        
+        if (cyrillicPattern.test(text) && !isValidUTF8(text)) {
+          currentEncoding.value = 'Windows-1251';
+        } else if (latinPattern.test(text) && !isValidUTF8(text)) {
+          currentEncoding.value = 'ISO-8859-1';
+        } else {
+          currentEncoding.value = 'Unknown';
+        }
+      }
+    } catch (error) {
+      console.error('Error detecting encoding:', error);
+      currentEncoding.value = 'Unknown';
+    } finally {
+      isDetectingEncoding.value = false;
+    }
+  };
+
+  const setupEncodingDetection = () => {
+    if (editor) {
+      editor.getSession().on('change', async () => {
+        const content = editor.getValue();
+        await detectEncoding(content);
+      });
+    }
+  };
+
+  const openDownloadPopupMobile = () => {
+    showDownloadPopup.value = true;
+    isMobileMenuOpen.value = false;
+    nextTick(() => {
+      const input = document.querySelector('#projectName');
+      if (input) {
+        input.focus();
+      }
+    });
+  };
+
   return {
     editorContainer,
     previewFrame,
@@ -1404,7 +1531,6 @@ body {
     theme,
     themes,
     showThemeDropdown,
-    showUploadDropdown,
     showConsole,
     consoleLogs,
     consoleInput,
@@ -1425,11 +1551,10 @@ body {
     executeConsoleCommand,
     openDownloadPopup,
     cancelDownload,
-    downloadProject,
+    handleDownload,
     toggleThemeDropdown,
     setTheme,
     saveCode,
-    toggleUploadDropdown,
     triggerFileUpload,
     handleFileUpload,
     handleButtonClick,
@@ -1466,5 +1591,10 @@ body {
     initEditor,
     justSaved,
     hasRunOnce,
+    isDetectingEncoding,
+    showErrorPopup,
+    isErrorPopupHiding,
+    errorMessage,
+    openDownloadPopupMobile,
   };
 }

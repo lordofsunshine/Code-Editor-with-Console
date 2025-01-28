@@ -1,5 +1,14 @@
 User-agent: *
 Disallow: /private/
 Disallow: /temp/
+Disallow: /api/
+Disallow: /admin/
 Allow: /
-Sitemap: https://code-editor.pro/sitemap.xml 
+
+Allow: /*.html
+Allow: /*.css
+Allow: /*.js
+
+Sitemap: https://code-editor.pro/sitemap.xml
+
+Crawl-delay: 10 
