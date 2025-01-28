@@ -9,12 +9,16 @@ A versatile and interactive code editor built with Vue.js, featuring live previe
 
 <hr>
 
-# 🌑 **What's New: 0.1.4** 🌑
-
+# 🌑 **What's New: 0.1.4 (2)** 🌑
+### Part 1 
 - [x] Instead of auto-updating the code, which often produced many errors during coding, we've implemented a Run button that displays your results and code changes when clicked.
 - [x] Our editor has undergone a redesign, including rearrangement of elements and updated animations. The style and design are changing, and I'm trying to keep them updated as well. =)
 - [x] The code editor is now fully compatible with mobile devices. Due to the expanded functionality of the editor, we had to create a special menu with all the functions so that you can write code even from your phone!
 - [x] Various minor elements have been added to the site. Errors in the editor have been fixed, such as incorrect code formatting.
+### Part 2 
+- [x] Checks and error handling were added, and the design of popup cards was updated. There are no longer any Dropdowns in the code editor. Animations were updated.
+- [x] Now the code editor AUTOMATICALLY detects the file encoding.
+- [x] Now when downloading the project as a zip archive, there will first be a folder containing your files inside.
 
 **We are also preparing for the File Creation feature.** We are already trying to implement it, but it will take more time and effort, so we've released this seemingly small update, which is quite significant for the future of the code editor. For example, in the address bar, the value */?file=script.js* now includes the full file name with its format. :D
 
