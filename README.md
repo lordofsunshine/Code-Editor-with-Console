@@ -19,6 +19,8 @@ A versatile and interactive code editor built with Vue.js, featuring live previe
 - [x] Checks and error handling were added, and the design of popup cards was updated. There are no longer any Dropdowns in the code editor. Animations were updated.
 - [x] Now the code editor AUTOMATICALLY detects the file encoding.
 - [x] Now when downloading the project as a zip archive, there will first be a folder containing your files inside.
+- [x] **A new feature has been added** to the code editor - auto-save when! You can enable this feature through our Terminal, using the `editor autosave` command.
+- [x] Correction of errors and omissions.
 
 **We are also preparing for the File Creation feature.** We are already trying to implement it, but it will take more time and effort, so we've released this seemingly small update, which is quite significant for the future of the code editor. For example, in the address bar, the value */?file=script.js* now includes the full file name with its format. :D
 
