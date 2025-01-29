@@ -1064,7 +1064,7 @@ input::placeholder {
 }
 
 .mobile-menu-item:hover {
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-secondary) !important;
   transform: translateX(5px);
 }
 
