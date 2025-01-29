@@ -388,22 +388,25 @@ body {
       wrap: editorWrap.value,
       useWorker: false,
       scrollPastEnd: 0.5,
-      enableBasicAutocompletion: editorAutocomplete.value,
-      enableLiveAutocompletion: editorAutocomplete.value,
-      enableSnippets: true,
     });
 
-    editor
-      .getSession()
-      .setMode(
-        `ace/mode/${activeFile.value === "js" ? "javascript" : activeFile.value}`,
-      );
+    setTimeout(() => {
+      editor.setOptions({
+        enableBasicAutocompletion: editorAutocomplete.value,
+        enableLiveAutocompletion: editorAutocomplete.value,
+        enableSnippets: true,
+      });
+    }, 100);
 
-    if (fileContents[activeFile.value].value) {
-      editor.setValue(fileContents[activeFile.value].value, -1);
-    }
+    setupEditorEvents();
+    
+    nextTick(() => {
+      updatePreviewFrame();
+    });
+  };
 
-    fileContents[activeFile.value].session = editor.getSession();
+  const setupEditorEvents = () => {
+    if (!editor) return;
 
     editor.on("change", () => {
       fileContents[activeFile.value].value = editor.getValue();
@@ -411,8 +414,30 @@ body {
       updateUndoRedoState();
     });
 
-    updateUndoRedoState();
-    updatePreviewFrame();
+    editor.getSession().on("changeScrollTop", () => {
+      if (tooltip.value) {
+        hideTooltip();
+      }
+    });
+
+    editor.getSession().on('change', () => {
+      requestAnimationFrame(async () => {
+        const content = editor.getValue();
+        await detectEncoding(content);
+      });
+    });
+
+    let autoSaveTimer;
+    editor.on("change", () => {
+      if (!autoSaveEnabled.value) return;
+      
+      clearTimeout(autoSaveTimer);
+      autoSaveTimer = setTimeout(() => {
+        if (hasUnsavedChanges.value) {
+          saveCode();
+        }
+      }, 5000);
+    });
   };
 
   const createPreviewContent = () => {
@@ -444,29 +469,27 @@ body {
   const updatePreviewFrame = () => {
     if (!previewFrame.value) return;
 
-    const htmlContent = fileContents.html.value;
-    const cssContent = fileContents.css.value;
-    const jsContent = fileContents.js.value;
+    requestAnimationFrame(() => {
+      const htmlContent = fileContents.html.value;
+      const cssContent = fileContents.css.value;
+      const jsContent = fileContents.js.value;
 
-    const content = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>${cssContent}</style>
-        </head>
-        <body>
-          ${htmlContent}
-          <script>${jsContent}</script>
-        </body>
-      </html>
-    `;
+      const content = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>${cssContent}</style>
+          </head>
+          <body>
+            ${htmlContent}
+            <script>${jsContent}</script>
+          </body>
+        </html>
+      `;
 
-    const previewDocument =
-      previewFrame.value.contentDocument ||
-      previewFrame.value.contentWindow.document;
-    previewDocument.open();
-    previewDocument.write(content);
-    previewDocument.close();
+      const blob = new Blob([content], { type: 'text/html' });
+      previewFrame.value.src = URL.createObjectURL(blob);
+    });
   };
 
   const openPreviewInNewTab = () => {
@@ -649,6 +672,15 @@ body {
           timestamp: timestamp,
         });
         break;
+      case "autosave":
+        autoSaveEnabled.value = !autoSaveEnabled.value;
+        localStorage.setItem("editorAutoSave", autoSaveEnabled.value);
+        consoleLogs.value.push({
+          type: "success",
+          message: `Auto-save ${autoSaveEnabled.value ? "enabled" : "disabled"}`,
+          timestamp: timestamp,
+        });
+        break;
       case "help":
         const helpCommands = [
           "Available commands:",
@@ -658,6 +690,7 @@ body {
           "- editor linenumbers: Toggle line numbers",
           "- editor wrap: Toggle line wrap",
           "- editor format: Format code",
+          "- editor autosave: Toggle auto-save",
           "- editor help: Show this help message",
         ];
         const helpMessage = helpCommands.join("\n");
@@ -787,7 +820,7 @@ body {
 
     files.forEach((file) => {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const content = e.target.result;
         if (file.name.endsWith(".html")) {
           fileContents.html.value = content;
@@ -802,6 +835,7 @@ body {
         if (editor) {
           editor.setValue(content, -1);
         }
+        await updateLanguageAndEncoding();
       };
       reader.readAsText(file);
     });
@@ -929,16 +963,16 @@ body {
 
     try {
       clearConsole();
-
       fileContents[activeFile.value].value = editor.getValue();
-
       activeView.value = "preview";
 
-      if (!hasRunOnce.value) {
-        runConfetti();
-        hasRunOnce.value = true;
-        localStorage.setItem("hasRunOnce", "true");
-      }
+      setTimeout(() => {
+        if (!hasRunOnce.value) {
+          runConfetti();
+          hasRunOnce.value = true;
+          localStorage.setItem("hasRunOnce", "true");
+        }
+      }, 0);
 
       updatePreviewFrame();
     } catch (error) {
@@ -957,14 +991,9 @@ body {
     setTheme(themes[nextIndex]);
   };
 
-  const updateLanguageAndEncoding = () => {
-    const fileExtensions = {
-      html: "HTML",
-      css: "CSS",
-      js: "JavaScript",
-    };
-    currentLanguage.value = fileExtensions[activeFile.value] || "Unknown";
-    currentEncoding.value = "UTF-8";
+  const updateLanguageAndEncoding = async () => {
+    const currentContent = fileContents[activeFile.value].value;
+    await detectEncoding(currentContent);
   };
 
   const getLastSavedText = (date) => {
@@ -1226,10 +1255,47 @@ body {
   let lastErrorTime = 0;
 
   onMounted(() => {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme) {
-      setTheme(savedTheme);
-    }
+    nextTick(() => {
+      initEditor();
+      loadSavedCode();
+      handleFileFromUrl();
+    });
+
+    setTimeout(() => {
+      const savedTheme = localStorage.getItem("theme");
+      if (savedTheme) {
+        setTheme(savedTheme);
+      }
+
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      mediaQuery.addListener(() => {
+        if (theme.value === "system") {
+          applyTheme("system");
+        }
+      });
+
+      window.addEventListener("resize", () => {
+        if (editor) {
+          requestAnimationFrame(() => {
+            editor.resize();
+          });
+        }
+      });
+
+      setupEncodingDetection();
+    }, 0);
+
+    setTimeout(() => {
+      window.addEventListener("beforeunload", (event) => {
+        if (hasUnsavedChanges.value) {
+          event.preventDefault();
+          event.returnValue = "";
+        }
+      });
+
+      document.addEventListener('click', handleClickOutside);
+    }, 500);
+
     window.addEventListener("message", (event) => {
       if (
         event.data &&
@@ -1253,12 +1319,6 @@ body {
           });
         }
       }
-    });
-
-    nextTick(() => {
-      initEditor();
-      loadSavedCode();
-      handleFileFromUrl();
     });
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -1303,13 +1363,6 @@ body {
     } else {
       setActiveFile("html");
     }
-
-    window.addEventListener("beforeunload", (event) => {
-      if (hasUnsavedChanges.value) {
-        event.preventDefault();
-        event.returnValue = "";
-      }
-    });
 
     const savedFontSize = localStorage.getItem("fontSize");
     if (savedFontSize && editor) {
@@ -1439,58 +1492,43 @@ body {
     currentEncoding.value = 'Detecting...';
 
     try {
-      const firstBytes = new Uint8Array(Buffer.from(text)).slice(0, 4);
+      const encoder = new TextEncoder();
+      const bytes = encoder.encode(text);
       
-      if (firstBytes[0] === 0xEF && firstBytes[1] === 0xBB && firstBytes[2] === 0xBF) {
+      if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
         currentEncoding.value = 'UTF-8 with BOM';
         return;
       }
       
-      if (firstBytes[0] === 0xFE && firstBytes[1] === 0xFF) {
-        currentEncoding.value = 'UTF-16 BE';
-        return;
-      }
-      
-      if (firstBytes[0] === 0xFF && firstBytes[1] === 0xFE) {
-        currentEncoding.value = 'UTF-16 LE';
-        return;
-      }
-      
-      if (firstBytes[0] === 0x00 && firstBytes[1] === 0x00 && firstBytes[2] === 0xFE && firstBytes[3] === 0xFF) {
-        currentEncoding.value = 'UTF-32 BE';
-        return;
-      }
-      
-      if (firstBytes[0] === 0xFF && firstBytes[1] === 0xFE && firstBytes[2] === 0x00 && firstBytes[3] === 0x00) {
-        currentEncoding.value = 'UTF-32 LE';
-        return;
-      }
-
-      const isValidUTF8 = (str) => {
-        try {
-          const decoder = new TextDecoder('utf-8', { fatal: true });
-          decoder.decode(new TextEncoder().encode(str));
-          return true;
-        } catch {
-          return false;
+      if (bytes.length >= 2) {
+        if (bytes[0] === 0xFE && bytes[1] === 0xFF) {
+          currentEncoding.value = 'UTF-16 BE';
+          return;
         }
-      };
-
-      const hasExtendedAscii = /[\x80-\xFF]/.test(text);
-      const hasMultibyteSequences = /[\u0080-\uffff]/.test(text);
+        if (bytes[0] === 0xFF && bytes[1] === 0xFE) {
+          currentEncoding.value = 'UTF-16 LE';
+          return;
+        }
+      }
       
-      if (!hasExtendedAscii && !hasMultibyteSequences) {
-        currentEncoding.value = 'ASCII';
-      } else if (isValidUTF8(text)) {
+      if (bytes.length >= 4) {
+        if (bytes[0] === 0x00 && bytes[1] === 0x00 && bytes[2] === 0xFE && bytes[3] === 0xFF) {
+          currentEncoding.value = 'UTF-32 BE';
+          return;
+        }
+        if (bytes[0] === 0xFF && bytes[1] === 0xFE && bytes[2] === 0x00 && bytes[3] === 0x00) {
+          currentEncoding.value = 'UTF-32 LE';
+          return;
+        }
+      }
+
+      try {
+        const decoder = new TextDecoder('utf-8', { fatal: true });
+        decoder.decode(bytes);
         currentEncoding.value = 'UTF-8';
-      } else {
-        const cyrillicPattern = /[а-яА-Я]/;
-        const latinPattern = /[a-zA-Z]/;
-        
-        if (cyrillicPattern.test(text) && !isValidUTF8(text)) {
-          currentEncoding.value = 'Windows-1251';
-        } else if (latinPattern.test(text) && !isValidUTF8(text)) {
-          currentEncoding.value = 'ISO-8859-1';
+      } catch {
+        if (/^[\x00-\x7F]*$/.test(text)) {
+          currentEncoding.value = 'ASCII';
         } else {
           currentEncoding.value = 'Unknown';
         }
@@ -1522,6 +1560,12 @@ body {
       }
     });
   };
+
+  watch(() => [fileContents.html.value, fileContents.css.value, fileContents.js.value], async () => {
+    await updateLanguageAndEncoding();
+  }, { deep: true });
+
+  const autoSaveEnabled = ref(localStorage.getItem('editorAutoSave') === 'true' || false);
 
   return {
     editorContainer,
@@ -1596,5 +1640,6 @@ body {
     isErrorPopupHiding,
     errorMessage,
     openDownloadPopupMobile,
+    autoSaveEnabled,
   };
 }

@@ -19,6 +19,7 @@
   /* Text colors */
   --text-primary: #111827;
   --text-secondary: #4b5563;
+  --text-grey: #76828f;
 
   /* Other colors */
   --border-color: #e5e7eb;
@@ -52,6 +53,7 @@
   --file-title: #ffffff80;
   --white: #ffffff;
   --white-text: #000000;
+  --text-grey: #cbd5e0;
   --dark: #ffffff;
   --grey: #718096;
   --shadow: #0000007d;
@@ -98,6 +100,10 @@ body {
 
 .text-gray-500 {
   color: #6b7280 !important;
+}
+
+.text-gray-400 {
+  color: var(--text-grey) !important;
 }
 
 /* Background styles */
@@ -274,15 +280,35 @@ body {
 }
 
 /* Tooltip styles */
-.tooltip-bottom {
+.tooltip {
+  position: fixed;
+  background-color: var(--bg-tooltip);
   color: var(--text-primary);
-  background: var(--bg-tooltip);
-  box-shadow: 0 0 20px var(--bg-primary);
-  margin-top: 5px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  opacity: 0;
+  transform: scale(0.95) translateY(5px);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 9999999;
   white-space: nowrap;
-  max-width: calc(100vw - 2rem);
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.tooltip::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(8px);
+  border-radius: inherit;
+  z-index: -1;
+}
+
+.tooltip.show {
+  opacity: 1;
+  transform: scale(1) translateY(0);
 }
 
 /* Upload button styles */
@@ -429,7 +455,7 @@ button:focus-visible {
   position: absolute;
   z-index: 99999;
   padding: 5px;
-  margin: 16px 30px;
+  margin: 16px 24px;
   background: var(--bg-preview);
   backdrop-filter: blur(12px);
   border-radius: 50%;
@@ -698,24 +724,6 @@ input::placeholder {
   }
 }
 
-.tooltip {
-  position: fixed;
-  background-color: var(--bg-tooltip);
-  color: var(--dark);
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 13px;
-  opacity: 0;
-  transition: opacity 0.3s ease-in-out;
-  pointer-events: none;
-  z-index: 9999999;
-  white-space: nowrap;
-}
-
-.tooltip.show {
-  opacity: 1;
-}
-
 .button-animation:active {
   transform: scale(0.95);
 }
@@ -917,7 +925,7 @@ input::placeholder {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 99999 !important;
+  z-index: 9999999 !important;
 }
 
 .mobile-menu-overlay {
@@ -1663,7 +1671,6 @@ input::placeholder {
   color: var(--white-text);
 }
 
-/* Добавим анимацию для иконок */
 .mobile-menu-item svg {
   transition: transform 0.2s;
 }

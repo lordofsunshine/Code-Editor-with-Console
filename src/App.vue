@@ -126,10 +126,7 @@
           <span class="text-xs uppercase tracking-wider file-title font-medium">Explorer</span>
           <div class="relative">
             <button @click="triggerFileUpload"
-              class="bg-transparent px-3 py-1.5 rounded-md upload-button text-sm font-medium"
-              @mouseenter="showTooltip($event, 'Upload Files')" 
-              @mouseleave="hideTooltip">
-              Upload
+              class="bg-transparent px-3 py-1.5 rounded-md upload-button text-sm font-medium">Upload
             </button>
           </div>
           <input type="file" ref="fileInput" @change="handleFileUpload" multiple style="display: none;"
@@ -323,7 +320,6 @@
             </button>
           </div>
           <div class="mobile-menu-items">
-            <!-- Основные действия -->
             <div class="mobile-menu-section">
               <div class="mobile-menu-section-title">Actions</div>
               <button @click="runCodeMobile" class="mobile-menu-item mobile-run-button">
@@ -353,7 +349,6 @@
               </button>
             </div>
 
-            <!-- Редактирование -->
             <div class="mobile-menu-section">
               <div class="mobile-menu-section-title">Edit</div>
               <button @click="formatTextMobile" class="mobile-menu-item">
@@ -383,7 +378,6 @@
               </button>
             </div>
 
-            <!-- Настройки -->
             <div class="mobile-menu-section">
               <div class="mobile-menu-section-title">Settings</div>
               <button @click="toggleThemeOnly" class="mobile-menu-item">
@@ -423,7 +417,7 @@
         </div>
       </div>
     </transition>
-    <!-- Error Popup -->
+
     <transition name="slide-fade">
       <div v-if="showErrorPopup" class="error-popup" :class="{ hiding: isErrorPopupHiding }">
         <div class="error-popup-content">
