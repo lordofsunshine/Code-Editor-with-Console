@@ -4,6 +4,9 @@ A versatile and interactive code editor built with Vue.js, featuring live previe
 
 <img alt="Banner" src="https://cdn.glitch.global/4ae4fbec-cbe7-491c-b8b9-57879c9f0e5d/9ec9a6e8-3b7b-4305-9657-9d7c75685dfe.image.png?v=1738080588866">
 
+> [!CAUTION]
+> ***We are currently redesigning the entire code editor to enhance your experience. Please note that your saved code will not be transferred to the new version. Make sure you have backed up your code before proceeding.***
+
 > [!NOTE]
 > Our website **is available by domain** ( [code-editor.pro](https://code-editor.pro/) ), if the site is unavailable for the first domain, then ( [click](https://code-editor-with-console.vercel.app) )
 
