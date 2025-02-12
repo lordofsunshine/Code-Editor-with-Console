@@ -434,6 +434,47 @@
         </div>
       </div>
     </transition>
+
+    <transition name="modal">
+      <div v-if="showUpdatePopup" class="update-modal-backdrop">
+        <div class="update-popup" @click.stop>
+          <div class="update-glass-effect"></div>
+          <div class="update-popup-content">
+            <div class="update-popup-header">
+              <div class="update-icon-wrapper">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </div>
+              <h2>Important Notice</h2>
+            </div>
+            
+            <div class="update-popup-body">
+              <p>We are currently redesigning the entire code editor to enhance your experience. Please note that your saved code will not be transferred to the new version.</p>
+              <p>Make sure you have backed up your code before proceeding.</p>
+            </div>
+
+            <div class="update-popup-footer">
+              <button 
+                @click="acknowledgeUpdate" 
+                :disabled="countdown > 0"
+                class="update-confirm-btn"
+                :class="{ 'disabled': countdown > 0 }"
+              >
+                <template v-if="countdown > 0">
+                  Please wait {{ countdown }}s
+                </template>
+                <template v-else>
+                  Got it, thanks
+                </template>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 

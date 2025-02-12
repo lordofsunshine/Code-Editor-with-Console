@@ -1254,6 +1254,9 @@ body {
   let lastError = null;
   let lastErrorTime = 0;
 
+  const showUpdatePopup = ref(false);
+  const countdown = ref(5);
+
   onMounted(() => {
     nextTick(() => {
       initEditor();
@@ -1411,6 +1414,23 @@ body {
 
     document.addEventListener('click', handleClickOutside);
     setupEncodingDetection();
+
+    const hasStoredCode = localStorage.getItem("htmlCode") || 
+                         localStorage.getItem("cssCode") || 
+                         localStorage.getItem("jsCode");
+                         
+    const hasSeenUpdate = localStorage.getItem("hasSeenUpdate");
+    
+    if (hasStoredCode && !hasSeenUpdate) {
+      showUpdatePopup.value = true;
+      
+      const timer = setInterval(() => {
+        countdown.value--;
+        if (countdown.value <= 0) {
+          clearInterval(timer);
+        }
+      }, 1000);
+    }
   });
 
   onUnmounted(() => {
@@ -1567,6 +1587,13 @@ body {
 
   const autoSaveEnabled = ref(localStorage.getItem('editorAutoSave') === 'true' || false);
 
+  const acknowledgeUpdate = () => {
+    if (countdown.value <= 0) {
+      showUpdatePopup.value = false;
+      localStorage.setItem("hasSeenUpdate", "true");
+    }
+  };
+
   return {
     editorContainer,
     previewFrame,
@@ -1641,5 +1668,8 @@ body {
     errorMessage,
     openDownloadPopupMobile,
     autoSaveEnabled,
+    showUpdatePopup,
+    countdown,
+    acknowledgeUpdate,
   };
 }
