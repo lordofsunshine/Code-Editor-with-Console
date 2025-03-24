@@ -2,7 +2,7 @@
   <div :class="['flex flex-col body-bg h-screen', themeClass]">
     <transition name="slide-fade">
       <div v-if="showUpdatePopup" class="bg-[#1a1b1e] text-white px-4 py-2 flex items-center justify-center text-sm border-b border-[#2a2b2e]">
-        <span>Если домен code-editor.pro перестанет работать, воспользуйтесь доменом <a href="https://code-editor-with-console.vercel.app/" target="_blank" class="text-blue-400 hover:text-blue-300 underline mx-1">code-editor-with-console.vercel.app</a></span>
+        <span>If the domain code-editor.pro if it stops working, use the domain <a href="https://code-editor-with-console .vercel.app/" target="_blank" class="text-blue-400 hover:text-blue-300 underline mx-1">code-editor-with-console.vercel.app</a></span>
         <button @click="acknowledgeUpdate" class="ml-4 text-gray-400 hover:text-gray-300">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>
