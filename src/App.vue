@@ -1,5 +1,16 @@
 <template>
   <div :class="['flex flex-col body-bg h-screen', themeClass]">
+    <transition name="slide-fade">
+      <div v-if="showUpdatePopup" class="bg-[#1a1b1e] text-white px-4 py-2 flex items-center justify-center text-sm border-b border-[#2a2b2e]">
+        <span>Если домен code-editor.pro перестанет работать, воспользуйтесь доменом <a href="https://code-editor-with-console.vercel.app/" target="_blank" class="text-blue-400 hover:text-blue-300 underline mx-1">code-editor-with-console.vercel.app</a></span>
+        <button @click="acknowledgeUpdate" class="ml-4 text-gray-400 hover:text-gray-300">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </transition>
     <header class="flex items-center justify-between h-16 px-4 border-b border-muted">
       <div class="flex items-center justify-between w-full">
         <div class="flex items-center gap-4">
@@ -434,47 +445,6 @@
         </div>
       </div>
     </transition>
-
-    <transition name="modal">
-      <div v-if="showUpdatePopup" class="update-modal-backdrop">
-        <div class="update-popup" @click.stop>
-          <div class="update-glass-effect"></div>
-          <div class="update-popup-content">
-            <div class="update-popup-header">
-              <div class="update-icon-wrapper">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                  <line x1="12" y1="9" x2="12" y2="13"/>
-                  <line x1="12" y1="17" x2="12.01" y2="17"/>
-                </svg>
-              </div>
-              <h2>Important Notice</h2>
-            </div>
-            
-            <div class="update-popup-body">
-              <p>We are currently redesigning the entire code editor to enhance your experience. Please note that your saved code will not be transferred to the new version.</p>
-              <p>Make sure you have backed up your code before proceeding.</p>
-            </div>
-
-            <div class="update-popup-footer">
-              <button 
-                @click="acknowledgeUpdate" 
-                :disabled="countdown > 0"
-                class="update-confirm-btn"
-                :class="{ 'disabled': countdown > 0 }"
-              >
-                <template v-if="countdown > 0">
-                  Please wait {{ countdown }}s
-                </template>
-                <template v-else>
-                  Got it, thanks
-                </template>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </transition>
   </div>
 </template>
 
@@ -488,3 +458,17 @@ export default {
   }
 };
 </script>
+
+<style>
+.slide-fade-enter-active {
+  transition: all 0.3s ease;
+}
+.slide-fade-leave-active {
+  transition: all 0.3s ease;
+}
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  transform: translateY(-100%);
+  opacity: 0;
+}
+</style>

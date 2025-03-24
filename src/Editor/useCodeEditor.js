@@ -1255,7 +1255,24 @@ body {
   let lastErrorTime = 0;
 
   const showUpdatePopup = ref(false);
-  const countdown = ref(5);
+  const lastNotificationShown = ref(localStorage.getItem("lastNotificationShown") || null);
+
+  const checkNotification = () => {
+    const now = new Date().getTime();
+    const lastShown = lastNotificationShown.value ? new Date(parseInt(lastNotificationShown.value)).getTime() : 0;
+    const oneMonth = 30 * 24 * 60 * 60 * 1000; // 30 дней в миллисекундах
+
+    if (!lastShown || (now - lastShown) >= oneMonth) {
+      showUpdatePopup.value = true;
+    }
+  };
+
+  const acknowledgeUpdate = () => {
+    showUpdatePopup.value = false;
+    const now = new Date().getTime();
+    localStorage.setItem("lastNotificationShown", now.toString());
+    lastNotificationShown.value = now.toString();
+  };
 
   onMounted(() => {
     nextTick(() => {
@@ -1423,14 +1440,9 @@ body {
     
     if (hasStoredCode && !hasSeenUpdate) {
       showUpdatePopup.value = true;
-      
-      const timer = setInterval(() => {
-        countdown.value--;
-        if (countdown.value <= 0) {
-          clearInterval(timer);
-        }
-      }, 1000);
     }
+
+    checkNotification();
   });
 
   onUnmounted(() => {
@@ -1587,13 +1599,6 @@ body {
 
   const autoSaveEnabled = ref(localStorage.getItem('editorAutoSave') === 'true' || false);
 
-  const acknowledgeUpdate = () => {
-    if (countdown.value <= 0) {
-      showUpdatePopup.value = false;
-      localStorage.setItem("hasSeenUpdate", "true");
-    }
-  };
-
   return {
     editorContainer,
     previewFrame,
@@ -1669,7 +1674,7 @@ body {
     openDownloadPopupMobile,
     autoSaveEnabled,
     showUpdatePopup,
-    countdown,
     acknowledgeUpdate,
+    lastNotificationShown,
   };
 }
