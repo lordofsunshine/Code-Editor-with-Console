@@ -1259,11 +1259,13 @@ body {
 
   const checkNotification = () => {
     const now = new Date().getTime();
-    const lastShown = lastNotificationShown.value ? new Date(parseInt(lastNotificationShown.value)).getTime() : 0;
+    const lastShown = lastNotificationShown.value ? parseInt(lastNotificationShown.value) : 0;
     const oneMonth = 30 * 24 * 60 * 60 * 1000; // 30 дней в миллисекундах
 
     if (!lastShown || (now - lastShown) >= oneMonth) {
       showUpdatePopup.value = true;
+    } else {
+      showUpdatePopup.value = false;
     }
   };
 
