@@ -8,7 +8,7 @@ A versatile and interactive code editor built with Vue.js, featuring live previe
 > ***We are currently redesigning the entire code editor to enhance your experience. Please note that your saved code will not be transferred to the new version. Make sure you have backed up your code before proceeding.***
 
 > [!NOTE]
-> Our website **is available by domain** ( [code-editor.pro](https://code-editor.pro/) ), if the site is unavailable for the first domain, then ( [click](https://code-editor-with-console.vercel.app) )
+> 🚧 Our website **is available by domain** ( [code-editor.pro](https://code-editor.pro/) ), if the site is unavailable for the first domain *(until October, 2025)*, then ( [code-editor.world](https://code-editor.world) or [code-editor.run](https://code-editor.run))
 
 <hr>
 
