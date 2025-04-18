@@ -2,7 +2,11 @@
   <div :class="['flex flex-col body-bg h-screen', themeClass]">
     <transition name="slide-fade">
       <div v-if="showUpdatePopup" class="bg-[#1a1b1e] text-white px-4 py-2 flex items-center justify-center text-sm border-b border-[#2a2b2e]">
-        <span>If code-editor.pro becomes unavailable, please use our alternative domain: <a href="https://code-editor-with-console.vercel.app/" target="_blank" class="text-blue-400 hover:text-blue-300 underline mx-1">code-editor-with-console.vercel.app</a></span>
+        <span>
+          code-editor.pro will become unavailable in October, 2025. Please use our 
+          <button @click="showAlternativeDomains" class="text-blue-400 hover:text-blue-300 underline mx-1">alternative domains</button>. 
+          For all updates, join our <a href="https://discord.gg/FtvCbrc7ZU" target="_blank" class="text-blue-400 hover:text-blue-300 underline mx-1">Discord Server</a>.
+        </span>
         <button @click="acknowledgeUpdate" class="ml-4 text-gray-400 hover:text-gray-300">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -310,6 +314,43 @@
                   <path d="M8 2v8m0 0l-3-3m3 3l3-3m-7.5 6h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+    <transition name="modal">
+      <div v-if="showDomainsPopup" class="modal-backdrop">
+        <div class="modern-popup" @click.stop>
+          <div class="glass-effect"></div>
+          <div class="modern-popup-content">
+            <div class="modern-popup-header">
+              <h2>Available Domains</h2>
+              <button @click="closeDomainsPopup" class="close-btn" aria-label="Close">
+                <svg width="20" height="20" viewBox="0 0 20 20">
+                  <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+            
+            <div class="modern-popup-body domains-list">
+              <div class="domain-item" v-for="(domain, index) in alternativeDomains" :key="index">
+                <div class="domain-name">
+                  <span class="domain-status" :class="domain.status"></span>
+                  <a :href="domain.url" target="_blank" class="domain-link">{{ domain.name }}</a>
+                </div>
+                <div class="domain-info">{{ domain.info }}</div>
+              </div>
+              
+              <div class="discord-info">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="discord-icon">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <circle cx="12" cy="10" r="3"></circle>
+                  <path d="M7 16.3c2.2 0 4.3-1 5-2.9"></path>
+                  <path d="M17 16.3c-2.2 0-4.3-1-5-2.9"></path>
+                </svg>
+                <span>Stay updated by joining our <a href="https://discord.gg/FtvCbrc7ZU" target="_blank" class="discord-link">Discord Server</a></span>
+              </div>
             </div>
           </div>
         </div>

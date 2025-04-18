@@ -1255,12 +1255,40 @@ body {
   let lastErrorTime = 0;
 
   const showUpdatePopup = ref(false);
+  const showDomainsPopup = ref(false);
   const lastNotificationShown = ref(localStorage.getItem("lastNotificationShown") || null);
+
+  const alternativeDomains = ref([
+    {
+      name: "code-editor.pro",
+      url: "https://code-editor.pro",
+      status: "warning",
+      info: "Available until October 2025"
+    },
+    {
+      name: "code-editor.run",
+      url: "https://code-editor.run",
+      status: "active",
+      info: "Permanent domain"
+    },
+    {
+      name: "code-editor.world",
+      url: "https://code-editor.world",
+      status: "active",
+      info: "Permanent domain"
+    },
+    {
+      name: "code-editor-with-console.vercel.app",
+      url: "https://code-editor-with-console.vercel.app",
+      status: "active",
+      info: "Vercel deployment"
+    }
+  ]);
 
   const checkNotification = () => {
     const now = new Date().getTime();
     const lastShown = lastNotificationShown.value ? parseInt(lastNotificationShown.value) : 0;
-    const oneMonth = 30 * 24 * 60 * 60 * 1000; // 30 дней в миллисекундах
+    const oneMonth = 30 * 24 * 60 * 60 * 1000;
 
     if (!lastShown || (now - lastShown) >= oneMonth) {
       showUpdatePopup.value = true;
@@ -1274,6 +1302,20 @@ body {
     const now = new Date().getTime();
     localStorage.setItem("lastNotificationShown", now.toString());
     lastNotificationShown.value = now.toString();
+  };
+
+  const showAlternativeDomains = () => {
+    showDomainsPopup.value = true;
+    nextTick(() => {
+      const domainItems = document.querySelectorAll('.domain-item');
+      domainItems.forEach((item, index) => {
+        item.style.setProperty('--index', index);
+      });
+    });
+  };
+
+  const closeDomainsPopup = () => {
+    showDomainsPopup.value = false;
   };
 
   onMounted(() => {
@@ -1678,5 +1720,9 @@ body {
     showUpdatePopup,
     acknowledgeUpdate,
     lastNotificationShown,
+    showDomainsPopup,
+    alternativeDomains,
+    showAlternativeDomains,
+    closeDomainsPopup,
   };
 }
