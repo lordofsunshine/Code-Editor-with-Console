@@ -198,15 +198,15 @@
       <div class="flex items-center justify-between px-4 h-12">
         <div class="flex items-center justify-between max-width gap-6">
           <button @click="toggleConsole" class="flex items-center bg-transparent gap-1 p-2 console-icon button-animation"
-            @mouseenter="showTooltip($event, 'Toggle Console')" @mouseleave="hideTooltip">
+            @mouseenter="showTooltip($event, 'Toggle Terminal')" @mouseleave="hideTooltip">
             <svg :class="['ml-1 transform transition-transform', { 'rotate-180': showConsole }]"
               xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
               class="lucide lucide-chevron-down h-4 w-4 transition-transform -rotate-90">
               <path d="m6 9 6 6 6-6"></path>
             </svg>
-            Console
-            <span class="sr-only">Toggle console</span>
+            Terminal
+            <span class="sr-only">Toggle terminal</span>
           </button>
           <div class="footer-text">
             <span class="file-type">{{ activeFile.toUpperCase() }}</span>
@@ -242,14 +242,14 @@
               class="lucide lucide-chevron-down h-4 w-4 transition-transform rotate-0">
               <path d="m6 9 6 6 6-6"></path>
             </svg>
-            Console
-            <span class="sr-only">Toggle console</span>
+            Terminal
+            <span class="sr-only">Toggle terminal</span>
           </button>
           <button @click="clearConsole" :class="[
             'text-sm clear-console-btn button-animation',
             consoleLogs.length === 0 ? 'disabled' : 'text-blue-500 hover:text-blue-600'
           ]" :disabled="consoleLogs.length === 0">
-            Clear console
+            Clear terminal
           </button>
         </div>
         <div class="h-48 overflow-auto p-2 font-mono text-sm whitespace-pre custom-scrollbar">
@@ -509,7 +509,7 @@ export default {
 }
 .slide-fade-enter-from,
 .slide-fade-leave-to {
-  transform: translateY(-100%);
+  transform: translateY(100%);
   opacity: 0;
 }
 </style>

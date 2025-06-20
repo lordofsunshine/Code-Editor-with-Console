@@ -178,19 +178,19 @@ body {
   justify-content: space-between;
 }
 
-/* Console styles */
-.console-icon {
-  color: var(--text-secondary);
-  font-weight: 500;
-  font-size: 15px;
-  transition: color 0.2s ease;
-  padding: .5rem 0 !important;
-  user-select: none;
-}
+  /* Terminal styles */
+  .console-icon {
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 15px;
+    transition: color 0.2s ease;
+    padding: .5rem 0 !important;
+    user-select: none;
+  }
 
-.console-icon:hover {
-  color: var(--text-primary);
-}
+  .console-icon:hover {
+    color: var(--text-primary);
+  }
 
 /* Dropdown styles */
 .upload-dropdown,
@@ -471,7 +471,7 @@ button:focus-visible {
   position: fixed;
 }
 
-/* Console input styles */
+/* Terminal input styles */
 .input-console {
   font-family: "Source Code Pro", sans-serif;
   font-size: 14px;
@@ -1378,7 +1378,6 @@ input::placeholder {
   }
 }
 
-/* Modern styles for modal window */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1386,7 +1385,7 @@ input::placeholder {
   backdrop-filter: blur(8px);
   display: grid;
   place-items: center;
-  z-index: 1000;
+  z-index: 9999;
 }
 
 .modern-popup {
@@ -1813,6 +1812,7 @@ input::placeholder {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  padding-bottom: 1rem;
 }
 
 .domain-item {
