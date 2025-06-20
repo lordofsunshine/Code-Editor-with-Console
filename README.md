@@ -2,12 +2,11 @@
 
 A versatile and interactive code editor built with Vue.js, featuring live preview, console output, and theme customization.
 
+***On June 17, 2025, the project turned exactly one year old! Thank you for continuing to use our mini code editor.***
+
 <img alt="Banner" src="https://cdn.glitch.global/4ae4fbec-cbe7-491c-b8b9-57879c9f0e5d/9ec9a6e8-3b7b-4305-9657-9d7c75685dfe.image.png?v=1738080588866">
 
 > [!CAUTION]
-> ***We are currently redesigning the entire code editor to enhance your experience. Please note that your saved code will not be transferred to the new version. Make sure you have backed up your code before proceeding.***
-
-> [!NOTE]
 > 🚧 Our website **is available by domain** ( [code-editor.pro](https://code-editor.pro/) ), if the site is unavailable for the first domain *(until October, 2025)*, then ( [code-editor.world](https://code-editor.world) or [code-editor.run](https://code-editor.run))
 
 <hr>
@@ -26,10 +25,6 @@ A versatile and interactive code editor built with Vue.js, featuring live previe
 - [x] Correction of errors and omissions.
 
 **We are also preparing for the File Creation feature.** We are already trying to implement it, but it will take more time and effort, so we've released this seemingly small update, which is quite significant for the future of the code editor. For example, in the address bar, the value */?file=script.js* now includes the full file name with its format. :D
-
-> [!WARNING]
-> Please, in order for the update to fully initialize, **please clear the Cookies in the editor**, first making sure that you have saved your previous code.
-<hr>
 
 ## ✨ Features
 
@@ -66,24 +61,6 @@ yarn install
 yarn dev
 ```
 5. Open your browser and visit `http://localhost:5173` to see the app running.
-## Usage
-
-- Edit HTML, CSS, and JavaScript code in their respective tabs
-- See live updates in the preview pane
-- Toggle the console to view JavaScript output and errors
-- Change themes using the theme dropdown in the header
-- Upload existing HTML, CSS, or JavaScript files using the upload button
-- Download your project as a zip file using the download button
-- Use the fullscreen button to view your preview in fullscreen mode
-
-## Dependencies
-
-- Vue.js
-- Ace Editor
-- JSZip
-- File Saver
-- GSAP (GreenSock Animation Platform)
-- Canvas Confetti
 
 <hr>
 
