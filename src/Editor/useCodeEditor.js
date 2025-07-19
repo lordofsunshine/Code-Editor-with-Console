@@ -4,9 +4,16 @@ import "ace-builds/src-noconflict/mode-html";
 import "ace-builds/src-noconflict/mode-css";
 import "ace-builds/src-noconflict/mode-javascript";
 import "ace-builds/src-noconflict/theme-twilight";
-import "ace-builds/src-noconflict/theme-github";
+import "ace-builds/src-noconflict/theme-dawn";
 import "ace-builds/src-noconflict/ext-language_tools";
 import "ace-builds/src-noconflict/ext-beautify";
+import "ace-builds/src-noconflict/ext-searchbox";
+import "ace-builds/src-noconflict/ext-code_lens";
+import "ace-builds/src-noconflict/ext-error_marker";
+import "ace-builds/src-noconflict/ext-linking";
+import "ace-builds/src-noconflict/ext-modelist";
+import "ace-builds/src-noconflict/ext-themelist";
+import "ace-builds/src-noconflict/ext-whitespace";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import confetti from "canvas-confetti";
@@ -293,9 +300,9 @@ body {
       return window.matchMedia &&
         window.matchMedia("(prefers-color-scheme: dark)").matches
         ? "ace/theme/twilight"
-        : "ace/theme/github";
+        : "ace/theme/dawn";
     }
-    return themeValue === "dark" ? "ace/theme/twilight" : "ace/theme/github";
+    return themeValue === "dark" ? "ace/theme/twilight" : "ace/theme/dawn";
   };
 
   const getMessagePrefix = (type) => {
@@ -382,12 +389,35 @@ body {
       mode: `ace/mode/${activeFile.value === "js" ? "javascript" : activeFile.value}`,
       theme: getAceTheme(editorTheme.value),
       fontSize: editorFontSize.value,
+      fontFamily: "'Inconsolata', monospace",
       showPrintMargin: false,
-      highlightActiveLine: false,
+      highlightActiveLine: true,
+      highlightSelectedWord: true,
       showGutter: editorLineNumbers.value,
       wrap: editorWrap.value,
       useWorker: false,
       scrollPastEnd: 0.5,
+      animatedScroll: true,
+      showInvisibles: false,
+      displayIndentGuides: true,
+      highlightIndentGuides: true,
+      showFoldWidgets: true,
+      fadeFoldWidgets: false,
+      dragEnabled: true,
+      dragDelay: 0,
+      focusTimeout: 0,
+      tooltipFollowsMouse: false,
+      behavioursEnabled: true,
+      wrapBehavioursEnabled: true,
+      autoScrollEditorIntoView: false,
+      copyWithEmptySelection: true,
+      useSoftTabs: true,
+      navigateWithinSoftTabs: false,
+      enableMultiselect: true,
+      enableKeyboardAccessibility: true,
+      cursorStyle: "ace",
+      mergeUndoDeltas: "always",
+      hasCssTransforms: true,
     });
 
     setTimeout(() => {
@@ -395,7 +425,17 @@ body {
         enableBasicAutocompletion: editorAutocomplete.value,
         enableLiveAutocompletion: editorAutocomplete.value,
         enableSnippets: true,
+        autoInsert: false,
+        autoSelect: true,
+        exactMatch: false,
+        setSelectOnHover: true,
+        showLoadingState: true,
+        stickySelection: false,
+        stickySelectionDelay: 500, 
       });
+      
+      editor.setOption("enableLinking", true);
+      editor.setOption("enableCodeLens", false);
     }, 100);
 
     setupEditorEvents();
