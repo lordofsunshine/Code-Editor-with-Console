@@ -9,6 +9,6 @@ Allow: /*.html
 Allow: /*.css
 Allow: /*.js
 
-Sitemap: https://code-editor.pro/sitemap.xml
+Sitemap: https://code-editor.run/sitemap.xml
 
 Crawl-delay: 10 

@@ -1,27 +1,13 @@
 <template>
   <div :class="['flex flex-col body-bg h-screen', themeClass]">
-    <transition name="slide-fade">
-      <div v-if="showUpdatePopup" class="bg-[#1a1b1e] text-white px-4 py-2 flex items-center justify-center text-sm border-b border-[#2a2b2e]">
-        <span>
-          code-editor.pro will become unavailable in October, 2025. Please use our 
-          <button @click="showAlternativeDomains" class="text-blue-400 hover:text-blue-300 underline mx-1">alternative domains</button>. 
-          For all updates, join our <a href="https://discord.gg/FtvCbrc7ZU" target="_blank" class="text-blue-400 hover:text-blue-300 underline mx-1">Discord Server</a>.
-        </span>
-        <button @click="acknowledgeUpdate" class="ml-4 text-gray-400 hover:text-gray-300">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-    </transition>
     <header class="flex items-center justify-between h-16 px-4 border-b border-muted">
       <div class="flex items-center justify-between w-full">
         <div class="flex items-center gap-4">
-          <div class="flex items-center gap-2 logo-container">
-            <div class="flex items-center px-3 gap-2 logo-bg font-semibold whitespace-nowrap cursor-grab">
+          <div class="flex items-center gap-2 logo-container cursor-grab" @click="openInfoPopup">
+            <div class="flex items-center px-3 gap-2 logo-bg font-semibold whitespace-nowrap">
               <span>Code Editor</span>
             </div>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><g fill="var(--text-grey)"><path d="M13.895 15.553a1 1 0 0 1-.448 1.341l-1 .5A1 1 0 0 1 11 16.5V13a1 1 0 0 1-.447-1.894l1-.5A1 1 0 0 1 13 11.5V15a1 1 0 0 1 .895.553M12 9.5a1.5 1.5 0 1 0 0-3a1.5 1.5 0 0 0 0 3"/><path fill-rule="evenodd" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2S2 6.477 2 12s4.477 10 10 10m0-2a8 8 0 1 0 0-16a8 8 0 0 0 0 16" clip-rule="evenodd"/></g></svg>
           </div>
           <div class="header-actions hidden md:flex items-center gap-2">
             <button @click="openDownloadPopup" class="bg-transparent bg-hover p-2 rounded-md button-animation"
@@ -137,7 +123,7 @@
     </header>
     <div class="flex flex-1 overflow-hidden">
       <div class="flex flex-col w-64 border-r border-muted files-block">
-        <div class="flex items-center justify-between h-12 px-4 border-b border-muted">
+        <div class="flex items-center justify-between gap-2 h-12 px-4 border-b border-muted">
           <span class="text-xs uppercase tracking-wider file-title font-medium">Explorer</span>
           <div class="relative">
             <button @click="triggerFileUpload"
@@ -220,14 +206,18 @@
               </template>
               <span v-else>{{ currentEncoding }}</span>
             </span>
-            <div class="save-info">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
-              <span>Last saved {{ lastSaved ? getLastSavedText(lastSaved) : 'never' }}</span>
-            </div>
+            <transition name="save-info-width">
+              <div v-if="lastSaved" class="save-info-wrap">
+                <div class="save-info">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span>Last saved {{ getLastSavedText(lastSaved) }}</span>
+                </div>
+              </div>
+            </transition>
           </div>
         </div>
       </div>
@@ -254,23 +244,24 @@
         </div>
         <div class="h-48 overflow-auto p-2 font-mono text-sm whitespace-pre custom-scrollbar">
           <div v-for="(log, index) in consoleLogs" :key="index" :class="['mb-1', getMessageTypeClass(log.type)]">
-            <span class="select-none text-gray-500 mr-2">{{ log.timestamp }}</span>
+            <span class="text-gray-500 mr-2">{{ log.timestamp }}</span>
             <template v-if="log.command">
-              <span class="select-none text-gray-400">></span> {{ log.command }}
+              <span class="text-gray-400">></span> {{ log.command }}
             </template>
             <template v-else>
-              <span v-if="log.type === 'error'" class="select-none text-red-500">ERROR: </span>
-              <span v-else-if="log.type === 'warn'" class="select-none text-yellow-500">WARNING: </span>
-              <span v-else-if="log.type === 'info'" class="select-none text-blue-500">INFO: </span>
-              <span v-else-if="log.type === 'success'" class="select-none text-green-500">SUCCESS: </span>
-              {{ log.message }}
+              <span v-if="log.type === 'error'" class="text-red-500">ERROR: </span>
+              <span v-else-if="log.type === 'warn'" class="text-yellow-500">WARNING: </span>
+              <span v-else-if="log.type === 'info'" class="text-blue-500">INFO: </span>
+              <span v-else-if="log.type === 'success'" class="text-green-500">SUCCESS: </span>
+              <template v-if="log.type === 'error'">{{ log.message }} (help: editor help)</template>
+              <template v-else>{{ log.message }}</template>
             </template>
           </div>
         </div>
         <div class="flex items-center p-2 border-t border-muted">
           <span class="text-gray-500 mr-2">></span>
           <input v-model="consoleInput" @keyup.enter="executeConsoleCommand"
-            class="flex-1 bg-transparent outline-none input-console" placeholder="Enter command... ( editor help )">
+            class="flex-1 bg-transparent outline-none input-console" placeholder="Enter command...">
         </div>
       </div>
     </transition>
@@ -314,6 +305,96 @@
                   <path d="M8 2v8m0 0l-3-3m3 3l3-3m-7.5 6h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+    <transition name="modal">
+      <div v-if="showInfoPopup" class="modal-backdrop" @click.self="closeInfoPopup">
+        <div class="modern-popup wide" @click.stop>
+          <div class="glass-effect"></div>
+          <div class="modern-popup-content">
+            <div class="modern-popup-header">
+              <h2>Info</h2>
+              <button @click="closeInfoPopup" class="close-btn" aria-label="Close">
+                <svg width="20" height="20" viewBox="0 0 20 20">
+                  <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="segmented" :data-tab="activeInfoTab">
+              <div class="tab-indicator" :style="{ transform: activeInfoTab === 'about' ? 'translateX(0%)' : activeInfoTab === 'domains' ? 'translateX(100%)' : 'translateX(200%)' }"></div>
+              <button :class="['seg-btn', { active: activeInfoTab === 'about' }]" @click="activeInfoTab = 'about'">About</button>
+              <button :class="['seg-btn', { active: activeInfoTab === 'domains' }]" @click="activeInfoTab = 'domains'">Domains</button>
+              <button :class="['seg-btn', { active: activeInfoTab === 'links' }]" @click="activeInfoTab = 'links'">Links</button>
+            </div>
+
+            <div class="tabs-body rich">
+              <div class="tabs-height-wrapper" :style="{ height: (infoHeight + 'px') }" ref="infoContentWrapper">
+                <transition name="tab-swap" mode="out-in">
+                  <div :key="activeInfoTab">
+                  <div v-if="activeInfoTab === 'about'" class="tab-panel">
+                    <div class="about-head">
+                      <div class="brand">
+                        <div class="brand-mark">
+                          <img src="/favicon.png" alt="Logo" class="brand-logo"/>
+                        </div>
+                        <div class="brand-text">
+                          <div class="brand-title">Code Editor</div>
+                          <div class="brand-sub">Fast. Minimal. Powerful.</div>
+                        </div>
+                      </div>
+                      <div class="version-pill">v{{ $root?.$?.appContext?.app?._component?.version || '0.1.5' }}</div>
+                    </div>
+                    <div class="about-grid">
+                      <div class="feature">
+                        <div class="feature-icon">⚡</div>
+                        <div class="feature-title">Instant preview</div>
+                        <div class="feature-desc">Run and see results immediately</div>
+                      </div>
+                      <div class="feature">
+                        <div class="feature-icon">🧩</div>
+                        <div class="feature-title">Console</div>
+                        <div class="feature-desc">Execute commands and debug output</div>
+                      </div>
+                      <div class="feature">
+                        <div class="feature-icon">🎨</div>
+                        <div class="feature-title">Themes</div>
+                        <div class="feature-desc">Light, Dark and System modes</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else-if="activeInfoTab === 'domains'" class="tab-panel">
+                    <ul class="domain-list">
+                      <li class="domain-row">
+                        <span class="dot active"></span>
+                        <a href="https://code-editor.pro" target="_blank">code-editor.pro</a>
+                        <span class="badge ok">active</span>
+                      </li>
+                      <li class="domain-row">
+                        <span class="dot active"></span>
+                        <a href="https://code-editor.run" target="_blank">code-editor.run</a>
+                        <span class="badge ok">active</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div v-else class="tab-panel">
+                    <div class="links-flex">
+                      <a class="link-card" href="https://github.com/lordofsunshine/Code-Editor-with-Console/" target="_blank">
+                        <span class="link-ico"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M12.001 2c-5.525 0-10 4.475-10 10a9.99 9.99 0 0 0 6.837 9.488c.5.087.688-.213.688-.476c0-.237-.013-1.024-.013-1.862c-2.512.463-3.162-.612-3.362-1.175c-.113-.288-.6-1.175-1.025-1.413c-.35-.187-.85-.65-.013-.662c.788-.013 1.35.725 1.538 1.025c.9 1.512 2.337 1.087 2.912.825c.088-.65.35-1.087.638-1.337c-2.225-.25-4.55-1.113-4.55-4.938c0-1.088.387-1.987 1.025-2.687c-.1-.25-.45-1.275.1-2.65c0 0 .837-.263 2.75 1.024a9.3 9.3 0 0 1 2.5-.337c.85 0 1.7.112 2.5.337c1.913-1.3 2.75-1.024 2.75-1.024c.55 1.375.2 2.4.1 2.65c.637.7 1.025 1.587 1.025 2.687c0 3.838-2.337 4.688-4.562 4.938c.362.312.675.912.675 1.85c0 1.337-.013 2.412-.013 2.75c0 .262.188.574.688.474A10.02 10.02 0 0 0 22 12c0-5.525-4.475-10-10-10"/></svg></span>
+                        <span>GitHub</span>
+                      </a>
+                      <a class="link-card" href="https://github.com/lordofsunshine/" target="_blank">
+                        <span class="link-ico"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M12 1a2 2 0 0 0-2 2c0 1.11.89 2 2 2s2-.89 2-2a2 2 0 0 0-2-2m-2 5c-.27 0-.5.11-.69.28H9.3L4 11.59L5.42 13L9 9.41V22h2v-7h2v7h2V9.41L18.58 13L20 11.59l-5.3-5.31c-.2-.17-.43-.28-.7-.28"/></svg></span>
+                        <span>Creator</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+                </transition>
+              </div>
             </div>
           </div>
         </div>
@@ -499,17 +580,3 @@ export default {
   }
 };
 </script>
-
-<style>
-.slide-fade-enter-active {
-  transition: all 0.3s ease;
-}
-.slide-fade-leave-active {
-  transition: all 0.3s ease;
-}
-.slide-fade-enter-from,
-.slide-fade-leave-to {
-  transform: translateY(100%);
-  opacity: 0;
-}
-</style>

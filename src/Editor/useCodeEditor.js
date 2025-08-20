@@ -4,7 +4,7 @@ import "ace-builds/src-noconflict/mode-html";
 import "ace-builds/src-noconflict/mode-css";
 import "ace-builds/src-noconflict/mode-javascript";
 import "ace-builds/src-noconflict/theme-twilight";
-import "ace-builds/src-noconflict/theme-github";
+import "ace-builds/src-noconflict/theme-eclipse";
 import "ace-builds/src-noconflict/ext-language_tools";
 import "ace-builds/src-noconflict/ext-beautify";
 import JSZip from "jszip";
@@ -26,6 +26,50 @@ export function useCodeEditor() {
   const fileInput = ref(null);
   const previewWindow = ref(null);
   const showDownloadPopup = ref(false);
+  const showInfoPopup = ref(false);
+  const activeInfoTab = ref('about');
+  const infoContentWrapper = ref(null);
+  const infoContentHeight = ref(0);
+  const infoDefaultHeights = {
+    about: 420,
+    domains: 280,
+    links: 240,
+  };
+  const infoHeight = computed(() => {
+    const measured = Number(infoContentHeight.value) || 0;
+    if (measured > 0) return measured;
+    return infoDefaultHeights[activeInfoTab.value] || 260;
+  });
+  let infoPanelObserver = null;
+
+  const measureInfoPanel = () => {
+    const wrapper = infoContentWrapper.value;
+    if (!wrapper) return;
+    const panel = wrapper.querySelector('.tab-panel');
+    if (!panel) return;
+    const style = window.getComputedStyle(panel);
+    const marginTop = parseFloat(style.marginTop) || 0;
+    const marginBottom = parseFloat(style.marginBottom) || 0;
+    infoContentHeight.value = Math.ceil(panel.scrollHeight + marginTop + marginBottom);
+  };
+
+  const observeInfoPanel = () => {
+    const wrapper = infoContentWrapper.value;
+    if (!wrapper) return;
+    const panel = wrapper.querySelector('.tab-panel');
+    if (!panel) return;
+
+    if (infoPanelObserver) {
+      infoPanelObserver.disconnect();
+    }
+    infoPanelObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        measureInfoPanel();
+      }
+    });
+    infoPanelObserver.observe(panel);
+    requestAnimationFrame(() => measureInfoPanel());
+  };
   const projectName = ref("");
   const canUndo = ref(false);
   const canRedo = ref(false);
@@ -293,9 +337,9 @@ body {
       return window.matchMedia &&
         window.matchMedia("(prefers-color-scheme: dark)").matches
         ? "ace/theme/twilight"
-        : "ace/theme/github";
+        : "ace/theme/eclipse";
     }
-    return themeValue === "dark" ? "ace/theme/twilight" : "ace/theme/github";
+    return themeValue === "dark" ? "ace/theme/twilight" : "ace/theme/eclipse";
   };
 
   const getMessagePrefix = (type) => {
@@ -713,6 +757,18 @@ body {
     showDownloadPopup.value = true;
   };
 
+  const openInfoPopup = () => {
+    activeInfoTab.value = 'about';
+    showInfoPopup.value = true;
+    nextTick(() => {
+      requestAnimationFrame(() => observeInfoPanel());
+    });
+  };
+
+  const closeInfoPopup = () => {
+    showInfoPopup.value = false;
+  };
+
   const cancelDownload = () => {
     showDownloadPopup.value = false;
     projectName.value = "";
@@ -1109,7 +1165,7 @@ body {
       theme.value = 'light';
     }
     localStorage.setItem('theme', theme.value);
-    isMobileMenuOpen.value = false;
+    isMobileMenuOpen.value = true;
   };
 
   const previewError = ref(null);
@@ -1254,69 +1310,7 @@ body {
   let lastError = null;
   let lastErrorTime = 0;
 
-  const showUpdatePopup = ref(false);
-  const showDomainsPopup = ref(false);
-  const lastNotificationShown = ref(localStorage.getItem("lastNotificationShown") || null);
 
-  const alternativeDomains = ref([
-    {
-      name: "code-editor.pro",
-      url: "https://code-editor.pro",
-      status: "warning",
-      info: "Available until October 2025"
-    },
-    {
-      name: "code-editor.run",
-      url: "https://code-editor.run",
-      status: "active",
-      info: "Permanent domain"
-    },
-    {
-      name: "code-editor.world",
-      url: "https://code-editor.world",
-      status: "active",
-      info: "Permanent domain"
-    },
-    {
-      name: "code-editor-with-console.vercel.app",
-      url: "https://code-editor-with-console.vercel.app",
-      status: "active",
-      info: "Vercel deployment"
-    }
-  ]);
-
-  const checkNotification = () => {
-    const now = new Date().getTime();
-    const lastShown = lastNotificationShown.value ? parseInt(lastNotificationShown.value) : 0;
-    const oneMonth = 30 * 24 * 60 * 60 * 1000;
-
-    if (!lastShown || (now - lastShown) >= oneMonth) {
-      showUpdatePopup.value = true;
-    } else {
-      showUpdatePopup.value = false;
-    }
-  };
-
-  const acknowledgeUpdate = () => {
-    showUpdatePopup.value = false;
-    const now = new Date().getTime();
-    localStorage.setItem("lastNotificationShown", now.toString());
-    lastNotificationShown.value = now.toString();
-  };
-
-  const showAlternativeDomains = () => {
-    showDomainsPopup.value = true;
-    nextTick(() => {
-      const domainItems = document.querySelectorAll('.domain-item');
-      domainItems.forEach((item, index) => {
-        item.style.setProperty('--index', index);
-      });
-    });
-  };
-
-  const closeDomainsPopup = () => {
-    showDomainsPopup.value = false;
-  };
 
   onMounted(() => {
     nextTick(() => {
@@ -1479,14 +1473,6 @@ body {
     const hasStoredCode = localStorage.getItem("htmlCode") || 
                          localStorage.getItem("cssCode") || 
                          localStorage.getItem("jsCode");
-                         
-    const hasSeenUpdate = localStorage.getItem("hasSeenUpdate");
-    
-    if (hasStoredCode && !hasSeenUpdate) {
-      showUpdatePopup.value = true;
-    }
-
-    checkNotification();
   });
 
   onUnmounted(() => {
@@ -1555,6 +1541,16 @@ body {
     if (editor) {
       editor.setOption("wrap", newValue);
     }
+  });
+
+  watch(activeInfoTab, () => {
+    nextTick(() => {
+      requestAnimationFrame(() => observeInfoPanel());
+    });
+  });
+
+  window.addEventListener('resize', () => {
+    requestAnimationFrame(() => measureInfoPanel());
   });
 
   watch(previewError, (newValue) => {
@@ -1660,6 +1656,10 @@ body {
     fileIcons,
     themeClass,
     showDownloadPopup,
+    showInfoPopup,
+    activeInfoTab,
+    infoContentWrapper,
+    infoContentHeight,
     projectName,
     canUndo,
     canRedo,
@@ -1670,8 +1670,10 @@ body {
     clearConsole,
     executeConsoleCommand,
     openDownloadPopup,
+    openInfoPopup,
     cancelDownload,
     handleDownload,
+    closeInfoPopup,
     toggleThemeDropdown,
     setTheme,
     saveCode,
@@ -1717,12 +1719,5 @@ body {
     errorMessage,
     openDownloadPopupMobile,
     autoSaveEnabled,
-    showUpdatePopup,
-    acknowledgeUpdate,
-    lastNotificationShown,
-    showDomainsPopup,
-    alternativeDomains,
-    showAlternativeDomains,
-    closeDomainsPopup,
   };
 }
