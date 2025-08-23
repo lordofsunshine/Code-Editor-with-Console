@@ -378,6 +378,16 @@
                         <a href="https://code-editor.run" target="_blank">code-editor.run</a>
                         <span class="badge ok">active</span>
                       </li>
+                      <li class="domain-row">
+                        <span class="dot active"></span>
+                        <a href="https://code-editor.app" target="_blank">code-editor.app</a>
+                        <span class="badge ok">active</span>
+                      </li>
+                      <li class="domain-row">
+                        <span class="dot active"></span>
+                        <a href="https://code-editor.lol" target="_blank">code-editor.lol</a>
+                        <span class="badge ok">active</span>
+                      </li>
                     </ul>
                   </div>
                   <div v-else class="tab-panel">
@@ -394,43 +404,6 @@
                   </div>
                 </div>
                 </transition>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </transition>
-    <transition name="modal">
-      <div v-if="showDomainsPopup" class="modal-backdrop">
-        <div class="modern-popup" @click.stop>
-          <div class="glass-effect"></div>
-          <div class="modern-popup-content">
-            <div class="modern-popup-header">
-              <h2>Available Domains</h2>
-              <button @click="closeDomainsPopup" class="close-btn" aria-label="Close">
-                <svg width="20" height="20" viewBox="0 0 20 20">
-                  <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-              </button>
-            </div>
-            
-            <div class="modern-popup-body domains-list">
-              <div class="domain-item" v-for="(domain, index) in alternativeDomains" :key="index">
-                <div class="domain-name">
-                  <span class="domain-status" :class="domain.status"></span>
-                  <a :href="domain.url" target="_blank" class="domain-link">{{ domain.name }}</a>
-                </div>
-                <div class="domain-info">{{ domain.info }}</div>
-              </div>
-              
-              <div class="discord-info">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="discord-icon">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <circle cx="12" cy="10" r="3"></circle>
-                  <path d="M7 16.3c2.2 0 4.3-1 5-2.9"></path>
-                  <path d="M17 16.3c-2.2 0-4.3-1-5-2.9"></path>
-                </svg>
-                <span>Stay updated by joining our <a href="https://discord.gg/FtvCbrc7ZU" target="_blank" class="discord-link">Discord Server</a></span>
               </div>
             </div>
           </div>
