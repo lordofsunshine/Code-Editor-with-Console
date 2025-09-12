@@ -370,11 +370,6 @@
                     <ul class="domain-list">
                       <li class="domain-row">
                         <span class="dot active"></span>
-                        <a href="https://code-editor.pro" target="_blank">code-editor.pro</a>
-                        <span class="badge ok">active</span>
-                      </li>
-                      <li class="domain-row">
-                        <span class="dot active"></span>
                         <a href="https://code-editor.run" target="_blank">code-editor.run</a>
                         <span class="badge ok">active</span>
                       </li>
