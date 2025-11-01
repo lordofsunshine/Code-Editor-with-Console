@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>code-editor - Modern Code Collaboration Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/landing.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="/" class="logo">
+        <svg viewBox="0 0 40 40">
+          <rect x="4" y="4" width="32" height="32" rx="4" class="logo-rect"/>
+          <path d="M 14 16 L 20 22 L 14 28" class="logo-path"/>
+          <line x1="24" y1="28" x2="30" y2="28" class="logo-line"/>
+        </svg>
+        <span class="logo-text">code-editor</span>
+      </a>
+      <div class="nav-links">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#preview" class="nav-link">Preview</a>
+        <a href="/auth" class="btn btn-primary">Get Started</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <div class="hero-content">
+          <div class="hero-badge">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+            Real-time Collaboration
+          </div>
+          <h1>Code Together,<br>Build Better</h1>
+          <p class="hero-description">
+            A modern, powerful code editor with real-time collaboration. 
+            Write, share, and iterate with your team seamlessly in a sleek monochrome interface.
+          </p>
+          <div class="hero-buttons">
+            <a href="/auth" class="btn btn-primary">Start Coding Now</a>
+            <a href="#features" class="btn btn-secondary">Explore Features</a>
+          </div>
+          <div class="hero-stats">
+            <div class="stat">
+              <div class="stat-number">100%</div>
+              <div class="stat-label">Open Source</div>
+            </div>
+            <div class="stat">
+              <div class="stat-number">Real-time</div>
+              <div class="stat-label">Collaboration</div>
+            </div>
+            <div class="stat">
+              <div class="stat-number">Monaco</div>
+              <div class="stat-label">Powered</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="features">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge">Features</span>
+          <h2>Everything you need<br>to code efficiently</h2>
+          <p class="section-description">
+            Powerful features designed for modern development workflows with a focus on simplicity and performance
+          </p>
+        </div>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-number">01</div>
+            <h3>Real-time<br>Collaboration</h3>
+            <p>Code together with your team in real-time. See changes instantly, share cursor positions, and work seamlessly across projects without conflicts.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-number">02</div>
+            <h3>Project<br>Management</h3>
+            <p>Organize your code with intuitive projects and file structures. Upload media, manage resources, and keep everything perfectly organized.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-number">03</div>
+            <h3>Live<br>Preview</h3>
+            <p>See your HTML, CSS, and JavaScript come to life instantly. Preview images, videos, and other media files with a powerful integrated viewer.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-number">04</div>
+            <h3>Team<br>Invitations</h3>
+            <p>Invite collaborators to your projects effortlessly. Share code, review together, and build as a unified team with smart permission controls.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-number">05</div>
+            <h3>Secure &<br>Private</h3>
+            <p>Your code is protected with industry-standard security. CSRF protection, encrypted sessions, and secure WebSocket connections keep you safe.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-number">06</div>
+            <h3>Monaco<br>Editor</h3>
+            <p>Powered by the same editor that runs VS Code. Enjoy intelligent code completion, syntax highlighting, and a familiar coding experience.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="preview" class="code-preview">
+      <div class="container">
+        <div class="preview-grid">
+          <div class="preview-content">
+            <span class="section-badge">Code Editor</span>
+            <h2>Powered by<br>Monaco Editor</h2>
+            <p class="section-description">
+              The same editor that powers Visual Studio Code, integrated seamlessly into a modern web interface.
+            </p>
+            <div class="preview-features">
+              <div class="preview-feature">
+                <div class="preview-feature-icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                  </svg>
+                </div>
+                <div class="preview-feature-text">
+                  <h4>Syntax Highlighting</h4>
+                  <p>Support for all major programming languages with intelligent color coding</p>
+                </div>
+              </div>
+              <div class="preview-feature">
+                <div class="preview-feature-icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                  </svg>
+                </div>
+                <div class="preview-feature-text">
+                  <h4>IntelliSense</h4>
+                  <p>Smart code completion and parameter hints as you type</p>
+                </div>
+              </div>
+              <div class="preview-feature">
+                <div class="preview-feature-icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                  </svg>
+                </div>
+                <div class="preview-feature-text">
+                  <h4>Multiple Themes</h4>
+                  <p>Choose between dark and light themes optimized for long coding sessions</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="code-window">
+            <div class="code-header">
+              <div class="code-dot"></div>
+              <div class="code-dot"></div>
+              <div class="code-dot"></div>
+            </div>
+            <div class="code-body">
+              <div class="code-line">
+                <span class="line-number">1</span>
+                <span>import { initEditor } from './editor.js';</span>
+              </div>
+              <div class="code-line">
+                <span class="line-number">2</span>
+                <span></span>
+              </div>
+              <div class="code-line">
+                <span class="line-number">3</span>
+                <span>const startCoding = async () => {</span>
+              </div>
+              <div class="code-line">
+                <span class="line-number">4</span>
+                <span>  const editor = await initEditor();</span>
+              </div>
+              <div class="code-line">
+                <span class="line-number">5</span>
+                <span>  editor.setValue('Hello, World!');</span>
+              </div>
+              <div class="code-line">
+                <span class="line-number">6</span>
+                <span>  console.log('Ready to code');</span>
+              </div>
+              <div class="code-line">
+                <span class="line-number">7</span>
+                <span>};</span>
+              </div>
+              <div class="code-line">
+                <span class="line-number">8</span>
+                <span></span>
+              </div>
+              <div class="code-line">
+                <span class="line-number">9</span>
+                <span>startCoding();</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div class="container">
+        <div class="cta-content">
+          <h2>Ready to elevate<br>your coding workflow?</h2>
+          <p class="cta-description">
+            Join developers who are building better, together. Start your free account today and experience the future of collaborative coding.
+          </p>
+          <div style="justify-content: center;" class="hero-buttons">
+            <a href="/auth" class="btn btn-primary">Get Started Free</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-main">
+        <a href="/" class="logo">
+          <svg viewBox="0 0 40 40">
+            <rect x="4" y="4" width="32" height="32" rx="4" class="logo-rect"/>
+            <path d="M 14 16 L 20 22 L 14 28" class="logo-path"/>
+            <line x1="24" y1="28" x2="30" y2="28" class="logo-line"/>
+          </svg>
+          <span class="logo-text">code-editor</span>
+        </a>
+        <nav style="margin: 0;padding: 24px 0 24px 24px;" class="footer-nav">
+          <a href="#features" class="footer-link">Features</a>
+          <a href="#preview" class="footer-link">Preview</a>
+          <a href="/auth" class="footer-link">Get Started</a>
+        </nav>
+      </div>
+      <div class="footer-bottom">
+        <div class="copyright">© 2025 code-editor. All rights reserved.</div>
+        <a href="https://github.com/lordofsunshine/Code-Editor-with-Console" target="_blank" rel="noopener noreferrer" class="watermark">
+          Developed by lordofsunshine
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <div class="legacy-modal" id="legacyModal">
+    <div class="legacy-content">
+      <div class="legacy-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
+      </div>
+      <h3>Legacy Code Detected</h3>
+      <p>The editor has been completely rebuilt. We found saved code from the previous version. Would you like to download it before proceeding?</p>
+      <div class="legacy-buttons">
+        <button class="btn btn-primary" id="downloadLegacy">Download & Close</button>
+        <button class="btn btn-secondary" id="closeLegacy">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const hasLegacyCode = localStorage.getItem('htmlCode') || localStorage.getItem('cssCode') || localStorage.getItem('jsCode');
+      
+      if (hasLegacyCode) {
+        const modal = document.getElementById('legacyModal');
+        modal.classList.add('active');
+
+        function createZipAndDownload() {
+          const htmlCode = localStorage.getItem('htmlCode') || '';
+          const cssCode = localStorage.getItem('cssCode') || '';
+          const jsCode = localStorage.getItem('jsCode') || '';
+
+          const content = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Legacy Code</title>
+  <style>
+${cssCode}
+  </style>
+</head>
+<body>
+${htmlCode}
+  <script>
+${jsCode}
+  <\/script>
+</body>
+</html>`;
+
+          const blob = new Blob([content], { type: 'text/html' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'legacy-code.html';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+
+        function clearLegacyData() {
+          localStorage.removeItem('htmlCode');
+          localStorage.removeItem('cssCode');
+          localStorage.removeItem('jsCode');
+          modal.classList.remove('active');
+        }
+
+        document.getElementById('downloadLegacy').addEventListener('click', function() {
+          createZipAndDownload();
+          clearLegacyData();
+        });
+
+        document.getElementById('closeLegacy').addEventListener('click', function() {
+          clearLegacyData();
+        });
+      }
+
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

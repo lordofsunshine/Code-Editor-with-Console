@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Editor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/styles/animations.css">
+  <link rel="stylesheet" href="/styles/auth.css">
+</head>
+<body>
+  <div class="background-pattern"></div>
+  
+  <div class="auth-container">
+    <div class="auth-box">
+      <div class="logo-container">
+        <svg class="logo" viewBox="0 0 100 100">
+          <rect x="10" y="10" width="80" height="80" rx="8" class="logo-rect"/>
+          <path d="M 30 35 L 45 50 L 30 65" class="logo-path"/>
+          <line x1="55" y1="65" x2="70" y2="65" class="logo-line"/>
+        </svg>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="login">Sign In</button>
+        <button class="tab" data-tab="register">Sign Up</button>
+        <div class="tab-indicator"></div>
+      </div>
+
+      <form id="loginForm" class="auth-form active">
+        <div class="input-group">
+          <input type="text" id="loginUsername" required autocomplete="username">
+          <label>Username</label>
+          <span class="input-border"></span>
+        </div>
+        
+        <div class="input-group">
+          <input type="password" id="loginPassword" required autocomplete="current-password">
+          <label>Password</label>
+          <span class="input-border"></span>
+        </div>
+
+        <button type="submit" class="btn-primary">
+          <span>Enter</span>
+          <div class="btn-shimmer"></div>
+        </button>
+      </form>
+
+      <form id="registerForm" class="auth-form">
+        <div class="input-group">
+          <input type="text" id="registerUsername" required autocomplete="username">
+          <label>Username (min 3 characters)</label>
+          <span class="input-border"></span>
+        </div>
+        
+        <div class="input-group">
+          <input type="password" id="registerPassword" required autocomplete="new-password">
+          <label>Password (min 6 characters)</label>
+          <span class="input-border"></span>
+        </div>
+
+        <button type="submit" class="btn-primary">
+          <span>Create Account</span>
+          <div class="btn-shimmer"></div>
+        </button>
+      </form>
+
+      <div id="errorMessage" class="error-message"></div>
+    </div>
+  </div>
+
+  <script src="/scripts/auth.js"></script>
+</body>
+</html>
+

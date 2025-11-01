@@ -1,53 +1,63 @@
-# ✍ Code Editor
-Fast. Minimal. Powerful.
+## Code Editor — Modern, Real‑Time Collaboration
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Version](https://img.shields.io/badge/version-0.1.5-green.svg)
-![TOTP](https://img.shields.io/badge/vuejs-^4.5.1-orange.svg)
+| Language | Link |
+|---|---|
+| English | This page |
+| Русский | [README_RU.md](README_RU.md) |
 
-<img alt="Banner" src="https://i.ibb.co/1YthQG96/image.png">
-<hr>
+[![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A518-brightgreen?logo=node.js)](https://nodejs.org)
+[![Fastify](https://img.shields.io/badge/Backend-Fastify-007ec6?logo=fastify)](https://fastify.dev)
+[![Socket.IO](https://img.shields.io/badge/Realtime-Socket.IO-black?logo=socketdotio)](https://socket.io)
+[![Monaco Editor](https://img.shields.io/badge/Editor-Monaco-1f6feb)](https://microsoft.github.io/monaco-editor)
+[![SQLite](https://img.shields.io/badge/DB-better--sqlite3-003b57?logo=sqlite)](https://www.npmjs.com/package/better-sqlite3)
 
-# 🌹 **What's New: 0.1.5** 
-- [x] The editor’s design has been slightly reworked. Some animations were fixed, unnecessary blocks were removed, and it’s now more pleasant to use our editor.
-- [x] If you click the "code-editor" label, a panel with essential information and useful links will open.
-- [x] For some reason, the code-editor.world domain no longer works. Please note that the code-editor.pro domain will stop working in October 2025. Use the code-editor.run domain.
+A lightweight, web‑based code editor with real‑time collaboration, project/file management, and a sleek, distraction‑free UI. Powered by Monaco (the editor behind VS Code), Fastify, and Socket.IO.
 
-*P.S. I would have liked to completely rewrite the code editor, but every time I started, development kept stalling. Perhaps someday I’ll manage to rewrite the editor and show it to you. Thank you.*
+<img alt="Banner" src="https://i.postimg.cc/7L4GsLkh/image.png">
 
-## Mobile Adaptation
+- **Real‑time collaboration**: live edits, remote cursor position, presence.
+- **Project & file management**: create, upload, delete, and organize assets.
+- **Invitations**: bring teammates into a project (default limit: up to 2 collaborators).
+- **Live preview**: instant preview for HTML/CSS/JS, Markdown, SVG, images, audio, and video.
+- **Modern UX**: dark/light themes, status bar, tabs, keyboard shortcuts.
+- **Security**: sessions with httpOnly cookies, CSRF token checks, protective headers, rate limiting.
 
-<img alt="Banner two" width="340" src="https://i.ibb.co/tTqgNkyB/image.png">
-<img alt="Banner three" width="340" src="https://i.ibb.co/zhCZCfvT/image.png">
+### Quick Start
 
-## Commands
+- **Requirements**: Node.js 18+
 
-<img alt="Banner four" src="https://i.ibb.co/S7Pw2X5d/image.png">
-
-## Light Theme
-
-<img alt="Banner five" width="900" src="https://i.ibb.co/qFCddwNf/image.png">
-
-<hr>
-
-## Installation
-
-To set up the project locally, follow these steps:
-
-1. Clone the repository:
 ```bash
-git clone https://github.com/lordofsunshine/Code-Editor-with-Console.git
+npm install
+npm run start   # production mode
+# or
+npm run dev     # auto-reload during development
 ```
-2. Navigate to the project directory:
-```bash
- cd code-editor-with-console
-```
-3. Install the dependencies using Yarn:
-```bash
-yarn install
-```
-4. Start the development server:
-```bash
-yarn dev
-```
-5. Open your browser and visit `http://localhost:5173` to see the app running.
+
+Open `http://localhost:3000`:
+- Landing page at `/`
+- Auth flow at `/auth`
+- Editor at `/editor` (requires session)
+
+### How It Works
+
+- **Frontend**: Monaco Editor with a split view and integrated preview panel. The preview securely renders content via an iframe and Blob URLs; HTML pages are auto‑stitched with in‑memory CSS/JS for instant feedback.
+- **Collaboration**: Socket.IO rooms per project. Events include file changes, file create/delete, cursor updates, and collaborator presence.
+- **Backend**: Fastify serves static assets and JSON APIs (`/api/auth`, `/api/projects`, `/api/files`, `/api/invitations`, `/api/warnings`). Sessions and CSRF are enforced for mutating requests.
+- **Storage**: `better-sqlite3` for a simple, fast embedded database. Scheduled cleanup tasks remove stale data.
+
+### Configuration
+
+- The server runs on port `3000` by default.
+- `SESSION_SECRET` (optional): provide your own secret for session signing.
+- Defaults are sensible; no extra setup is required for local development.
+
+### Security & Responsible Disclosure
+
+If you discover a security vulnerability, **don’t stay silent — please report it!**
+- Open an issue in this repository with the “security” label, or
+- Contact the maintainers privately if sensitive details are involved.
+
+We appreciate responsible disclosure and will respond promptly.
+
+— Happy coding!
+
