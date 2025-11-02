@@ -1,4 +1,5 @@
 let previewVisible = false;
+let currentBlobUrl = null;
 
 export function initPreview() {
   document.getElementById('refreshPreview').addEventListener('click', updatePreview);
@@ -68,6 +69,11 @@ function hidePreview() {
   if (previewVisible) {
     togglePreview();
   }
+  
+  if (currentBlobUrl) {
+    URL.revokeObjectURL(currentBlobUrl);
+    currentBlobUrl = null;
+  }
 }
 
 export function updatePreview() {
@@ -108,66 +114,101 @@ export function updatePreview() {
 function renderHTMLPreview(htmlFile, allFiles, iframe) {
   let html = htmlFile.content;
   
-  const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg', 'ico', 'apng', 'avif'];
-  const imageFiles = allFiles.filter(f => {
+  const mediaFiles = allFiles.filter(f => {
     const ext = f.name.split('.').pop().toLowerCase();
-    return imageExtensions.includes(ext);
+    const mediaExts = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg', 'ico', 'apng', 'avif', 'mp4', 'webm', 'mov', 'avi', 'mp3', 'wav', 'ogg'];
+    return mediaExts.includes(ext);
   });
   
-  imageFiles.forEach(imgFile => {
-    const imgPath = imgFile.path.startsWith('/') ? imgFile.path : `/${imgFile.path}`;
-    const imgName = imgFile.name;
+  mediaFiles.forEach(mediaFile => {
+    const fileName = mediaFile.name;
     
-    if (imgFile.content && imgFile.content.startsWith('data:image/')) {
-      const regex1 = new RegExp(`src=["']${escapeRegex(imgPath)}["']`, 'g');
-      const regex2 = new RegExp(`src=["']${escapeRegex(imgName)}["']`, 'g');
-      const regex3 = new RegExp(`src=["']/${escapeRegex(imgName)}["']`, 'g');
+    if (mediaFile.content && mediaFile.content.startsWith('data:')) {
+      const patterns = [
+        new RegExp(`src=["']${escapeRegex(fileName)}["']`, 'gi'),
+        new RegExp(`src=["']/${escapeRegex(fileName)}["']`, 'gi'),
+        new RegExp(`src=["']./${escapeRegex(fileName)}["']`, 'gi'),
+        new RegExp(`src=["']\\.\\./${escapeRegex(fileName)}["']`, 'gi'),
+        new RegExp(`href=["']${escapeRegex(fileName)}["']`, 'gi'),
+        new RegExp(`href=["']/${escapeRegex(fileName)}["']`, 'gi')
+      ];
       
-      html = html.replace(regex1, `src="${imgFile.content}"`);
-      html = html.replace(regex2, `src="${imgFile.content}"`);
-      html = html.replace(regex3, `src="${imgFile.content}"`);
+      patterns.forEach(regex => {
+        html = html.replace(regex, (match) => {
+          const attr = match.includes('href') ? 'href' : 'src';
+          return `${attr}="${mediaFile.content}"`;
+        });
+      });
     }
   });
   
   const cssFiles = allFiles.filter(f => f.name.endsWith('.css'));
   const jsFiles = allFiles.filter(f => f.name.endsWith('.js'));
   
-  let styles = '';
   cssFiles.forEach(cssFile => {
-    styles += `<style>${cssFile.content}</style>`;
+    const fileName = cssFile.name;
+    const linkPatterns = [
+      new RegExp(`<link[^>]*href=["']${escapeRegex(fileName)}["'][^>]*>`, 'gi'),
+      new RegExp(`<link[^>]*href=["']/${escapeRegex(fileName)}["'][^>]*>`, 'gi'),
+      new RegExp(`<link[^>]*href=["']./${escapeRegex(fileName)}["'][^>]*>`, 'gi'),
+      new RegExp(`<link[^>]*href=["']\\.\\./${escapeRegex(fileName)}["'][^>]*>`, 'gi')
+    ];
+    
+    linkPatterns.forEach(regex => {
+      html = html.replace(regex, `<style>${cssFile.content}</style>`);
+    });
   });
   
-  let scripts = '';
   jsFiles.forEach(jsFile => {
-    scripts += `<script>${jsFile.content}</script>`;
+    const fileName = jsFile.name;
+    const scriptPatterns = [
+      new RegExp(`<script[^>]*src=["']${escapeRegex(fileName)}["'][^>]*></script>`, 'gi'),
+      new RegExp(`<script[^>]*src=["']/${escapeRegex(fileName)}["'][^>]*></script>`, 'gi'),
+      new RegExp(`<script[^>]*src=["']./${escapeRegex(fileName)}["'][^>]*></script>`, 'gi'),
+      new RegExp(`<script[^>]*src=["']\\.\\./${escapeRegex(fileName)}["'][^>]*></script>`, 'gi')
+    ];
+    
+    scriptPatterns.forEach(regex => {
+      html = html.replace(regex, `<script>${jsFile.content}</script>`);
+    });
   });
   
-  if (html.includes('</head>')) {
-    html = html.replace('</head>', `${styles}</head>`);
-  } else if (html.includes('<html>')) {
-    html = html.replace('<html>', `<html><head><meta charset="UTF-8">${styles}</head>`);
-  } else {
-    html = `<html><head><meta charset="UTF-8">${styles}</head><body>${html}</body></html>`;
+  let inlinedStyles = '';
+  cssFiles.forEach(cssFile => {
+    inlinedStyles += `<style>${cssFile.content}</style>\n`;
+  });
+  
+  let inlinedScripts = '';
+  jsFiles.forEach(jsFile => {
+    inlinedScripts += `<script>${jsFile.content}</script>\n`;
+  });
+  
+  if (!html.includes('<link') && inlinedStyles) {
+    if (html.includes('</head>')) {
+      html = html.replace('</head>', `${inlinedStyles}</head>`);
+    } else if (html.includes('<html>')) {
+      html = html.replace('<html>', `<html><head><meta charset="UTF-8">${inlinedStyles}</head>`);
+    } else {
+      html = `<html><head><meta charset="UTF-8">${inlinedStyles}</head><body>${html}</body></html>`;
+    }
   }
   
-  if (html.includes('</body>')) {
-    html = html.replace('</body>', `${scripts}</body>`);
-  } else {
-    html += scripts;
+  if (!html.includes('<script') && inlinedScripts) {
+    if (html.includes('</body>')) {
+      html = html.replace('</body>', `${inlinedScripts}</body>`);
+    } else {
+      html += inlinedScripts;
+    }
+  }
+  
+  if (currentBlobUrl) {
+    URL.revokeObjectURL(currentBlobUrl);
+    currentBlobUrl = null;
   }
   
   const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
-  const blobUrl = URL.createObjectURL(blob);
-  iframe.src = blobUrl;
-  
-  const oldSrc = iframe.src;
-  if (oldSrc && oldSrc.startsWith('blob:')) {
-    URL.revokeObjectURL(oldSrc);
-  }
-  
-  iframe.addEventListener('load', () => {
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-  }, { once: true });
+  currentBlobUrl = URL.createObjectURL(blob);
+  iframe.src = currentBlobUrl;
 }
 
 function escapeRegex(str) {
@@ -196,18 +237,14 @@ function renderTextPreview(file, iframe) {
     </html>
   `;
   
-  const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
-  const blobUrl = URL.createObjectURL(blob);
-  iframe.src = blobUrl;
-  
-  const oldSrc = iframe.src;
-  if (oldSrc && oldSrc.startsWith('blob:')) {
-    URL.revokeObjectURL(oldSrc);
+  if (currentBlobUrl) {
+    URL.revokeObjectURL(currentBlobUrl);
+    currentBlobUrl = null;
   }
   
-  iframe.addEventListener('load', () => {
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-  }, { once: true });
+  const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
+  currentBlobUrl = URL.createObjectURL(blob);
+  iframe.src = currentBlobUrl;
 }
 
 function renderSVGPreview(file, iframe) {
@@ -231,18 +268,14 @@ function renderSVGPreview(file, iframe) {
     </html>
   `;
   
-  const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
-  const blobUrl = URL.createObjectURL(blob);
-  iframe.src = blobUrl;
-  
-  const oldSrc = iframe.src;
-  if (oldSrc && oldSrc.startsWith('blob:')) {
-    URL.revokeObjectURL(oldSrc);
+  if (currentBlobUrl) {
+    URL.revokeObjectURL(currentBlobUrl);
+    currentBlobUrl = null;
   }
   
-  iframe.addEventListener('load', () => {
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-  }, { once: true });
+  const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
+  currentBlobUrl = URL.createObjectURL(blob);
+  iframe.src = currentBlobUrl;
 }
 
 function escapeHtml(text) {
@@ -303,18 +336,14 @@ function renderMarkdownPreview(file, iframe) {
     </html>
   `;
   
-  const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
-  const blobUrl = URL.createObjectURL(blob);
-  iframe.src = blobUrl;
-  
-  const oldSrc = iframe.src;
-  if (oldSrc && oldSrc.startsWith('blob:')) {
-    URL.revokeObjectURL(oldSrc);
+  if (currentBlobUrl) {
+    URL.revokeObjectURL(currentBlobUrl);
+    currentBlobUrl = null;
   }
   
-  iframe.addEventListener('load', () => {
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-  }, { once: true });
+  const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
+  currentBlobUrl = URL.createObjectURL(blob);
+  iframe.src = currentBlobUrl;
 }
 
 function renderImagePreview(file, iframe) {
@@ -368,18 +397,14 @@ function renderImagePreview(file, iframe) {
     </html>
   `;
   
-  const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
-  const blobUrl = URL.createObjectURL(blob);
-  iframe.src = blobUrl;
-  
-  const oldSrc = iframe.src;
-  if (oldSrc && oldSrc.startsWith('blob:')) {
-    URL.revokeObjectURL(oldSrc);
+  if (currentBlobUrl) {
+    URL.revokeObjectURL(currentBlobUrl);
+    currentBlobUrl = null;
   }
   
-  iframe.addEventListener('load', () => {
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-  }, { once: true });
+  const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
+  currentBlobUrl = URL.createObjectURL(blob);
+  iframe.src = currentBlobUrl;
 }
 
 function renderVideoPreview(file, iframe) {
@@ -432,18 +457,14 @@ function renderVideoPreview(file, iframe) {
     </html>
   `;
   
-  const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
-  const blobUrl = URL.createObjectURL(blob);
-  iframe.src = blobUrl;
-  
-  const oldSrc = iframe.src;
-  if (oldSrc && oldSrc.startsWith('blob:')) {
-    URL.revokeObjectURL(oldSrc);
+  if (currentBlobUrl) {
+    URL.revokeObjectURL(currentBlobUrl);
+    currentBlobUrl = null;
   }
   
-  iframe.addEventListener('load', () => {
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-  }, { once: true });
+  const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
+  currentBlobUrl = URL.createObjectURL(blob);
+  iframe.src = currentBlobUrl;
 }
 
 function renderAudioPreview(file, iframe) {
@@ -512,17 +533,13 @@ function renderAudioPreview(file, iframe) {
     </html>
   `;
   
-  const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
-  const blobUrl = URL.createObjectURL(blob);
-  iframe.src = blobUrl;
-  
-  const oldSrc = iframe.src;
-  if (oldSrc && oldSrc.startsWith('blob:')) {
-    URL.revokeObjectURL(oldSrc);
+  if (currentBlobUrl) {
+    URL.revokeObjectURL(currentBlobUrl);
+    currentBlobUrl = null;
   }
   
-  iframe.addEventListener('load', () => {
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-  }, { once: true });
+  const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
+  currentBlobUrl = URL.createObjectURL(blob);
+  iframe.src = currentBlobUrl;
 }
 

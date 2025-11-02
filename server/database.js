@@ -69,12 +69,22 @@ export class Database {
         project_id INTEGER NOT NULL,
         from_user_id INTEGER NOT NULL,
         to_user_id INTEGER NOT NULL,
+        role TEXT DEFAULT 'editor',
         status TEXT DEFAULT 'pending',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
         FOREIGN KEY (from_user_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (to_user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS editor_settings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL UNIQUE,
+        settings TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       );
 
       CREATE INDEX IF NOT EXISTS idx_files_project ON files(project_id);
@@ -85,10 +95,11 @@ export class Database {
       CREATE INDEX IF NOT EXISTS idx_collaborators_user ON project_collaborators(user_id);
       CREATE INDEX IF NOT EXISTS idx_invitations_to_user ON invitations(to_user_id);
       CREATE INDEX IF NOT EXISTS idx_invitations_status ON invitations(status);
+      CREATE INDEX IF NOT EXISTS idx_editor_settings_user ON editor_settings(user_id);
     `);
 
-    const columns = this.db.pragma('table_info(users)');
-    const hasLastAccessed = columns.some(col => col.name === 'last_accessed_at');
+    const userColumns = this.db.pragma('table_info(users)');
+    const hasLastAccessed = userColumns.some(col => col.name === 'last_accessed_at');
     
     if (!hasLastAccessed) {
       this.db.exec(`
@@ -96,6 +107,24 @@ export class Database {
         ALTER TABLE projects ADD COLUMN last_accessed_at DATETIME DEFAULT CURRENT_TIMESTAMP;
         CREATE INDEX IF NOT EXISTS idx_users_last_access ON users(last_accessed_at);
         CREATE INDEX IF NOT EXISTS idx_projects_last_access ON projects(last_accessed_at);
+      `);
+    }
+
+    const invitationColumns = this.db.pragma('table_info(invitations)');
+    const hasRoleInInvitations = invitationColumns.some(col => col.name === 'role');
+    
+    if (!hasRoleInInvitations) {
+      this.db.exec(`
+        ALTER TABLE invitations ADD COLUMN role TEXT DEFAULT 'editor';
+      `);
+    }
+
+    const collaboratorColumns = this.db.pragma('table_info(project_collaborators)');
+    const hasRoleInCollaborators = collaboratorColumns.some(col => col.name === 'role');
+    
+    if (!hasRoleInCollaborators) {
+      this.db.exec(`
+        ALTER TABLE project_collaborators ADD COLUMN role TEXT DEFAULT 'editor';
       `);
     }
   }
@@ -251,9 +280,9 @@ export class Database {
     this.db.exec('PRAGMA incremental_vacuum(100)');
   }
 
-  createInvitation(projectId, fromUserId, toUserId) {
-    const stmt = this.db.prepare('INSERT INTO invitations (project_id, from_user_id, to_user_id) VALUES (?, ?, ?)');
-    return stmt.run(projectId, fromUserId, toUserId);
+  createInvitation(projectId, fromUserId, toUserId, role = 'editor') {
+    const stmt = this.db.prepare('INSERT INTO invitations (project_id, from_user_id, to_user_id, role) VALUES (?, ?, ?, ?)');
+    return stmt.run(projectId, fromUserId, toUserId, role);
   }
 
   getInvitation(invitationId) {
@@ -317,8 +346,13 @@ export class Database {
   }
 
   isCollaborator(projectId, userId) {
-    const stmt = this.db.prepare('SELECT 1 FROM project_collaborators WHERE project_id = ? AND user_id = ?');
-    return !!stmt.get(projectId, userId);
+    const ownerStmt = this.db.prepare('SELECT 1 FROM projects WHERE id = ? AND user_id = ?');
+    if (ownerStmt.get(projectId, userId)) {
+      return true;
+    }
+    
+    const collabStmt = this.db.prepare('SELECT 1 FROM project_collaborators WHERE project_id = ? AND user_id = ?');
+    return !!collabStmt.get(projectId, userId);
   }
 
   getSharedProjects(userId) {
@@ -354,5 +388,53 @@ export class Database {
 
   getUserIdFromSession(sessionId) {
     return null;
+  }
+
+  getEditorSettings(userId) {
+    const stmt = this.db.prepare('SELECT settings FROM editor_settings WHERE user_id = ?');
+    const result = stmt.get(userId);
+    return result ? JSON.parse(result.settings) : null;
+  }
+
+  saveEditorSettings(userId, settings) {
+    const settingsJson = JSON.stringify(settings);
+    const stmt = this.db.prepare(`
+      INSERT INTO editor_settings (user_id, settings) VALUES (?, ?)
+      ON CONFLICT(user_id) DO UPDATE SET settings = ?, updated_at = CURRENT_TIMESTAMP
+    `);
+    return stmt.run(userId, settingsJson, settingsJson);
+  }
+
+  getUserRole(projectId, userId) {
+    const project = this.db.prepare('SELECT user_id FROM projects WHERE id = ?').get(projectId);
+    if (project && project.user_id === userId) {
+      return 'owner';
+    }
+    
+    const collab = this.db.prepare('SELECT role FROM project_collaborators WHERE project_id = ? AND user_id = ?').get(projectId, userId);
+    return collab ? collab.role : null;
+  }
+
+  updateCollaboratorRole(projectId, userId, role) {
+    const stmt = this.db.prepare('UPDATE project_collaborators SET role = ? WHERE project_id = ? AND user_id = ?');
+    return stmt.run(role, projectId, userId);
+  }
+
+  searchFiles(projectId, query) {
+    const stmt = this.db.prepare(`
+      SELECT * FROM files 
+      WHERE project_id = ? AND (name LIKE ? OR path LIKE ?)
+      ORDER BY name
+    `);
+    return stmt.all(projectId, `%${query}%`, `%${query}%`);
+  }
+
+  searchFilesByContent(projectId, query) {
+    const stmt = this.db.prepare(`
+      SELECT * FROM files 
+      WHERE project_id = ? AND content LIKE ?
+      ORDER BY name
+    `);
+    return stmt.all(projectId, `%${query}%`);
   }
 }

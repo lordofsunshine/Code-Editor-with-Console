@@ -1,3 +1,5 @@
+import { fetchWithCSRF } from './utils.js';
+
 let socket = null;
 let currentProjectId = null;
 let pendingInvitations = [];
@@ -36,9 +38,27 @@ export function initCollaboration() {
     loadPendingInvitations();
   });
 
+  socket.on('kicked-from-project', ({ projectId, projectName, reason }) => {
+    showToast(`You have been removed from project "${projectName}"`, 'error');
+    
+    if (currentProjectId === projectId) {
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } else {
+      setTimeout(() => {
+        if (window.loadProjects) {
+          window.loadProjects();
+        }
+      }, 1000);
+    }
+  });
+
   socket.on('file-updated', ({ fileId, content, username, isTyping }) => {
     if (window.onFileUpdatedByOther) {
-      window.onFileUpdatedByOther(fileId, content, username, isTyping);
+      setTimeout(() => {
+        window.onFileUpdatedByOther(fileId, content, username, isTyping);
+      }, 50);
     }
   });
 
@@ -63,6 +83,9 @@ export function initCollaboration() {
   setupInvitationUI();
   setupNotificationsUI();
   loadPendingInvitations();
+  
+  window.showToast = showToast;
+  window.showMessage = showToast;
 }
 
 export function joinProject(projectId) {
@@ -104,6 +127,7 @@ function setupInvitationUI() {
   const cancelInvite = document.getElementById('cancelInvite');
   const sendInviteBtn = document.getElementById('sendInvite');
   const inviteUsername = document.getElementById('inviteUsername');
+  const inviteRole = document.getElementById('inviteRole');
   const inviteStatus = document.getElementById('inviteStatus');
 
   leaveBtn.addEventListener('click', async () => {
@@ -145,6 +169,7 @@ function setupInvitationUI() {
 
   sendInviteBtn.addEventListener('click', async () => {
     const username = inviteUsername.value.trim();
+    const role = inviteRole ? inviteRole.value : 'editor';
     if (!username || !currentProjectId) return;
 
     try {
@@ -163,7 +188,7 @@ function setupInvitationUI() {
       const response = await fetchWithCSRF('/api/invitations/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: currentProjectId, username })
+        body: JSON.stringify({ projectId: currentProjectId, username, role })
       });
 
       const data = await response.json();
@@ -246,7 +271,10 @@ function renderProjectInvitations(invitations) {
 
   container.innerHTML = activeInvitations.map(inv => `
     <div class="invitation-item">
-      <span class="invitation-user">${escapeHtml(inv.to_username)}</span>
+      <div class="invitation-user-info">
+        <span class="invitation-user">${escapeHtml(inv.to_username)}</span>
+        <span class="invitation-role">${inv.role || 'editor'}</span>
+      </div>
       <span class="invitation-status ${inv.status}">${inv.status}</span>
       <button class="invitation-remove" onclick="window.removeCollaborator(${inv.id}, '${inv.status}', ${inv.to_user_id})" title="${inv.status === 'pending' ? 'Cancel invitation' : 'Remove from project'}">
         <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
@@ -312,7 +340,7 @@ function renderNotifications() {
       <div class="notification-title">Project Invitation</div>
       <div class="notification-message">
         <strong>${escapeHtml(inv.from_username)}</strong> invited you to join 
-        <strong>${escapeHtml(inv.project_name)}</strong>
+        <strong>${escapeHtml(inv.project_name)}</strong> as <strong>${inv.role || 'editor'}</strong>
       </div>
       <div class="notification-actions">
         <button class="notification-accept" onclick="window.acceptInvitation(${inv.id})">Accept</button>
@@ -516,17 +544,6 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-async function fetchWithCSRF(url, options = {}) {
-  const csrfToken = window.editorState?.csrfToken;
-  if (csrfToken && options.method && options.method !== 'GET') {
-    options.headers = {
-      ...options.headers,
-      'X-CSRF-Token': csrfToken
-    };
-  }
-  return fetch(url, options);
-}
-
 export function showInviteButton(show) {
   const inviteBtn = document.getElementById('inviteBtn');
   const leaveBtn = document.getElementById('leaveBtn');
@@ -537,4 +554,6 @@ export function showInviteButton(show) {
 export function setCurrentProjectId(projectId) {
   currentProjectId = projectId;
 }
+
+export { showToast };
 

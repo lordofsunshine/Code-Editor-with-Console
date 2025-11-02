@@ -844,9 +844,6 @@
   animation: fadeIn 1s ease, slideUp 1s ease;
   opacity: 0;
   animation-fill-mode: forwards;
-  background: rgba(10, 10, 10, 0.6);
-  backdrop-filter: blur(30px) saturate(180%);
-  -webkit-backdrop-filter: blur(30px) saturate(180%);
   border-radius: 0;
   margin: 0;
   border: none;
@@ -1045,8 +1042,22 @@
   border-radius: 4px;
 }
 
+#fileInfo:empty {
+  display: none;
+}
+
+.main-area:has(.welcome-screen:not(.hidden)) #fileInfo {
+  display: none;
+}
+
 [data-theme="light"] #fileInfo {
   background: rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 768px) {
+  #fileInfo {
+    display: none !important;
+  }
 }
 
 .cursorPosition,
@@ -1110,6 +1121,14 @@
     height: 100vh;
     z-index: 100;
     box-shadow: 4px 0 20px var(--shadow);
+  }
+
+  .mobile-overlay {
+    z-index: 99;
+  }
+
+  .modal {
+    z-index: 1010;
   }
 
   .sidebar.collapsed {
@@ -1460,14 +1479,13 @@
 .mobile-menu-btn {
   display: none;
   position: fixed;
-  bottom: calc(80px + env(safe-area-inset-bottom, 0px));
-  left: 20px;
+  bottom: calc(130px + env(safe-area-inset-bottom, 0px));
   width: 56px;
   height: 56px;
-  background: var(--accent-color);
-  border: none;
+  background: var(--accent);
+  border: 1px solid var(--border-color);
   border-radius: 50%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px var(--shadow);
   cursor: pointer;
   z-index: 999;
   transition: transform 0.2s;
@@ -1480,7 +1498,7 @@
 .mobile-menu-btn svg {
   width: 24px;
   height: 24px;
-  fill: white;
+  fill: var(--bg-primary);
 }
 
 .mobile-overlay {
@@ -1503,7 +1521,12 @@
 }
 
 [data-theme="light"] .mobile-menu-btn {
-  background: var(--accent-color);
+  background: var(--accent);
+  border-color: var(--border-color);
+}
+
+[data-theme="light"] .mobile-menu-btn svg {
+  fill: var(--bg-primary);
 }
 
 [data-theme="light"] .invitation-remove {
@@ -1535,6 +1558,7 @@
 
 [data-theme="light"] .user-avatar {
   background: linear-gradient(135deg, #f3f3f3 0%, #c1c1c1 100%);
+  color: #000000;
 }
 
 @media (max-width: 768px) {
@@ -1545,10 +1569,18 @@
     width: 80%;
     max-width: 320px;
     height: 100vh;
-    z-index: 1001;
+    z-index: 100;
     transition: left 0.3s ease;
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
     background: var(--bg-primary);
+  }
+
+  .mobile-overlay {
+    z-index: 99;
+  }
+
+  .modal {
+    z-index: 1010;
   }
 
   .sidebar.active {
@@ -1600,6 +1632,136 @@
   
   .cursorPosition, .fileLanguage {
     display: none;
+  }
+}
+
+.stars-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.star {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  animation: starAppear 2.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.star::before,
+.star::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.5);
+  clip-path: polygon(
+    50% 0%, 61% 35%, 98% 35%, 68% 57%,
+    79% 91%, 50% 70%, 21% 91%, 32% 57%,
+    2% 35%, 39% 35%
+  );
+}
+
+.star::after {
+  background: rgba(255, 255, 255, 0.3);
+  clip-path: polygon(
+    50% 0%, 56% 20%, 80% 20%, 60% 35%,
+    68% 55%, 50% 45%, 32% 55%, 40% 35%,
+    20% 20%, 44% 20%
+  );
+}
+
+.star.small {
+  width: 4px;
+  height: 4px;
+}
+
+.star.small::before,
+.star.small::after {
+  width: 4px;
+  height: 4px;
+}
+
+.star.medium {
+  width: 5px;
+  height: 5px;
+}
+
+.star.medium::before,
+.star.medium::after {
+  width: 5px;
+  height: 5px;
+}
+
+.star.large {
+  width: 7px;
+  height: 7px;
+}
+
+.star.large::before,
+.star.large::after {
+  width: 7px;
+  height: 7px;
+}
+
+.star.twinkle {
+  animation: starAppear 2.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, starTwinkle 3s ease-in-out 2.5s infinite;
+}
+
+.star.large::before {
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+}
+
+.star.medium::before {
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+}
+
+.star.small::before {
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
+}
+
+@keyframes starAppear {
+  from {
+    opacity: 0;
+    transform: scale(0) rotate(var(--rotation, 0deg));
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15) rotate(var(--rotation, 0deg));
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(var(--rotation, 0deg));
+  }
+}
+
+@keyframes starFade {
+  from {
+    opacity: 1;
+    transform: scale(1) rotate(var(--rotation, 0deg));
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.7) rotate(var(--rotation, 0deg));
+  }
+}
+
+@keyframes starTwinkle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1) rotate(var(--rotation, 0deg));
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.9) rotate(var(--rotation, 0deg));
   }
 }
 

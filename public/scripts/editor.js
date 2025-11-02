@@ -1,6 +1,8 @@
 import { initPreview, checkPreviewAvailability, updatePreview, togglePreview } from './preview.js';
 import { checkWarnings } from './warnings.js';
 import { initCollaboration, joinProject, leaveProject, emitFileChange, emitFileCreated, emitFileDeleted, showInviteButton, setCurrentProjectId } from './collaboration.js';
+import { initStarsObserver, fetchWithCSRF } from './utils.js';
+import { initIntegration, setCurrentProject, setCurrentFile, setUserRole } from './integration.js';
 
 let editor;
 let currentProject = null;
@@ -19,16 +21,6 @@ const state = {
 };
 
 window.editorState = state;
-
-async function fetchWithCSRF(url, options = {}) {
-  if (state.csrfToken && options.method && options.method !== 'GET') {
-    options.headers = {
-      ...options.headers,
-      'X-CSRF-Token': state.csrfToken
-    };
-  }
-  return fetch(url, options);
-}
 
 require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
 
@@ -58,9 +50,9 @@ function initEditor() {
     fontFamily: "'Fira Code', 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace",
     fontLigatures: true,
     minimap: { enabled: false },
-    scrollBeyondLastLine: false,
+    scrollBeyondLastLine: true,
     renderWhitespace: 'selection',
-    cursorBlinking: 'smooth',
+    cursorBlinking: 'blink',
     cursorSmoothCaretAnimation: 'on',
     smoothScrolling: true,
     padding: { top: 16 },
@@ -103,6 +95,19 @@ function initEditor() {
   });
 }
 
+function updateFileInfoVisibility() {
+  const welcomeScreen = document.getElementById('welcomeScreen');
+  const fileInfo = document.getElementById('fileInfo');
+  
+  if (welcomeScreen && fileInfo) {
+    if (welcomeScreen.classList.contains('hidden')) {
+      fileInfo.style.display = fileInfo.textContent ? '' : 'none';
+    } else {
+      fileInfo.style.display = 'none';
+    }
+  }
+}
+
 async function init() {
   applyTheme();
   await loadUser();
@@ -113,6 +118,41 @@ async function init() {
   setupEventListeners();
   handleRouting();
   checkWarnings();
+  
+  const welcomeScreen = document.getElementById('welcomeScreen');
+  if (welcomeScreen) {
+    const observer = new MutationObserver(() => {
+      updateFileInfoVisibility();
+    });
+    observer.observe(welcomeScreen, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+    
+    const fileInfoObserver = new MutationObserver(() => {
+      updateFileInfoVisibility();
+    });
+    const fileInfo = document.getElementById('fileInfo');
+    if (fileInfo) {
+      fileInfoObserver.observe(fileInfo, {
+        childList: true,
+        characterData: true,
+        subtree: true
+      });
+    }
+    
+    updateFileInfoVisibility();
+  }
+  
+  setTimeout(() => {
+    initStarsObserver();
+  }, 800);
+  
+  if (editor) {
+    initIntegration(editor);
+  }
+  
+  window.openFile = openFile;
 }
 
 async function loadUser() {
@@ -145,18 +185,8 @@ async function loadUser() {
 
 function updateWelcomeMessage(username) {
   const titleEl = document.getElementById('welcomeTitle');
-  const sidebar = document.getElementById('sidebar');
-  const statusbar = document.querySelector('.statusbar');
-  const isMobile = window.innerWidth <= 768;
   
   titleEl.textContent = 'Welcome to code-editor';
-  
-  if (!isMobile) {
-    sidebar.style.opacity = '0';
-    sidebar.style.transform = 'translateX(-20px)';
-    statusbar.style.opacity = '0';
-    statusbar.style.transform = 'translateY(20px)';
-  }
   
   setTimeout(() => {
     const hour = new Date().getHours();
@@ -181,25 +211,6 @@ function updateWelcomeMessage(username) {
           titleEl.textContent += fullText.charAt(index);
           index++;
           setTimeout(typeWriter, 50);
-        } else {
-          if (!isMobile && sidebar && statusbar) {
-            setTimeout(() => {
-              sidebar.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
-              sidebar.style.opacity = '1';
-              sidebar.style.transform = 'translateX(0)';
-              
-              setTimeout(() => {
-                statusbar.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
-                statusbar.style.opacity = '1';
-                statusbar.style.transform = 'translateY(0)';
-              }, 200);
-            }, 300);
-          } else if (sidebar && statusbar) {
-            sidebar.style.opacity = '1';
-            sidebar.style.transform = '';
-            statusbar.style.opacity = '1';
-            statusbar.style.transform = '';
-          }
         }
       };
       
@@ -292,17 +303,25 @@ async function selectProject(projectId) {
   document.getElementById('uploadFile').disabled = false;
   
   setCurrentProjectId(projectId);
+  setCurrentProject(projectId);
   showInviteButton(project.isOwner);
   joinProject(projectId);
   
-  const mobileSidebar = document.getElementById('sidebar');
-  const mobileOverlay = document.getElementById('mobileOverlay');
-  if (mobileSidebar) {
-    mobileSidebar.classList.remove('active');
-    mobileSidebar.classList.remove('collapsed');
+  if (state.userId) {
+    setUserRole(projectId, state.userId);
   }
-  if (mobileOverlay) {
-    mobileOverlay.classList.remove('active');
+  
+  const isMobile = window.innerWidth <= 768;
+  if (!isMobile) {
+    const mobileSidebar = document.getElementById('sidebar');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    if (mobileSidebar) {
+      mobileSidebar.classList.remove('active');
+      mobileSidebar.classList.remove('collapsed');
+    }
+    if (mobileOverlay) {
+      mobileOverlay.classList.remove('active');
+    }
   }
   
   updateURL();
@@ -371,6 +390,7 @@ function openFile(fileId) {
   if (!file) return;
   
   currentFile = file;
+  setCurrentFile(fileId);
   
   if (!openTabs.find(t => t.id === fileId)) {
     openTabs.push(file);
@@ -395,6 +415,7 @@ function openFile(fileId) {
   
   document.getElementById('welcomeScreen').classList.add('hidden');
   document.getElementById('fileInfo').textContent = file.name;
+  updateFileInfoVisibility();
   const language = detectLanguage(file.name);
   document.getElementById('fileLanguage').textContent = languageNames[language] || language;
   
@@ -484,6 +505,7 @@ function closeTab(fileId) {
       document.getElementById('monacoEditor').classList.remove('active');
       document.getElementById('welcomeScreen').classList.remove('hidden');
       document.getElementById('fileInfo').textContent = '';
+      updateFileInfoVisibility();
       updateURL();
     }
   }
@@ -1179,6 +1201,7 @@ function setupCollaborationHandlers() {
     document.getElementById('monacoEditor').classList.remove('active');
     document.getElementById('welcomeScreen').classList.remove('hidden');
     document.getElementById('fileInfo').textContent = '';
+    updateFileInfoVisibility();
     document.getElementById('newFile').disabled = true;
     document.getElementById('uploadFile').disabled = true;
     hideMediaViewer();

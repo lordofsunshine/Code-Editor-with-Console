@@ -45,6 +45,10 @@ export async function projectRoutes(fastify, options) {
   fastify.delete('/:id', async (request, reply) => {
     const projectId = parseInt(request.params.id);
     
+    if (isNaN(projectId)) {
+      return reply.code(400).send({ error: 'Invalid project ID' });
+    }
+    
     const project = fastify.db.getProject(projectId, request.session.userId);
     if (!project) {
       return reply.code(404).send({ error: 'Project not found' });
@@ -52,6 +56,26 @@ export async function projectRoutes(fastify, options) {
 
     fastify.db.deleteProject(projectId, request.session.userId);
     return { success: true };
+  });
+
+  fastify.get('/:projectId/role/:userId', async (request, reply) => {
+    const projectId = parseInt(request.params.projectId);
+    const userId = parseInt(request.params.userId);
+    
+    if (isNaN(projectId) || isNaN(userId)) {
+      return reply.code(400).send({ error: 'Invalid IDs' });
+    }
+    
+    if (request.session.userId !== userId) {
+      return reply.code(403).send({ error: 'Access denied' });
+    }
+    
+    if (!fastify.db.hasProjectAccess(projectId, userId)) {
+      return reply.code(403).send({ error: 'Access denied' });
+    }
+    
+    const role = fastify.db.getUserRole(projectId, userId);
+    return { role };
   });
 }
 

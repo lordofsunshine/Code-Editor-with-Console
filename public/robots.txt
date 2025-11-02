@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /editor
+Disallow: /auth
+
+Sitemap: https://code-editor.run/sitemap.xml
+Sitemap: https://code-editor.app/sitemap.xml
+Sitemap: https://code-editor.lol/sitemap.xml
+

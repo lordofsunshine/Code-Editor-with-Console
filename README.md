@@ -22,6 +22,19 @@ A lightweight, web‑based code editor with real‑time collaboration, project/f
 - **Modern UX**: dark/light themes, status bar, tabs, keyboard shortcuts.
 - **Security**: sessions with httpOnly cookies, CSRF token checks, protective headers, rate limiting.
 
+### What's New?
+
+Latest updates and improvements:
+
+- **Kick notifications**: Real-time WebSocket events when users are removed from projects with automatic redirect
+- **Editor Settings**: Now you can customize the editor as you want!
+- **Enhanced security**: Full input validation with `isNaN()` checks, SQL injection protection, XSS prevention, role-based access control
+- **Database optimization**: Automatic VACUUM (weekly), PRAGMA optimize (daily), incremental vacuum for better performance
+- **SEO ready**: Complete meta tags (Open Graph, Twitter Cards, descriptions), favicon.svg, robots.txt, sitemap.xml for all domains (code-editor.run, code-editor.app, code-editor.lol)
+- **Welcome screen animations**: Smooth stars and comets animations with optimized performance and clean code architecture
+- **Code organization**: Utility functions extracted to separate utils.js file for better maintainability
+- **Access control**: Strengthened permission checks across all API endpoints with proper error handling
+
 ### Quick Start
 
 - **Requirements**: Node.js 18+

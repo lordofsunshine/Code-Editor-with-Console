@@ -12,6 +12,8 @@ import { fileRoutes } from './routes/files.js';
 import { projectRoutes } from './routes/projects.js';
 import { warningRoutes } from './routes/warnings.js';
 import { invitationRoutes } from './routes/invitations.js';
+import { settingsRoutes } from './routes/settings.js';
+import { searchRoutes } from './routes/search.js';
 import { initCleanupTasks } from './cleanup.js';
 import { initSocket } from './socket.js';
 import chalk from 'chalk';
@@ -76,7 +78,7 @@ fastify.addHook('onRequest', (request, reply, done) => {
 });
 
 fastify.addHook('preHandler', (request, reply, done) => {
-  const exemptRoutes = ['/api/auth/me', '/api/auth/logout'];
+  const exemptRoutes = ['/api/auth/me', '/api/auth/logout', '/api/settings/'];
   const exemptMethods = ['GET', 'HEAD', 'OPTIONS'];
   
   if (exemptMethods.includes(request.method) || exemptRoutes.includes(request.url)) {
@@ -115,6 +117,8 @@ await fastify.register(fileRoutes, { prefix: '/api/files' });
 await fastify.register(projectRoutes, { prefix: '/api/projects' });
 await fastify.register(warningRoutes, { prefix: '/api/warnings' });
 await fastify.register(invitationRoutes, { prefix: '/api/invitations' });
+await fastify.register(settingsRoutes, { prefix: '/api/settings' });
+await fastify.register(searchRoutes, { prefix: '/api/search' });
 
 fastify.get('/editor', (request, reply) => {
   if (!request.session.userId) {

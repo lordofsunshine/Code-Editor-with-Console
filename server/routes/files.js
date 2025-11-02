@@ -15,6 +15,10 @@ export async function fileRoutes(fastify, options) {
   fastify.get('/:projectId', async (request, reply) => {
     const projectId = parseInt(request.params.projectId);
     
+    if (isNaN(projectId)) {
+      return reply.code(400).send({ error: 'Invalid project ID' });
+    }
+    
     if (!verifyProjectAccess(projectId, request.session.userId)) {
       return reply.code(403).send({ error: 'Access denied' });
     }
@@ -29,9 +33,19 @@ export async function fileRoutes(fastify, options) {
   fastify.post('/:projectId', async (request, reply) => {
     const projectId = parseInt(request.params.projectId);
     const { name, path, content = '', language = 'plaintext', isMedia = false } = request.body;
+    const userId = request.session.userId;
     
-    if (!verifyProjectAccess(projectId, request.session.userId)) {
+    if (isNaN(projectId)) {
+      return reply.code(400).send({ error: 'Invalid project ID' });
+    }
+    
+    if (!verifyProjectAccess(projectId, userId)) {
       return reply.code(403).send({ error: 'Access denied' });
+    }
+
+    const userRole = fastify.db.getUserRole(projectId, userId);
+    if (userRole === 'viewer') {
+      return reply.code(403).send({ error: 'Viewers cannot create files' });
     }
 
     if (!name || !path) {
@@ -62,9 +76,19 @@ export async function fileRoutes(fastify, options) {
     const projectId = parseInt(request.params.projectId);
     const fileId = parseInt(request.params.fileId);
     const { content } = request.body;
+    const userId = request.session.userId;
     
-    if (!verifyProjectAccess(projectId, request.session.userId)) {
+    if (isNaN(projectId) || isNaN(fileId)) {
+      return reply.code(400).send({ error: 'Invalid IDs' });
+    }
+    
+    if (!verifyProjectAccess(projectId, userId)) {
       return reply.code(403).send({ error: 'Access denied' });
+    }
+
+    const userRole = fastify.db.getUserRole(projectId, userId);
+    if (userRole === 'viewer') {
+      return reply.code(403).send({ error: 'Viewers cannot edit files' });
     }
 
     const file = fastify.db.getFile(fileId, projectId);
@@ -81,9 +105,19 @@ export async function fileRoutes(fastify, options) {
   fastify.delete('/:projectId/:fileId', async (request, reply) => {
     const projectId = parseInt(request.params.projectId);
     const fileId = parseInt(request.params.fileId);
+    const userId = request.session.userId;
     
-    if (!verifyProjectAccess(projectId, request.session.userId)) {
+    if (isNaN(projectId) || isNaN(fileId)) {
+      return reply.code(400).send({ error: 'Invalid IDs' });
+    }
+    
+    if (!verifyProjectAccess(projectId, userId)) {
       return reply.code(403).send({ error: 'Access denied' });
+    }
+
+    const userRole = fastify.db.getUserRole(projectId, userId);
+    if (userRole === 'viewer') {
+      return reply.code(403).send({ error: 'Viewers cannot delete files' });
     }
 
     fastify.db.deleteFile(fileId, projectId);

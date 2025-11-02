@@ -7,11 +7,15 @@ export async function invitationRoutes(fastify, options) {
   });
 
   fastify.post('/send', async (request, reply) => {
-    const { projectId, username } = request.body;
+    const { projectId, username, role = 'editor' } = request.body;
     const fromUserId = request.session.userId;
 
     if (!projectId || !username) {
       return reply.code(400).send({ error: 'Invalid request' });
+    }
+
+    if (!['viewer', 'editor'].includes(role)) {
+      return reply.code(400).send({ error: 'Invalid role' });
     }
 
     const project = fastify.db.getProject(projectId, fromUserId);
@@ -50,7 +54,7 @@ export async function invitationRoutes(fastify, options) {
     }
 
     try {
-      const result = fastify.db.createInvitation(projectId, fromUserId, toUser.id);
+      const result = fastify.db.createInvitation(projectId, fromUserId, toUser.id, role);
       const invitation = fastify.db.getInvitation(result.lastInsertRowid);
       
       if (fastify.io) {
@@ -64,7 +68,8 @@ export async function invitationRoutes(fastify, options) {
 
       return { success: true, invitation };
     } catch (err) {
-      return reply.code(409).send({ error: 'Failed to send invitation' });
+      console.error('Invitation error:', err);
+      return reply.code(500).send({ error: 'Failed to send invitation' });
     }
   });
 
@@ -78,6 +83,10 @@ export async function invitationRoutes(fastify, options) {
     const projectId = parseInt(request.params.projectId);
     const userId = request.session.userId;
 
+    if (isNaN(projectId)) {
+      return reply.code(400).send({ error: 'Invalid project ID' });
+    }
+
     const project = fastify.db.getProject(projectId, userId);
     if (!project) {
       return reply.code(403).send({ error: 'Access denied' });
@@ -90,6 +99,10 @@ export async function invitationRoutes(fastify, options) {
   fastify.post('/:invitationId/accept', async (request, reply) => {
     const invitationId = parseInt(request.params.invitationId);
     const userId = request.session.userId;
+
+    if (isNaN(invitationId)) {
+      return reply.code(400).send({ error: 'Invalid invitation ID' });
+    }
 
     const invitation = fastify.db.getInvitation(invitationId);
     if (!invitation) {
@@ -105,7 +118,7 @@ export async function invitationRoutes(fastify, options) {
     }
 
     try {
-      fastify.db.addCollaborator(invitation.project_id, userId);
+      fastify.db.addCollaborator(invitation.project_id, userId, invitation.role);
       fastify.db.updateInvitationStatus(invitationId, 'accepted');
       
       if (fastify.io) {
@@ -127,6 +140,10 @@ export async function invitationRoutes(fastify, options) {
   fastify.post('/:invitationId/reject', async (request, reply) => {
     const invitationId = parseInt(request.params.invitationId);
     const userId = request.session.userId;
+
+    if (isNaN(invitationId)) {
+      return reply.code(400).send({ error: 'Invalid invitation ID' });
+    }
 
     const invitation = fastify.db.getInvitation(invitationId);
     if (!invitation) {
@@ -160,6 +177,10 @@ export async function invitationRoutes(fastify, options) {
     const projectId = parseInt(request.params.projectId);
     const userId = request.session.userId;
 
+    if (isNaN(projectId)) {
+      return reply.code(400).send({ error: 'Invalid project ID' });
+    }
+
     if (!fastify.db.hasProjectAccess(projectId, userId)) {
       return reply.code(403).send({ error: 'Access denied' });
     }
@@ -173,9 +194,17 @@ export async function invitationRoutes(fastify, options) {
     const collaboratorId = parseInt(request.params.collaboratorId);
     const userId = request.session.userId;
 
+    if (isNaN(projectId) || isNaN(collaboratorId) || collaboratorId === userId) {
+      return reply.code(400).send({ error: 'Invalid request' });
+    }
+
     const project = fastify.db.getProject(projectId, userId);
     if (!project) {
       return reply.code(403).send({ error: 'Only owner can remove collaborators' });
+    }
+
+    if (!fastify.db.isCollaborator(projectId, collaboratorId)) {
+      return reply.code(404).send({ error: 'User is not a collaborator' });
     }
 
     fastify.db.removeCollaborator(projectId, collaboratorId);
@@ -190,7 +219,14 @@ export async function invitationRoutes(fastify, options) {
     if (fastify.io) {
       const collabSockets = Array.from(fastify.io.sockets.sockets.values())
         .filter(s => s.userId === collaboratorId);
-      collabSockets.forEach(s => s.emit('invitation-updated'));
+      collabSockets.forEach(s => {
+        s.emit('kicked-from-project', { 
+          projectId, 
+          projectName: project.name,
+          reason: 'removed' 
+        });
+        s.emit('invitation-updated');
+      });
       
       const ownerSockets = Array.from(fastify.io.sockets.sockets.values())
         .filter(s => s.userId === userId);
@@ -203,6 +239,10 @@ export async function invitationRoutes(fastify, options) {
   fastify.post('/:invitationId/cancel', async (request, reply) => {
     const invitationId = parseInt(request.params.invitationId);
     const userId = request.session.userId;
+
+    if (isNaN(invitationId)) {
+      return reply.code(400).send({ error: 'Invalid invitation ID' });
+    }
 
     const invitation = fastify.db.getInvitation(invitationId);
     if (!invitation) {
@@ -236,6 +276,10 @@ export async function invitationRoutes(fastify, options) {
   fastify.post('/leave/:projectId', async (request, reply) => {
     const projectId = parseInt(request.params.projectId);
     const userId = request.session.userId;
+
+    if (isNaN(projectId)) {
+      return reply.code(400).send({ error: 'Invalid project ID' });
+    }
 
     if (!fastify.db.isCollaborator(projectId, userId)) {
       return reply.code(403).send({ error: 'You are not a collaborator' });
