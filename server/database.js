@@ -10,6 +10,7 @@ export class Database {
     }
     
     this.db = new Database3('./data/editor.db');
+    this.db.pragma('foreign_keys = ON');
     this.db.pragma('journal_mode = WAL');
     this.db.pragma('synchronous = NORMAL');
     this.db.pragma('cache_size = -64000');
@@ -171,9 +172,9 @@ export class Database {
 
   createFile(projectId, name, path, content = '', language = 'plaintext', isMedia = false) {
     const stmt = this.db.prepare(
-      'INSERT INTO files (project_id, name, path, content, language) VALUES (?, ?, ?, ?, ?)'
+      'INSERT INTO files (project_id, name, path, content, language) VALUES (@projectId, @name, @path, @content, @language)'
     );
-    return stmt.run(projectId, name, path, content, language);
+    return stmt.run({ projectId, name, path, content, language });
   }
 
   getFiles(projectId) {
@@ -188,9 +189,9 @@ export class Database {
 
   updateFile(fileId, content) {
     const stmt = this.db.prepare(
-      'UPDATE files SET content = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+      'UPDATE files SET content = @content, updated_at = CURRENT_TIMESTAMP WHERE id = @fileId'
     );
-    return stmt.run(content, fileId);
+    return stmt.run({ content, fileId });
   }
 
   deleteFile(fileId, projectId) {

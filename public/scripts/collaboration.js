@@ -405,7 +405,7 @@ function showToast(message, type = 'info') {
   
   const isLightTheme = document.documentElement.getAttribute('data-theme') === 'light';
   
-  let bgColor, textColor, borderColor, icon;
+  let bgColor, textColor, borderColor, icon, glowColor;
   
   if (isLightTheme) {
     switch(type) {
@@ -413,19 +413,22 @@ function showToast(message, type = 'info') {
         bgColor = 'rgba(34, 197, 94, 0.15)';
         textColor = '#15803d';
         borderColor = 'rgba(34, 197, 94, 0.4)';
-        icon = '✓';
+        glowColor = 'rgba(34, 197, 94, 0.5)';
+        icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>';
         break;
       case 'error':
         bgColor = 'rgba(239, 68, 68, 0.15)';
         textColor = '#dc2626';
         borderColor = 'rgba(239, 68, 68, 0.4)';
-        icon = '✕';
+        glowColor = 'rgba(239, 68, 68, 0.5)';
+        icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 18L18 6M6 6l12 12"/></svg>';
         break;
       default:
         bgColor = 'rgba(59, 130, 246, 0.15)';
         textColor = '#2563eb';
         borderColor = 'rgba(59, 130, 246, 0.4)';
-        icon = 'ℹ';
+        glowColor = 'rgba(59, 130, 246, 0.5)';
+        icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>';
     }
   } else {
     switch(type) {
@@ -433,19 +436,22 @@ function showToast(message, type = 'info') {
         bgColor = 'rgba(34, 197, 94, 0.2)';
         textColor = '#4ade80';
         borderColor = 'rgba(34, 197, 94, 0.5)';
-        icon = '✓';
+        glowColor = 'rgba(34, 197, 94, 0.6)';
+        icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>';
         break;
       case 'error':
         bgColor = 'rgba(239, 68, 68, 0.2)';
         textColor = '#f87171';
         borderColor = 'rgba(239, 68, 68, 0.5)';
-        icon = '✕';
+        glowColor = 'rgba(239, 68, 68, 0.6)';
+        icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 18L18 6M6 6l12 12"/></svg>';
         break;
       default:
         bgColor = 'rgba(59, 130, 246, 0.2)';
         textColor = '#60a5fa';
         borderColor = 'rgba(59, 130, 246, 0.5)';
-        icon = 'ℹ';
+        glowColor = 'rgba(59, 130, 246, 0.6)';
+        icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>';
     }
   }
   
@@ -453,6 +459,8 @@ function showToast(message, type = 'info') {
     <div class="toast-icon">${icon}</div>
     <div class="toast-message">${escapeHtml(message)}</div>
   `;
+  
+  const animationName = `toastGlow-${type}`;
   
   toast.style.cssText = `
     position: fixed;
@@ -474,7 +482,7 @@ function showToast(message, type = 'info') {
     font-weight: 500;
     min-width: 280px;
     max-width: 400px;
-    animation: toastSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1), toastGlow 0.6s ease 0.2s;
+    animation: toastSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1), ${animationName} 0.6s ease 0.2s;
     transform-origin: bottom right;
   `;
   
@@ -505,20 +513,47 @@ function showToast(message, type = 'info') {
         }
       }
       
-      @keyframes toastGlow {
+      @keyframes toastGlow-success {
+        0%, 100% {
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(34, 197, 94, 0.5);
+        }
+        50% {
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px 4px rgba(34, 197, 94, 0.6);
+        }
+      }
+      
+      @keyframes toastGlow-error {
+        0%, 100% {
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(239, 68, 68, 0.5);
+        }
+        50% {
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px 4px rgba(239, 68, 68, 0.6);
+        }
+      }
+      
+      @keyframes toastGlow-info {
         0%, 100% {
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(59, 130, 246, 0.5);
         }
         50% {
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px 4px rgba(59, 130, 246, 0.5);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px 4px rgba(59, 130, 246, 0.6);
         }
       }
       
       .toast-icon {
-        font-size: 18px;
-        font-weight: 700;
-        line-height: 1;
+        width: 20px;
+        height: 20px;
         flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .toast-icon svg {
+        width: 100%;
+        height: 100%;
+        stroke-linecap: round;
+        stroke-linejoin: round;
       }
       
       .toast-message {

@@ -120,33 +120,129 @@ function renderHTMLPreview(htmlFile, allFiles, iframe) {
     return mediaExts.includes(ext);
   });
   
-  mediaFiles.forEach(mediaFile => {
-    const fileName = mediaFile.name;
-    
-    if (mediaFile.content && mediaFile.content.startsWith('data:')) {
-      const patterns = [
-        new RegExp(`src=["']${escapeRegex(fileName)}["']`, 'gi'),
-        new RegExp(`src=["']/${escapeRegex(fileName)}["']`, 'gi'),
-        new RegExp(`src=["']./${escapeRegex(fileName)}["']`, 'gi'),
-        new RegExp(`src=["']\\.\\./${escapeRegex(fileName)}["']`, 'gi'),
-        new RegExp(`href=["']${escapeRegex(fileName)}["']`, 'gi'),
-        new RegExp(`href=["']/${escapeRegex(fileName)}["']`, 'gi')
+  function getFileByName(fileName) {
+    return allFiles.find(f => f.name === fileName || f.name === fileName.replace(/^\/+/, '')) ||
+           allFiles.find(f => f.name.endsWith(fileName) || f.name.endsWith(fileName.replace(/^\/+/, '')));
+  }
+  
+  function processMediaInContent(content, mediaFiles) {
+    let processed = content;
+    mediaFiles.forEach(mediaFile => {
+      const fileName = mediaFile.name;
+      const baseFileName = fileName.split('/').pop();
+      
+      let dataUri = mediaFile.content;
+      if (!dataUri || !dataUri.startsWith('data:')) {
+        if (mediaFile.content) {
+          const ext = mediaFile.name.split('.').pop().toLowerCase();
+          const mimeTypes = {
+            'png': 'image/png',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'gif': 'image/gif',
+            'svg': 'image/svg+xml',
+            'webp': 'image/webp',
+            'ico': 'image/x-icon',
+            'bmp': 'image/bmp',
+            'mp4': 'video/mp4',
+            'webm': 'video/webm',
+            'mp3': 'audio/mpeg',
+            'wav': 'audio/wav',
+            'ogg': 'audio/ogg'
+          };
+          const mimeType = mimeTypes[ext] || 'application/octet-stream';
+          try {
+            if (typeof mediaFile.content === 'string') {
+              const base64 = btoa(unescape(encodeURIComponent(mediaFile.content)));
+              dataUri = `data:${mimeType};base64,${base64}`;
+            } else {
+              return;
+            }
+          } catch (e) {
+            return;
+          }
+        } else {
+          return;
+        }
+      }
+      
+      const htmlPatterns = [
+        new RegExp(`(src=["'])${escapeRegex(fileName)}(["'])`, 'gi'),
+        new RegExp(`(src=["'])/${escapeRegex(fileName)}(["'])`, 'gi'),
+        new RegExp(`(src=["'])\\./${escapeRegex(fileName)}(["'])`, 'gi'),
+        new RegExp(`(src=["'])\\.\\./${escapeRegex(fileName)}(["'])`, 'gi'),
+        new RegExp(`(src=["'])${escapeRegex(baseFileName)}(["'])`, 'gi'),
+        new RegExp(`(src=["'])/${escapeRegex(baseFileName)}(["'])`, 'gi'),
+        new RegExp(`(src=["'])\\./${escapeRegex(baseFileName)}(["'])`, 'gi'),
+        new RegExp(`(src=["'])\\.\\./${escapeRegex(baseFileName)}(["'])`, 'gi'),
+        new RegExp(`(href=["'])${escapeRegex(fileName)}(["'])`, 'gi'),
+        new RegExp(`(href=["'])/${escapeRegex(fileName)}(["'])`, 'gi'),
+        new RegExp(`(href=["'])\\./${escapeRegex(fileName)}(["'])`, 'gi'),
+        new RegExp(`(href=["'])\\.\\./${escapeRegex(fileName)}(["'])`, 'gi'),
+        new RegExp(`(href=["'])${escapeRegex(baseFileName)}(["'])`, 'gi'),
+        new RegExp(`(href=["'])/${escapeRegex(baseFileName)}(["'])`, 'gi'),
+        new RegExp(`(href=["'])\\./${escapeRegex(baseFileName)}(["'])`, 'gi'),
+        new RegExp(`(href=["'])\\.\\./${escapeRegex(baseFileName)}(["'])`, 'gi')
       ];
       
-      patterns.forEach(regex => {
-        html = html.replace(regex, (match) => {
-          const attr = match.includes('href') ? 'href' : 'src';
-          return `${attr}="${mediaFile.content}"`;
-        });
+      htmlPatterns.forEach(regex => {
+        processed = processed.replace(regex, `$1${dataUri}$2`);
       });
-    }
-  });
+      
+      const cssUrlPatterns = [
+        new RegExp(`(url\\(["']?)${escapeRegex(fileName)}(["']?\\))`, 'gi'),
+        new RegExp(`(url\\(["']?)/${escapeRegex(fileName)}(["']?\\))`, 'gi'),
+        new RegExp(`(url\\(["']?)\\./${escapeRegex(fileName)}(["']?\\))`, 'gi'),
+        new RegExp(`(url\\(["']?)\\.\\./${escapeRegex(fileName)}(["']?\\))`, 'gi'),
+        new RegExp(`(url\\(["']?)${escapeRegex(baseFileName)}(["']?\\))`, 'gi'),
+        new RegExp(`(url\\(["']?)/${escapeRegex(baseFileName)}(["']?\\))`, 'gi'),
+        new RegExp(`(url\\(["']?)\\./${escapeRegex(baseFileName)}(["']?\\))`, 'gi'),
+        new RegExp(`(url\\(["']?)\\.\\./${escapeRegex(baseFileName)}(["']?\\))`, 'gi')
+      ];
+      
+      cssUrlPatterns.forEach(regex => {
+        processed = processed.replace(regex, `url(${dataUri})`);
+      });
+    });
+    return processed;
+  }
+  
+  html = processMediaInContent(html, mediaFiles);
   
   const cssFiles = allFiles.filter(f => f.name.endsWith('.css'));
   const jsFiles = allFiles.filter(f => f.name.endsWith('.js'));
   
+  function processCSSImports(cssContent, processedFiles = new Set()) {
+    let processed = cssContent;
+    const importRegex = /@import\s+(?:url\()?["']?([^"')]+)["']?\)?;?/gi;
+    let match;
+    const imports = [];
+    
+    while ((match = importRegex.exec(cssContent)) !== null) {
+      const importPath = match[1].trim();
+      const fileName = importPath.split('/').pop();
+      const importedFile = getFileByName(fileName);
+      
+      if (importedFile && importedFile.name.endsWith('.css') && !processedFiles.has(importedFile.id)) {
+        processedFiles.add(importedFile.id);
+        const importedContent = processCSSImports(importedFile.content, processedFiles);
+        const importedCSS = processMediaInContent(importedContent, mediaFiles);
+        imports.push({ original: match[0], replacement: importedCSS });
+      }
+    }
+    
+    imports.forEach(({ original, replacement }) => {
+      processed = processed.replace(original, replacement);
+    });
+    
+    return processed;
+  }
+  
   cssFiles.forEach(cssFile => {
     const fileName = cssFile.name;
+    const processedCSS = processCSSImports(cssFile.content);
+    const finalCSS = processMediaInContent(processedCSS, mediaFiles);
+    
     const linkPatterns = [
       new RegExp(`<link[^>]*href=["']${escapeRegex(fileName)}["'][^>]*>`, 'gi'),
       new RegExp(`<link[^>]*href=["']/${escapeRegex(fileName)}["'][^>]*>`, 'gi'),
@@ -155,7 +251,7 @@ function renderHTMLPreview(htmlFile, allFiles, iframe) {
     ];
     
     linkPatterns.forEach(regex => {
-      html = html.replace(regex, `<style>${cssFile.content}</style>`);
+      html = html.replace(regex, `<style>${finalCSS}</style>`);
     });
   });
   
@@ -175,7 +271,9 @@ function renderHTMLPreview(htmlFile, allFiles, iframe) {
   
   let inlinedStyles = '';
   cssFiles.forEach(cssFile => {
-    inlinedStyles += `<style>${cssFile.content}</style>\n`;
+    const processedCSS = processCSSImports(cssFile.content);
+    const finalCSS = processMediaInContent(processedCSS, mediaFiles);
+    inlinedStyles += `<style>${finalCSS}</style>\n`;
   });
   
   let inlinedScripts = '';
@@ -200,6 +298,8 @@ function renderHTMLPreview(htmlFile, allFiles, iframe) {
       html += inlinedScripts;
     }
   }
+  
+  html = processMediaInContent(html, mediaFiles);
   
   if (currentBlobUrl) {
     URL.revokeObjectURL(currentBlobUrl);

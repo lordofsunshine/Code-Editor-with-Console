@@ -24,8 +24,21 @@
   <link rel="stylesheet" href="/styles/editor.css">
   <link rel="stylesheet" href="/styles/modals.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/editor/editor.main.css">
+  <script>
+    document.documentElement.classList.add('js-enabled');
+  </script>
 </head>
 <body>
+  <script>
+    document.body.classList.add('js-enabled');
+  </script>
+  <noscript>
+    <div class="noscript-content">
+      <h1>JavaScript Required</h1>
+      <p>This code editor requires JavaScript to function properly.</p>
+      <p>Please enable JavaScript in your browser settings and refresh the page.</p>
+    </div>
+  </noscript>
   <div class="mobile-overlay" id="mobileOverlay"></div>
   
   <button class="mobile-menu-btn" id="mobileMenuBtn">

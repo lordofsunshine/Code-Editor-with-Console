@@ -87,7 +87,7 @@ function validateForm(form) {
     return loginUsername.value.length >= 3 && loginPassword.value.length >= 6;
   } else {
     const usernameValid = validateUsername(registerUsername.value).valid;
-    return usernameValid && registerPassword.value.length >= 6;
+    return usernameValid && registerPassword.value.length >= 6 && registerPassword.value.length <= 128;
   }
 }
 
@@ -128,6 +128,8 @@ registerPassword.addEventListener('input', (e) => {
   
   if (value.length > 0 && value.length < 6) {
     showValidation(e.target, 'Password must be at least 6 characters', true);
+  } else if (value.length > 128) {
+    showValidation(e.target, 'Password must be less than 128 characters', true);
   } else if (value.length >= 6) {
     showValidation(e.target, '', false);
   } else {
@@ -235,6 +237,11 @@ registerForm.addEventListener('submit', async (e) => {
   
   if (password.length < 6) {
     showMessage('Password must be at least 6 characters', 'error');
+    return;
+  }
+  
+  if (password.length > 128) {
+    showMessage('Password must be less than 128 characters', 'error');
     return;
   }
   

@@ -14,7 +14,7 @@ export async function authRoutes(fastify, options) {
     try {
       const { username, password } = request.body;
       
-      if (!username || !password || username.length < 3 || password.length < 6) {
+      if (!username || !password || username.length < 3 || username.length > 20 || password.length < 6 || password.length > 128) {
         return reply.code(400).send({ error: 'Invalid credentials' });
       }
 

@@ -774,4 +774,8 @@ footer {
    justify-content: start;
 }
 
+  .logo {
+   margin: 0 auto;
+}
+
 }

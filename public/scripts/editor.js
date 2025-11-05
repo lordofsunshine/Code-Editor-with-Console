@@ -584,15 +584,31 @@ async function deleteProject(projectId) {
     
     if (response.ok) {
       if (currentProject?.id === projectId) {
+        leaveProject(currentProject.id);
+        
         currentProject = null;
         state.files = [];
         openTabs = [];
         currentFile = null;
+        
+        window.editorState.files = [];
+        window.editorState.projects = state.projects.filter(p => p.id !== projectId);
+        
+        editor.setValue('');
+        
+        hideMediaViewer();
+        
         renderFiles();
         renderTabs();
+        
         document.getElementById('monacoEditor').classList.remove('active');
         document.getElementById('welcomeScreen').classList.remove('hidden');
         document.getElementById('newFile').disabled = true;
+        document.getElementById('uploadFile').disabled = true;
+        document.getElementById('fileInfo').textContent = '';
+        document.getElementById('fileLanguage').textContent = 'Plain Text';
+        
+        updateFileInfoVisibility();
         updateURL();
       }
       await loadProjects();
