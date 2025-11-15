@@ -1,4 +1,5 @@
 import { fetchWithCSRF } from './utils.js';
+import { initChat, setCurrentProject as setChatProject, openChatTab, closeChatTab, loadChatMessages } from './chat.js';
 
 let socket = null;
 let currentProjectId = null;
@@ -82,14 +83,19 @@ export function initCollaboration() {
 
   setupInvitationUI();
   setupNotificationsUI();
+  setupModalTabs();
   loadPendingInvitations();
+  
+  initChat(socket);
   
   window.showToast = showToast;
   window.showMessage = showToast;
+  window.getSocket = () => socket;
 }
 
 export function joinProject(projectId) {
   currentProjectId = projectId;
+  setChatProject(projectId);
   if (socket && socket.connected) {
     socket.emit('join-project', projectId);
   }
@@ -123,6 +129,10 @@ export function emitFileDeleted(projectId, fileId) {
 function setupInvitationUI() {
   const inviteBtn = document.getElementById('inviteBtn');
   const leaveBtn = document.getElementById('leaveBtn');
+  const leaveBtnWrapper = document.getElementById('leaveBtnWrapper');
+  const projectMenu = document.getElementById('projectMenu');
+  const openChatFromMenu = document.getElementById('openChatFromMenu');
+  const leaveProjectFromMenu = document.getElementById('leaveProjectFromMenu');
   const inviteModal = document.getElementById('inviteModal');
   const cancelInvite = document.getElementById('cancelInvite');
   const sendInviteBtn = document.getElementById('sendInvite');
@@ -130,41 +140,92 @@ function setupInvitationUI() {
   const inviteRole = document.getElementById('inviteRole');
   const inviteStatus = document.getElementById('inviteStatus');
 
-  leaveBtn.addEventListener('click', async () => {
-    if (!currentProjectId) return;
-    
-    if (confirm('Are you sure you want to leave this project?')) {
-      try {
-        const response = await fetchWithCSRF(`/api/invitations/leave/${currentProjectId}`, {
-          method: 'POST'
-        });
-        
-        if (response.ok) {
-          showToast('Left project successfully', 'success');
-          leaveProject(currentProjectId);
-          if (window.reloadProjects) {
-            await window.reloadProjects();
-          }
-          if (window.clearEditor) {
-            window.clearEditor();
-          }
+  if (leaveBtn) {
+    leaveBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (projectMenu) {
+        const isOpen = projectMenu.style.display === 'block';
+        closeAllMenus();
+        if (!isOpen) {
+          projectMenu.style.display = 'block';
         }
-      } catch (err) {
-        showToast('Failed to leave project', 'error');
       }
+    });
+  }
+
+  if (openChatFromMenu) {
+    openChatFromMenu.addEventListener('click', async () => {
+      closeAllMenus();
+      if (inviteModal) {
+        inviteModal.classList.add('active');
+        switchTab('chat');
+        if (currentProjectId && window.loadChatMessages) {
+          window.loadChatMessages(currentProjectId);
+        }
+      }
+    });
+  }
+
+  if (leaveProjectFromMenu) {
+    leaveProjectFromMenu.addEventListener('click', async () => {
+      closeAllMenus();
+      if (!currentProjectId) return;
+      
+      if (confirm('Are you sure you want to leave this project?')) {
+        try {
+          const response = await fetchWithCSRF(`/api/invitations/leave/${currentProjectId}`, {
+            method: 'POST'
+          });
+          
+          if (response.ok) {
+            showToast('Left project successfully', 'success');
+            leaveProject(currentProjectId);
+            if (window.reloadProjects) {
+              await window.reloadProjects();
+            }
+            if (window.clearEditor) {
+              window.clearEditor();
+            }
+          }
+        } catch (err) {
+          showToast('Failed to leave project', 'error');
+        }
+      }
+    });
+  }
+
+  document.addEventListener('click', (e) => {
+    if (leaveBtnWrapper && !leaveBtnWrapper.contains(e.target)) {
+      closeAllMenus();
     }
   });
 
+  function closeAllMenus() {
+    if (projectMenu) {
+      projectMenu.style.display = 'none';
+    }
+  }
+
   inviteBtn.addEventListener('click', async () => {
     inviteModal.classList.add('active');
+    const isOwner = inviteBtn.style.display !== 'none';
+    const savedTab = localStorage.getItem('inviteModalTab') || 'invite';
+    const tabToShow = isOwner ? savedTab : 'chat';
+    switchTab(tabToShow);
     inviteStatus.className = 'invite-status';
     inviteStatus.textContent = '';
     inviteUsername.value = '';
-    await loadProjectInvitations();
+    if (isOwner) {
+      await loadProjectInvitations();
+    }
   });
 
   cancelInvite.addEventListener('click', () => {
     inviteModal.classList.remove('active');
+    closeChatTab();
+    if (window.clearChatMessages) {
+      window.clearChatMessages();
+    }
   });
 
   sendInviteBtn.addEventListener('click', async () => {
@@ -211,8 +272,70 @@ function setupInvitationUI() {
   inviteModal.addEventListener('click', (e) => {
     if (e.target === inviteModal) {
       inviteModal.classList.remove('active');
+      closeChatTab();
+      if (window.clearChatMessages) {
+        window.clearChatMessages();
+      }
     }
   });
+}
+
+function setupModalTabs() {
+  const tabs = document.querySelectorAll('.modal-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const tabName = tab.dataset.tab;
+      const inviteBtn = document.getElementById('inviteBtn');
+      const isOwner = inviteBtn && inviteBtn.style.display !== 'none';
+      
+      if (tabName === 'invite' && !isOwner) {
+        return;
+      }
+      
+      switchTab(tabName);
+      localStorage.setItem('inviteModalTab', tabName);
+    });
+  });
+}
+
+function switchTab(tabName) {
+  const inviteBtn = document.getElementById('inviteBtn');
+  const isOwner = inviteBtn && inviteBtn.style.display !== 'none';
+  
+  if (tabName === 'invite' && !isOwner) {
+    tabName = 'chat';
+  }
+  
+  const tabs = document.querySelectorAll('.modal-tab');
+  const tabContents = document.querySelectorAll('.modal-tab-content');
+  
+  tabs.forEach(tab => {
+    if (tab.dataset.tab === tabName) {
+      tab.classList.add('active');
+    } else {
+      tab.classList.remove('active');
+    }
+  });
+  
+  tabContents.forEach(content => {
+    if (content.id === `${tabName}Tab`) {
+      content.style.display = 'block';
+      if (tabName === 'chat') {
+        openChatTab();
+        if (currentProjectId) {
+          loadChatMessages(currentProjectId);
+        }
+      } else {
+        closeChatTab();
+      }
+    } else {
+      content.style.display = 'none';
+    }
+  });
+  
+  if (isOwner || tabName === 'chat') {
+    localStorage.setItem('inviteModalTab', tabName);
+  }
 }
 
 function setupNotificationsUI() {
@@ -581,9 +704,32 @@ function escapeHtml(text) {
 
 export function showInviteButton(show) {
   const inviteBtn = document.getElementById('inviteBtn');
-  const leaveBtn = document.getElementById('leaveBtn');
+  const leaveBtnWrapper = document.getElementById('leaveBtnWrapper');
   inviteBtn.style.display = show ? 'flex' : 'none';
-  leaveBtn.style.display = !show ? 'flex' : 'none';
+  if (leaveBtnWrapper) {
+    leaveBtnWrapper.style.display = !show ? 'flex' : 'none';
+  }
+  
+  const inviteTab = document.querySelector('.modal-tab[data-tab="invite"]');
+  if (inviteTab) {
+    if (show) {
+      inviteTab.style.display = 'block';
+      inviteTab.style.pointerEvents = 'auto';
+      inviteTab.style.opacity = '1';
+    } else {
+      inviteTab.style.display = 'none';
+      inviteTab.style.pointerEvents = 'none';
+      inviteTab.style.opacity = '0.5';
+    }
+  }
+  
+  const inviteTabContent = document.getElementById('inviteTab');
+  if (inviteTabContent && !show) {
+    const chatTab = document.querySelector('.modal-tab[data-tab="chat"]');
+    if (chatTab) {
+      chatTab.click();
+    }
+  }
 }
 
 export function setCurrentProjectId(projectId) {

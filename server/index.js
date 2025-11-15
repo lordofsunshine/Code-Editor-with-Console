@@ -14,6 +14,7 @@ import { warningRoutes } from './routes/warnings.js';
 import { invitationRoutes } from './routes/invitations.js';
 import { settingsRoutes } from './routes/settings.js';
 import { searchRoutes } from './routes/search.js';
+import { chatRoutes } from './routes/chat.js';
 import { initCleanupTasks } from './cleanup.js';
 import { initSocket } from './socket.js';
 import chalk from 'chalk';
@@ -119,6 +120,7 @@ await fastify.register(warningRoutes, { prefix: '/api/warnings' });
 await fastify.register(invitationRoutes, { prefix: '/api/invitations' });
 await fastify.register(settingsRoutes, { prefix: '/api/settings' });
 await fastify.register(searchRoutes, { prefix: '/api/search' });
+await fastify.register(chatRoutes, { prefix: '/api/chat' });
 
 fastify.get('/editor', (request, reply) => {
   if (!request.session.userId) {
@@ -139,7 +141,11 @@ fastify.get('/', (request, reply) => {
 });
 
 fastify.get('/error', (request, reply) => {
-  reply.sendFile('error.html');
+  reply.sendFile('other/error.html');
+});
+
+fastify.get('/terms', (request, reply) => {
+  reply.sendFile('other/terms.html');
 });
 
 fastify.setNotFoundHandler((request, reply) => {

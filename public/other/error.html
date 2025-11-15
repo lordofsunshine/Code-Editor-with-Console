@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Error - Code Editor</title>
+  <meta name="description" content="An error occurred. Please try again or return to the home page.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="geo.region" content="*">
+  <meta name="geo.placename" content="Worldwide">
+  <meta name="geo.position" content="*">
+  <meta name="distribution" content="global">
+  <meta name="rating" content="general">
+  <meta name="language" content="en">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="canonical" href="https://code-editor.run/error">
+  <link rel="alternate" hreflang="en" href="https://code-editor.run/error">
+  <link rel="alternate" hreflang="ru" href="https://code-editor.run/error">
+  <link rel="alternate" hreflang="x-default" href="https://code-editor.run/error">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/favicon.svg">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Error - Code Editor">
+  <meta property="og:description" content="An error occurred. Please try again or return to the home page.">
+  <meta property="og:url" content="https://code-editor.run/error">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="ru_RU">
+  <meta property="og:image" content="https://code-editor.run/favicon.svg">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Error - Code Editor">
+  <meta name="twitter:description" content="An error occurred. Please try again or return to the home page.">
+  <meta name="twitter:image" content="https://code-editor.run/favicon.svg">
+  <meta name="theme-color" content="#000000">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0a0a0a;
+      --bg-secondary: rgba(255, 255, 255, 0.05);
+      --text-primary: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.7);
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --border: rgba(255, 255, 255, 0.1);
+      --shadow: rgba(0, 0, 0, 0.3);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 40px 20px;
+      max-width: 800px;
+      width: 100%;
+    }
+
+    .error-selector {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 60px;
+      flex-wrap: wrap;
+    }
+
+    .error-btn {
+      padding: 10px 20px;
+      background: var(--bg-secondary);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .error-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--accent);
+      color: var(--text-primary);
+      transform: translateY(-2px);
+    }
+
+    .error-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .error-display {
+      display: none;
+      animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .error-display.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .error-icon {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 40px;
+      position: relative;
+    }
+
+    .error-icon svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 8px 24px rgba(59, 130, 246, 0.3));
+    }
+
+    .error-code {
+      font-size: 120px;
+      font-weight: 800;
+      font-family: 'Space Grotesk', sans-serif;
+      background: linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 24px;
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .error-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      font-family: 'Space Grotesk', sans-serif;
+      color: var(--text-primary);
+    }
+
+    .error-message {
+      font-size: 16px;
+      color: var(--text-secondary);
+      margin-bottom: 40px;
+      line-height: 1.6;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      border: 1px solid var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 768px) {
+      .error-code {
+        font-size: 80px;
+      }
+
+      .error-title {
+        font-size: 22px;
+      }
+
+      .error-message {
+        font-size: 14px;
+      }
+
+      .error-icon {
+        width: 100px;
+        height: 100px;
+      }
+
+      .error-selector {
+        gap: 6px;
+      }
+
+      .error-btn {
+        padding: 8px 14px;
+        font-size: 13px;
+      }
+
+      .btn {
+        padding: 12px 20px;
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="error-selector">
+      <button class="error-btn active" onclick="showError('404')">404</button>
+      <button class="error-btn" onclick="showError('403')">403</button>
+      <button class="error-btn" onclick="showError('500')">500</button>
+      <button class="error-btn" onclick="showError('503')">503</button>
+      <button class="error-btn" onclick="showError('401')">401</button>
+    </div>
+
+    <div class="error-display active" id="error-404">
+      <div class="error-icon">
+        <svg viewBox="0 0 200 200" fill="none">
+          <circle cx="100" cy="100" r="80" stroke="url(#grad1)" stroke-width="4" fill="none" opacity="0.3"/>
+          <circle cx="100" cy="100" r="60" stroke="url(#grad1)" stroke-width="4" fill="none" opacity="0.5"/>
+          <path d="M70 85 Q70 75 80 75 Q90 75 90 85 L90 95 Q90 105 80 105 Q70 105 70 95 Z" fill="url(#grad1)"/>
+          <path d="M110 85 Q110 75 120 75 Q130 75 130 85 L130 95 Q130 105 120 105 Q110 105 110 95 Z" fill="url(#grad1)"/>
+          <path d="M60 130 Q100 150 140 130" stroke="url(#grad1)" stroke-width="6" stroke-linecap="round" fill="none"/>
+          <defs>
+            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="error-code">404</div>
+      <h1 class="error-title">Page Not Found</h1>
+      <p class="error-message">The page you're looking for doesn't exist or has been moved. Let's get you back on track.</p>
+      <div class="action-buttons">
+        <a href="/" class="btn btn-primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+          </svg>
+          Go Home
+        </a>
+        <button onclick="history.back()" class="btn btn-secondary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+          </svg>
+          Go Back
+        </button>
+      </div>
+    </div>
+
+    <div class="error-display" id="error-403">
+      <div class="error-icon">
+        <svg viewBox="0 0 200 200" fill="none">
+          <rect x="60" y="80" width="80" height="90" rx="8" stroke="url(#grad1)" stroke-width="4" fill="none"/>
+          <path d="M75 80 V60 Q75 40 100 40 Q125 40 125 60 V80" stroke="url(#grad1)" stroke-width="6" stroke-linecap="round" fill="none"/>
+          <circle cx="100" cy="120" r="8" fill="url(#grad1)"/>
+          <rect x="96" y="128" width="8" height="25" rx="4" fill="url(#grad1)"/>
+        </svg>
+      </div>
+      <div class="error-code">403</div>
+      <h1 class="error-title">Access Forbidden</h1>
+      <p class="error-message">You don't have permission to access this resource. This area is restricted.</p>
+      <div class="action-buttons">
+        <a href="/" class="btn btn-primary">Go Home</a>
+        <button onclick="history.back()" class="btn btn-secondary">Go Back</button>
+      </div>
+    </div>
+
+    <div class="error-display" id="error-500">
+      <div class="error-icon">
+        <svg viewBox="0 0 200 200" fill="none">
+          <path d="M100 40 L180 170 L20 170 Z" stroke="url(#grad1)" stroke-width="4" fill="none"/>
+          <circle cx="100" cy="120" r="6" fill="url(#grad1)"/>
+          <rect x="97" y="80" width="6" height="30" rx="3" fill="url(#grad1)"/>
+        </svg>
+      </div>
+      <div class="error-code">500</div>
+      <h1 class="error-title">Internal Server Error</h1>
+      <p class="error-message">Something went wrong on our end. Our team has been notified and we're working to fix it.</p>
+      <div class="action-buttons">
+        <a href="/" class="btn btn-primary">Go Home</a>
+        <button onclick="location.reload()" class="btn btn-secondary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+          </svg>
+          Reload
+        </button>
+      </div>
+    </div>
+
+    <div class="error-display" id="error-503">
+      <div class="error-icon">
+        <svg viewBox="0 0 200 200" fill="none">
+          <circle cx="100" cy="100" r="60" stroke="url(#grad1)" stroke-width="4" fill="none"/>
+          <path d="M100 60 V110 L130 130" stroke="url(#grad1)" stroke-width="6" stroke-linecap="round"/>
+          <circle cx="100" cy="100" r="8" fill="url(#grad1)"/>
+        </svg>
+      </div>
+      <div class="error-code">503</div>
+      <h1 class="error-title">Service Unavailable</h1>
+      <p class="error-message">The service is temporarily unavailable. We're performing maintenance or experiencing high traffic.</p>
+      <div class="action-buttons">
+        <button onclick="location.reload()" class="btn btn-primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+          </svg>
+          Try Again
+        </button>
+        <a href="/" class="btn btn-secondary">Go Home</a>
+      </div>
+    </div>
+
+    <div class="error-display" id="error-401">
+      <div class="error-icon">
+        <svg viewBox="0 0 200 200" fill="none">
+          <circle cx="100" cy="70" r="30" stroke="url(#grad1)" stroke-width="4" fill="none"/>
+          <path d="M60 140 Q60 110 100 110 Q140 110 140 140 L140 170 L60 170 Z" stroke="url(#grad1)" stroke-width="4" fill="none"/>
+          <circle cx="90" cy="65" r="4" fill="url(#grad1)"/>
+          <circle cx="110" cy="65" r="4" fill="url(#grad1)"/>
+          <path d="M90 80 Q100 75 110 80" stroke="url(#grad1)" stroke-width="3" stroke-linecap="round" fill="none"/>
+        </svg>
+      </div>
+      <div class="error-code">401</div>
+      <h1 class="error-title">Unauthorized</h1>
+      <p class="error-message">You need to be authenticated to access this page. Please log in to continue.</p>
+      <div class="action-buttons">
+        <a href="/" class="btn btn-primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/>
+          </svg>
+          Login
+        </a>
+        <button onclick="history.back()" class="btn btn-secondary">Go Back</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showError(code) {
+      document.querySelectorAll('.error-display').forEach(el => {
+        el.classList.remove('active');
+      });
+      document.querySelectorAll('.error-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      document.getElementById(`error-${code}`).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const errorCode = params.get('code');
+    if (errorCode && ['404', '403', '500', '503', '401'].includes(errorCode)) {
+      const buttons = document.querySelectorAll('.error-btn');
+      buttons.forEach(btn => {
+        if (btn.textContent === errorCode) {
+          btn.click();
+        }
+      });
+    }
+  </script>
+</body>
+</html>

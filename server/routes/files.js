@@ -1,4 +1,5 @@
 import config from '../config.js';
+import { normalizeProjectPath, extractFileNameFromPath } from '../utils/path.js';
 
 export async function fileRoutes(fastify, options) {
   fastify.addHook('preHandler', (request, reply, done) => {
@@ -48,8 +49,14 @@ export async function fileRoutes(fastify, options) {
       return reply.code(403).send({ error: 'Viewers cannot create files' });
     }
 
-    if (!name || !path) {
-      return reply.code(400).send({ error: 'Invalid file data' });
+    const normalizedPath = normalizeProjectPath(path || name);
+    if (!normalizedPath) {
+      return reply.code(400).send({ error: 'Invalid file path' });
+    }
+
+    const fileName = extractFileNameFromPath(normalizedPath);
+    if (!fileName) {
+      return reply.code(400).send({ error: 'Invalid file name' });
     }
 
     const existingFiles = fastify.db.getFiles(projectId);
@@ -63,10 +70,10 @@ export async function fileRoutes(fastify, options) {
     }
 
     try {
-      const result = fastify.db.createFile(projectId, name, path, content, language, isMedia);
+      const result = fastify.db.createFile(projectId, fileName, normalizedPath, content, language, isMedia);
       fastify.db.updateProjectTimestamp(projectId);
       
-      return { id: result.lastInsertRowid, name, path, content, language };
+      return { id: result.lastInsertRowid, name: fileName, path: normalizedPath, content, language };
     } catch (err) {
       return reply.code(409).send({ error: 'File already exists' });
     }

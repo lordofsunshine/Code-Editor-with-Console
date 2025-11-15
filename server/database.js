@@ -97,6 +97,19 @@ export class Database {
       CREATE INDEX IF NOT EXISTS idx_invitations_to_user ON invitations(to_user_id);
       CREATE INDEX IF NOT EXISTS idx_invitations_status ON invitations(status);
       CREATE INDEX IF NOT EXISTS idx_editor_settings_user ON editor_settings(user_id);
+
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        message TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_chat_messages_project ON chat_messages(project_id);
+      CREATE INDEX IF NOT EXISTS idx_chat_messages_created ON chat_messages(created_at);
     `);
 
     const userColumns = this.db.pragma('table_info(users)');
@@ -437,5 +450,53 @@ export class Database {
       ORDER BY name
     `);
     return stmt.all(projectId, `%${query}%`);
+  }
+
+  createChatMessage(projectId, userId, message) {
+    const stmt = this.db.prepare(
+      'INSERT INTO chat_messages (project_id, user_id, message) VALUES (?, ?, ?)'
+    );
+    return stmt.run(projectId, userId, message);
+  }
+
+  getChatMessages(projectId, limit = 100) {
+    const stmt = this.db.prepare(`
+      SELECT cm.*, u.username, u.avatar
+      FROM chat_messages cm
+      JOIN users u ON cm.user_id = u.id
+      WHERE cm.project_id = ?
+      ORDER BY cm.created_at DESC
+      LIMIT ?
+    `);
+    return stmt.all(projectId, limit).reverse();
+  }
+
+  getLastChatMessage(projectId) {
+    const stmt = this.db.prepare(`
+      SELECT cm.*, u.username
+      FROM chat_messages cm
+      JOIN users u ON cm.user_id = u.id
+      WHERE cm.project_id = ?
+      ORDER BY cm.created_at DESC
+      LIMIT 1
+    `);
+    return stmt.get(projectId);
+  }
+
+  deleteOldChatMessages() {
+    const stmt = this.db.prepare(`
+      DELETE FROM chat_messages
+      WHERE project_id IN (
+        SELECT DISTINCT project_id
+        FROM chat_messages
+        WHERE datetime(created_at) < datetime('now', '-24 hours')
+        AND project_id NOT IN (
+          SELECT DISTINCT project_id
+          FROM chat_messages
+          WHERE datetime(created_at) >= datetime('now', '-24 hours')
+        )
+      )
+    `);
+    return stmt.run();
   }
 }

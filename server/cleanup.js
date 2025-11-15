@@ -19,6 +19,9 @@ export function initCleanupTasks(db) {
       const inactiveUsers = db.deleteInactiveUsers(inactiveDays);
       console.log(`Deleted ${inactiveUsers.changes} inactive users`);
       
+      const oldChats = db.deleteOldChatMessages();
+      console.log(`Deleted old chat messages: ${oldChats.changes} rows`);
+      
       db.optimize();
       console.log('Database optimized');
     } catch (err) {

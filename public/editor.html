@@ -6,15 +6,33 @@
   <title>Code Editor</title>
   <meta name="description" content="Professional code editing with Monaco Editor. Real-time collaboration, syntax highlighting, and intelligent code completion.">
   <meta name="robots" content="noindex, nofollow">
+  <meta name="geo.region" content="*">
+  <meta name="geo.placename" content="Worldwide">
+  <meta name="geo.position" content="*">
+  <meta name="distribution" content="global">
+  <meta name="rating" content="general">
+  <meta name="language" content="en">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="canonical" href="https://code-editor.run/editor">
+  <link rel="alternate" hreflang="en" href="https://code-editor.run/editor">
+  <link rel="alternate" hreflang="ru" href="https://code-editor.run/editor">
+  <link rel="alternate" hreflang="x-default" href="https://code-editor.run/editor">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/favicon.svg">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Code Editor - Professional Development Environment">
   <meta property="og:description" content="Professional code editing with Monaco Editor. Real-time collaboration, syntax highlighting, and intelligent code completion.">
   <meta property="og:url" content="https://code-editor.run/editor">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="ru_RU">
+  <meta property="og:image" content="https://code-editor.run/favicon.svg">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Code Editor - Professional Development Environment">
-  <meta name="twitter:description" content="Professional code editing with Monaco Editor.">
+  <meta name="twitter:description" content="Professional code editing with Monaco Editor. Real-time collaboration, syntax highlighting, and intelligent code completion.">
+  <meta name="twitter:image" content="https://code-editor.run/favicon.svg">
   <meta name="theme-color" content="#000000">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -163,7 +181,7 @@
                 </button>
               </div>
             </div>
-            <iframe id="previewFrame" sandbox="allow-scripts allow-modals"></iframe>
+            <iframe id="previewFrame" sandbox="allow-scripts allow-modals allow-same-origin"></iframe>
           </div>
         </div>
       </div>
@@ -175,10 +193,21 @@
             <svg viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
             <span>Invite</span>
           </button>
-          <button class="statusbar-btn" id="leaveBtn" title="Leave Project" style="display: none;">
-            <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
-            <span>Leave</span>
-          </button>
+          <div class="statusbar-btn-wrapper" id="leaveBtnWrapper" style="display: none;">
+            <button class="statusbar-btn" id="leaveBtn" title="Project Options">
+              <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+            </button>
+            <div class="project-menu" id="projectMenu" style="display: none;">
+              <button class="project-menu-item" id="openChatFromMenu">
+                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z" fill="currentColor"/></svg>
+                <span>Chat</span>
+              </button>
+              <button class="project-menu-item" id="leaveProjectFromMenu">
+                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" fill="currentColor"/></svg>
+                <span>Leave Project</span>
+              </button>
+            </div>
+          </div>
         </div>
         <div class="statusbar-right">
           <button class="statusbar-btn" id="notificationsBtn" title="Notifications" style="display: none;">
@@ -212,7 +241,8 @@
   <div class="modal" id="fileModal">
     <div class="modal-content">
       <h3>New File</h3>
-      <input type="text" id="fileName" placeholder="file.ext" class="modal-input">
+      <input type="text" id="fileName" placeholder="path/to/file.ext" class="modal-input">
+      <p class="modal-hint">Tip: use slashes to create folders, e.g. <span>assets/images/logo.svg</span></p>
       <div class="modal-actions">
         <button class="btn-secondary" id="cancelFile">Cancel</button>
         <button class="btn-primary" id="createFile"><span>Create</span></button>
@@ -224,17 +254,38 @@
 
   <div class="modal" id="inviteModal">
     <div class="modal-content">
-      <h3>Invite to Project</h3>
-      <input type="text" id="inviteUsername" placeholder="Enter username" class="modal-input">
-      <select id="inviteRole" class="modal-input" style="margin-top: 12px;">
-        <option value="editor">Editor (Can edit files)</option>
-        <option value="viewer">Viewer (Read only)</option>
-      </select>
-      <div id="inviteStatus" class="invite-status"></div>
-      <div class="invitations-list" id="invitationsList"></div>
-      <div class="modal-actions">
-        <button class="btn-secondary" id="cancelInvite">Close</button>
-        <button class="btn-primary" id="sendInvite"><span>Send Invite</span></button>
+      <h3>Project Collaboration</h3>
+      <div class="modal-tabs">
+        <button class="modal-tab active" data-tab="invite">Invite</button>
+        <button class="modal-tab" data-tab="chat">Chat</button>
+      </div>
+      <div class="modal-tab-content" id="inviteTab">
+        <input type="text" id="inviteUsername" placeholder="Enter username" class="modal-input">
+        <select id="inviteRole" class="modal-input" style="margin-top: 12px;">
+          <option value="editor">Editor (Can edit files)</option>
+          <option value="viewer">Viewer (Read only)</option>
+        </select>
+        <div id="inviteStatus" class="invite-status"></div>
+        <div class="invitations-list" id="invitationsList"></div>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="cancelInvite">Close</button>
+          <button class="btn-primary" id="sendInvite"><span>Send Invite</span></button>
+        </div>
+      </div>
+      <div class="modal-tab-content" id="chatTab" style="display: none;">
+        <div class="chat-container">
+          <div class="chat-messages" id="chatMessages"></div>
+          <div class="chat-input-container">
+            <input type="text" id="chatInput" placeholder="Type a message..." class="chat-input" maxlength="2000">
+            <button class="btn-primary" id="sendChatMessage">
+              <svg viewBox="0 0 24 24" width="16" height="16"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor"/></svg>
+            </button>
+          </div>
+          <div class="chat-response-time" id="chatResponseTime" style="display: none;"></div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="cancelChat">Close</button>
+        </div>
       </div>
     </div>
   </div>
@@ -253,11 +304,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
   <script src="/scripts/utils.js" type="module"></script>
+  <script src="/scripts/custom-select.js" type="module"></script>
   <script src="/scripts/hotkeys.js" type="module"></script>
   <script src="/scripts/search.js" type="module"></script>
   <script src="/scripts/settings.js" type="module"></script>
   <script src="/scripts/integration.js" type="module"></script>
   <script src="/scripts/collaboration.js" type="module"></script>
+  <script src="/scripts/chat.js" type="module"></script>
   <script src="/scripts/warnings.js" type="module"></script>
   <script src="/scripts/preview.js" type="module"></script>
   <script src="/scripts/editor.js" type="module"></script>

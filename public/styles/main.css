@@ -281,7 +281,7 @@ button, input, select, textarea {
   border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 32px;
-  min-width: 400px;
+  min-width: 600px;
   max-width: 90vw;
   animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 20px 60px var(--shadow);
@@ -304,10 +304,11 @@ button, input, select, textarea {
   border: 1px solid var(--border-color);
   border-radius: 8px;
   color: var(--text-primary);
-  font-size: 15px;
+  font-size: 14px;
   outline: none;
   transition: var(--transition);
   margin-bottom: 24px;
+  box-sizing: border-box;
 }
 
 .modal-input:focus {
@@ -315,10 +316,35 @@ button, input, select, textarea {
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
 }
 
+.modal-hint {
+  margin-top: -16px;
+  margin-bottom: 24px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.modal-hint span {
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--text-secondary);
+  font-family: 'Fira Code', 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 12px;
+}
+
+[data-theme="light"] .modal-hint span {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--text-secondary);
+}
+
 .modal-actions {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+  margin-top: 20px;
 }
 
 

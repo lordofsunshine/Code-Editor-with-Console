@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of Service - Code Editor</title>
+  <meta name="description" content="Terms of Service and Usage Rules for Code Editor platform. Learn about project limits, chat policies, data retention, and platform guidelines.">
+  <meta name="robots" content="index, follow">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/main.css">
+  <style>
+    .terms-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 60px 24px;
+      min-height: 100vh;
+    }
+
+    .terms-header {
+      margin-bottom: 48px;
+      text-align: center;
+    }
+
+    .terms-header h1 {
+      font-size: 42px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .terms-header p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .terms-content {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 48px;
+      margin-bottom: 32px;
+    }
+
+    .terms-section {
+      margin-bottom: 40px;
+    }
+
+    .terms-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .terms-section h2 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--text-primary);
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .terms-section h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-top: 24px;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+
+    .terms-section p {
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .terms-section ul {
+      margin-left: 24px;
+      margin-bottom: 16px;
+    }
+
+    .terms-section li {
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .terms-highlight {
+      background: rgba(99, 102, 241, 0.1);
+      border-left: 3px solid var(--accent);
+      padding: 16px 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+
+    .terms-highlight p {
+      margin: 0;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      margin-bottom: 32px;
+      transition: var(--transition);
+    }
+
+    .back-link:hover {
+      color: var(--accent-hover);
+      gap: 12px;
+    }
+
+    .terms-footer {
+      text-align: center;
+      padding-top: 32px;
+      border-top: 1px solid var(--border-color);
+      color: var(--text-tertiary);
+      font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .terms-container {
+        padding: 40px 16px;
+      }
+
+      .terms-content {
+        padding: 32px 24px;
+      }
+
+      .terms-header h1 {
+        font-size: 32px;
+      }
+
+      .terms-section h2 {
+        font-size: 20px;
+      }
+
+      .terms-section h3 {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body style="overflow: auto;">
+  <div class="terms-container">
+    <a href="/auth" class="back-link">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      <span>Back to Sign In</span>
+    </a>
+
+    <div class="terms-header">
+      <h1>Terms of Service</h1>
+      <p>Please read these terms carefully before using our platform</p>
+    </div>
+
+    <div class="terms-content">
+      <div class="terms-section">
+        <h2>1. Account and Project Limits</h2>
+        <p>To ensure optimal performance and fair usage for all users, our platform implements the following limits:</p>
+        <ul>
+          <li><strong>Projects:</strong> Each user account can create up to <strong>3 projects</strong> maximum.</li>
+          <li><strong>Files per Project:</strong> Each project can contain up to <strong>16 files</strong>.</li>
+          <li><strong>File Size:</strong> Individual files are limited to <strong>10 MB</strong> in size.</li>
+          <li><strong>Avatar Size:</strong> Profile avatars are limited to <strong>2 MB</strong>.</li>
+          <li><strong>Collaborators:</strong> Each project can have a maximum of <strong>2 collaborators</strong> in addition to the project owner.</li>
+        </ul>
+        <div class="terms-highlight">
+          <p>These limits are designed to maintain platform stability and ensure a smooth experience for all users. Please plan your projects accordingly.</p>
+        </div>
+      </div>
+
+      <div class="terms-section">
+        <h2>2. Data Retention and Cleanup</h2>
+        <h3>Inactive Accounts and Projects</h3>
+        <p>To maintain system efficiency and free up resources, our platform automatically removes inactive data:</p>
+        <ul>
+          <li>Projects and user accounts that remain inactive for <strong>90 days</strong> will be automatically deleted.</li>
+          <li>Users will receive a warning notification <strong>60 days</strong> before their account or projects are scheduled for deletion.</li>
+          <li>Activity is defined as any interaction with the platform, including logging in, editing files, or accessing projects.</li>
+        </ul>
+        <h3>Chat Messages</h3>
+        <p>Project chat messages are subject to automatic cleanup:</p>
+        <ul>
+          <li>Chat conversations that remain inactive for <strong>24 hours</strong> (with no new messages) will be automatically deleted.</li>
+          <li>If a project's chat receives new messages within the 24-hour period, the cleanup timer resets.</li>
+          <li>This policy helps maintain database performance and ensures that only active conversations are retained.</li>
+        </ul>
+        <div class="terms-highlight">
+          <p>We recommend regularly backing up important code and data. The platform is designed for active collaboration, not long-term archival storage.</p>
+        </div>
+      </div>
+
+      <div class="terms-section">
+        <h2>3. Collaboration and Permissions</h2>
+        <p>Our platform supports real-time collaboration with role-based access control:</p>
+        <ul>
+          <li><strong>Project Owner:</strong> Full control over the project, including the ability to invite collaborators, manage files, and delete the project.</li>
+          <li><strong>Editor:</strong> Can create, edit, and delete files within the project, but cannot manage invitations or delete the project.</li>
+          <li><strong>Viewer:</strong> Read-only access to project files. Cannot create, edit, or delete files.</li>
+          <li>All collaborators can participate in project chat conversations.</li>
+          <li>Project owners can remove collaborators at any time.</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <h2>4. Security and Privacy</h2>
+        <p>We take security seriously and implement multiple layers of protection:</p>
+        <ul>
+          <li>All authentication uses secure session management with httpOnly cookies.</li>
+          <li>CSRF (Cross-Site Request Forgery) protection is enabled for all state-changing operations.</li>
+          <li>Rate limiting is implemented to prevent abuse and ensure fair usage.</li>
+          <li>Input validation and sanitization are applied to all user-generated content.</li>
+          <li>File uploads are validated for size and type restrictions.</li>
+        </ul>
+        <p>Users are responsible for maintaining the confidentiality of their account credentials and for all activities that occur under their account.</p>
+      </div>
+
+      <div class="terms-section">
+        <h2>5. Acceptable Use</h2>
+        <p>When using our platform, you agree to:</p>
+        <ul>
+          <li>Use the service only for lawful purposes and in accordance with these terms.</li>
+          <li>Not attempt to circumvent platform limits or restrictions.</li>
+          <li>Not upload malicious code, viruses, or any content that could harm the platform or other users.</li>
+          <li>Respect intellectual property rights and not upload copyrighted material without proper authorization.</li>
+          <li>Not use the platform for spam, harassment, or any form of abusive behavior.</li>
+          <li>Maintain appropriate security practices for your account.</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <h2>6. Service Availability</h2>
+        <p>While we strive to maintain high availability, we do not guarantee uninterrupted or error-free service. The platform may experience:</p>
+        <ul>
+          <li>Scheduled maintenance windows (with advance notice when possible).</li>
+          <li>Unplanned downtime due to technical issues or external factors.</li>
+          <li>Performance variations based on system load.</li>
+        </ul>
+        <p>We are not liable for any loss of data or service interruptions. Users are encouraged to maintain backups of important work.</p>
+      </div>
+
+      <div class="terms-section">
+        <h2>7. Content Ownership</h2>
+        <p>You retain full ownership of all code and content you create or upload to the platform. By using our service, you grant us a limited license to store, process, and display your content solely for the purpose of providing the service.</p>
+        <p>You are responsible for ensuring that you have the right to upload and share any content you submit to the platform.</p>
+      </div>
+
+      <div class="terms-section">
+        <h2>8. Termination</h2>
+        <p>We reserve the right to suspend or terminate accounts that violate these terms or engage in abusive behavior. Users may also delete their accounts at any time through the platform interface.</p>
+        <p>Upon account termination, all associated projects, files, and data will be permanently deleted in accordance with our data retention policies.</p>
+      </div>
+
+      <div class="terms-section">
+        <h2>9. Changes to Terms</h2>
+        <p>We may update these terms from time to time. Material changes will be communicated to users through the platform or via email. Continued use of the service after changes constitutes acceptance of the updated terms.</p>
+      </div>
+
+      <div class="terms-section">
+        <h2>10. Contact and Support</h2>
+        <p>If you have questions about these terms or need assistance, please refer to the platform documentation or contact support through the appropriate channels.</p>
+      </div>
+    </div>
+
+    <div class="terms-footer">
+      <p>Last updated: November 2025</p>
+      <p>© 2025 code-editor. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+

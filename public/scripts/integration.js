@@ -154,6 +154,10 @@ function updateUIBasedOnRole() {
     if (newFileBtn) newFileBtn.title = 'New File';
     if (uploadFileBtn) uploadFileBtn.title = 'Upload File';
   }
+
+  if (window.updateFileTree) {
+    window.updateFileTree();
+  }
 }
 
 export function getUserRole() {

@@ -1,8 +1,9 @@
 import { initPreview, checkPreviewAvailability, updatePreview, togglePreview } from './preview.js';
 import { checkWarnings } from './warnings.js';
-import { initCollaboration, joinProject, leaveProject, emitFileChange, emitFileCreated, emitFileDeleted, showInviteButton, setCurrentProjectId } from './collaboration.js';
+import { initCollaboration, joinProject, leaveProject, emitFileChange, emitFileCreated, emitFileDeleted, showInviteButton, setCurrentProjectId, showToast } from './collaboration.js';
 import { initStarsObserver, fetchWithCSRF } from './utils.js';
-import { initIntegration, setCurrentProject, setCurrentFile, setUserRole } from './integration.js';
+import { initIntegration, setCurrentProject, setCurrentFile, setUserRole, getUserRole } from './integration.js';
+import { initFileTree } from './file-tree.js';
 
 let editor;
 let currentProject = null;
@@ -10,6 +11,55 @@ let currentFile = null;
 let openTabs = [];
 let saveTimeout = null;
 let isUpdatingFromRemote = false;
+let fileTreeController = null;
+
+function normalizePathInput(value) {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  let normalized = value.replace(/\\+/g, '/').trim();
+  normalized = normalized.replace(/\/+/g, '/');
+
+  const segments = normalized
+    .split('/')
+    .map(segment => segment.trim())
+    .filter(segment => segment.length > 0);
+
+  if (segments.length === 0) {
+    return null;
+  }
+
+  if (segments.some(segment => segment === '.' || segment === '..')) {
+    return null;
+  }
+
+  return segments.join('/');
+}
+
+function getFileNameFromPath(path) {
+  if (!path) {
+    return null;
+  }
+  const parts = path.split('/');
+  return parts[parts.length - 1] || null;
+}
+
+function normalizeFetchedFile(file) {
+  if (!file) {
+    return file;
+  }
+
+  const normalizedPath = normalizePathInput(file.path || file.name);
+  const safePath = normalizedPath || file.name;
+  const safeName = getFileNameFromPath(safePath) || file.name;
+
+  return {
+    ...file,
+    path: safePath,
+    name: safeName
+  };
+}
 
 const state = {
   projects: [],
@@ -109,6 +159,15 @@ function updateFileInfoVisibility() {
 }
 
 async function init() {
+  fileTreeController = initFileTree({
+    container: document.getElementById('filesTree'),
+    onFileOpen: (fileId) => openFile(fileId),
+    onDeleteFile: (fileId) => handleDeleteFileRequest(fileId),
+    onDeleteFolder: (path, fileIds) => handleDeleteFolderRequest(path, fileIds),
+    isReadOnly: () => !currentProject || getUserRole() === 'viewer'
+  });
+  window.updateFileTree = () => renderFiles();
+
   applyTheme();
   await loadUser();
   await loadProjects();
@@ -118,6 +177,10 @@ async function init() {
   setupEventListeners();
   handleRouting();
   checkWarnings();
+  
+  if (window.initCustomSelects) {
+    window.initCustomSelects();
+  }
   
   const welcomeScreen = document.getElementById('welcomeScreen');
   if (welcomeScreen) {
@@ -331,8 +394,28 @@ async function loadFiles(projectId) {
   try {
     const response = await fetch(`/api/files/${projectId}`);
     if (response.ok) {
-      state.files = await response.json();
+      const files = await response.json();
+      state.files = files
+        .map((file) => normalizeFetchedFile(file))
+        .sort((a, b) => a.path.localeCompare(b.path, undefined, { sensitivity: 'base' }));
+
+      window.editorState.files = state.files;
+
+      if (currentFile) {
+        const updatedCurrent = state.files.find(f => f.id === currentFile.id);
+        if (updatedCurrent) {
+          currentFile = updatedCurrent;
+        } else {
+          currentFile = null;
+        }
+      }
+
+      openTabs = openTabs
+        .map(tab => state.files.find(f => f.id === tab.id))
+        .filter(Boolean);
+
       renderFiles();
+      renderTabs();
       checkPreviewAvailability(state.files);
     }
   } catch (err) {
@@ -341,48 +424,66 @@ async function loadFiles(projectId) {
 }
 
 function renderFiles() {
-  const container = document.getElementById('filesTree');
-  
-  if (state.files.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <svg viewBox="0 0 24 24" class="empty-icon">
-          <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
-        </svg>
-        <span>No files yet</span>
-      </div>
-    `;
+  if (!fileTreeController) {
     return;
   }
-  
-  container.innerHTML = state.files.map(file => `
-    <div class="file-item ${currentFile?.id === file.id ? 'active' : ''}" data-id="${file.id}">
-      <svg class="file-icon" viewBox="0 0 24 24">
-        <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
-      </svg>
-      <span class="file-name">${escapeHtml(file.name)}</span>
-      <button class="file-delete" data-id="${file.id}">
-        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-      </button>
-    </div>
-  `).join('');
-  
-  container.querySelectorAll('.file-item').forEach(item => {
-    item.addEventListener('click', (e) => {
-      if (!e.target.closest('.file-delete')) {
-        openFile(parseInt(item.dataset.id));
-      }
-    });
-  });
-  
-  container.querySelectorAll('.file-delete').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      if (confirm('Delete this file?')) {
-        await deleteFile(parseInt(btn.dataset.id));
-      }
-    });
-  });
+
+  fileTreeController.update(state.files, currentFile?.id || null);
+}
+
+async function handleDeleteFileRequest(fileId) {
+  if (!currentProject) return;
+  const file = state.files.find(f => f.id === fileId);
+  if (!file) return;
+
+  const confirmed = confirm(`Delete file "${file.path}"?`);
+  if (!confirmed) return;
+
+  const success = await performDeleteFile(fileId);
+  if (success) {
+    await loadFiles(currentProject.id);
+    showToast(`File "${file.path}" deleted`, 'success');
+  }
+}
+
+async function handleDeleteFolderRequest(path, fileIds = []) {
+  if (!currentProject) return;
+  if (!Array.isArray(fileIds) || fileIds.length === 0) {
+    return;
+  }
+
+  const folderLabel = path;
+  const idsToDelete = Array.from(new Set(fileIds));
+
+  if (idsToDelete.length === 0) {
+    return;
+  }
+
+  const fileWord = idsToDelete.length === 1 ? 'file' : 'files';
+  const confirmed = confirm(`Delete folder "${folderLabel}" and ${idsToDelete.length} ${fileWord}?`);
+  if (!confirmed) return;
+
+  const deleted = [];
+
+  for (const fileId of idsToDelete) {
+    const success = await performDeleteFile(fileId, true);
+    if (success) {
+      deleted.push(fileId);
+    }
+  }
+
+  if (deleted.length === 0) {
+    showToast(`Failed to delete folder "${folderLabel}"`, 'error');
+    return;
+  }
+
+  await loadFiles(currentProject.id);
+
+  if (deleted.length === idsToDelete.length) {
+    showToast(`Folder "${folderLabel}" deleted (${deleted.length} ${fileWord})`, 'success');
+  } else {
+    showToast(`Folder "${folderLabel}" partially deleted (${deleted.length} of ${idsToDelete.length} ${fileWord})`, 'info');
+  }
 }
 
 function openFile(fileId) {
@@ -414,7 +515,11 @@ function openFile(fileId) {
   }
   
   document.getElementById('welcomeScreen').classList.add('hidden');
-  document.getElementById('fileInfo').textContent = file.name;
+  const fileInfoEl = document.getElementById('fileInfo');
+  if (fileInfoEl) {
+    fileInfoEl.textContent = file.path;
+    fileInfoEl.title = file.path;
+  }
   updateFileInfoVisibility();
   const language = detectLanguage(file.name);
   document.getElementById('fileLanguage').textContent = languageNames[language] || language;
@@ -437,22 +542,50 @@ function showMediaViewer(file, ext, imageExts, videoExts, audioExts) {
   
   mediaViewer.classList.add('active');
   
-  if (imageExts.includes(ext)) {
-    mediaViewer.innerHTML = `<img src="${file.content}" alt="${file.name}" class="media-content">`;
-  } else if (videoExts.includes(ext)) {
-    mediaViewer.innerHTML = `<video src="${file.content}" controls class="media-content"></video>`;
-  } else if (audioExts.includes(ext)) {
+  const showError = () => {
     mediaViewer.innerHTML = `
-      <div class="audio-player">
-        <div class="audio-info">
-          <svg viewBox="0 0 24 24" class="audio-icon">
-            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-          </svg>
-          <span>${file.name}</span>
-        </div>
-        <audio src="${file.content}" controls class="audio-control"></audio>
+      <div class="media-error">
+        <svg viewBox="0 0 24 24" class="media-error-icon">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
+        <div class="media-error-title">File corrupted or invalid</div>
+        <div class="media-error-message">The file "${escapeHtml(file.name)}" cannot be displayed. It may be corrupted or in an unsupported format.</div>
       </div>
     `;
+  };
+  
+  if (imageExts.includes(ext)) {
+    const img = document.createElement('img');
+    img.src = file.content;
+    img.alt = file.name;
+    img.className = 'media-content';
+    img.onerror = showError;
+    mediaViewer.innerHTML = '';
+    mediaViewer.appendChild(img);
+  } else if (videoExts.includes(ext)) {
+    const video = document.createElement('video');
+    video.src = file.content;
+    video.controls = true;
+    video.className = 'media-content';
+    video.onerror = showError;
+    mediaViewer.innerHTML = '';
+    mediaViewer.appendChild(video);
+  } else if (audioExts.includes(ext)) {
+    const audioContainer = document.createElement('div');
+    audioContainer.className = 'audio-player';
+    audioContainer.innerHTML = `
+      <div class="audio-info">
+        <svg viewBox="0 0 24 24" class="audio-icon">
+          <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+        </svg>
+        <span>${escapeHtml(file.name)}</span>
+      </div>
+      <audio src="${file.content}" controls class="audio-control"></audio>
+    `;
+    const audio = audioContainer.querySelector('audio');
+    audio.onerror = showError;
+    mediaViewer.innerHTML = '';
+    mediaViewer.appendChild(audioContainer);
   }
 }
 
@@ -467,7 +600,7 @@ function renderTabs() {
   const container = document.getElementById('tabsBar');
   
   container.innerHTML = openTabs.map(tab => `
-    <button class="tab-item ${currentFile?.id === tab.id ? 'active' : ''}" data-id="${tab.id}">
+    <button class="tab-item ${currentFile?.id === tab.id ? 'active' : ''}" data-id="${tab.id}" title="${escapeHtml(tab.path)}">
       ${escapeHtml(tab.name)}
       <span class="tab-close" data-id="${tab.id}">
         <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
@@ -504,7 +637,11 @@ function closeTab(fileId) {
       currentFile = null;
       document.getElementById('monacoEditor').classList.remove('active');
       document.getElementById('welcomeScreen').classList.remove('hidden');
-      document.getElementById('fileInfo').textContent = '';
+      const fileInfoEl = document.getElementById('fileInfo');
+      if (fileInfoEl) {
+        fileInfoEl.textContent = '';
+        fileInfoEl.removeAttribute('title');
+      }
       updateFileInfoVisibility();
       updateURL();
     }
@@ -558,7 +695,8 @@ async function downloadProject(projectId) {
     const projectFolder = zip.folder(project.name);
 
     for (const file of files) {
-      projectFolder.file(file.name, file.content || '');
+      const safePath = normalizePathInput(file.path || file.name) || file.name;
+      projectFolder.file(safePath, file.content || '');
     }
 
     const blob = await zip.generateAsync({ type: 'blob' });
@@ -605,7 +743,11 @@ async function deleteProject(projectId) {
         document.getElementById('welcomeScreen').classList.remove('hidden');
         document.getElementById('newFile').disabled = true;
         document.getElementById('uploadFile').disabled = true;
-        document.getElementById('fileInfo').textContent = '';
+        const fileInfoEl = document.getElementById('fileInfo');
+        if (fileInfoEl) {
+          fileInfoEl.textContent = '';
+          fileInfoEl.removeAttribute('title');
+        }
         document.getElementById('fileLanguage').textContent = 'Plain Text';
         
         updateFileInfoVisibility();
@@ -618,8 +760,8 @@ async function deleteProject(projectId) {
   }
 }
 
-async function deleteFile(fileId) {
-  if (!currentProject) return;
+async function performDeleteFile(fileId, suppressErrorToast = false) {
+  if (!currentProject) return false;
   
   try {
     const response = await fetchWithCSRF(`/api/files/${currentProject.id}/${fileId}`, {
@@ -628,13 +770,21 @@ async function deleteFile(fileId) {
     
     if (response.ok) {
       closeTab(fileId);
-      await loadFiles(currentProject.id);
-      
       emitFileDeleted(currentProject.id, fileId);
+      return true;
+    }
+    
+    if (!suppressErrorToast) {
+      showToast('Failed to delete file', 'error');
     }
   } catch (err) {
     console.error('Failed to delete file');
+    if (!suppressErrorToast) {
+      showToast('Failed to delete file', 'error');
+    }
   }
+  
+  return false;
 }
 
 function updateURL() {
@@ -927,18 +1077,23 @@ function setupEventListeners() {
   document.getElementById('createFile').addEventListener('click', async () => {
     if (!currentProject) return;
     
-    const name = document.getElementById('fileName').value.trim();
-    if (!name) return;
+    const inputValue = document.getElementById('fileName').value.trim();
+    const normalizedPath = normalizePathInput(inputValue);
+    if (!normalizedPath) {
+      showToast('Invalid file path', 'error');
+      return;
+    }
     
-    const language = detectLanguage(name);
+    const fileName = getFileNameFromPath(normalizedPath);
+    const language = detectLanguage(fileName);
     
     try {
       const response = await fetchWithCSRF(`/api/files/${currentProject.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          name, 
-          path: name,
+          name: fileName, 
+          path: normalizedPath,
           content: '',
           language 
         })
@@ -1216,7 +1371,11 @@ function setupCollaborationHandlers() {
     renderTabs();
     document.getElementById('monacoEditor').classList.remove('active');
     document.getElementById('welcomeScreen').classList.remove('hidden');
-    document.getElementById('fileInfo').textContent = '';
+    const fileInfoEl = document.getElementById('fileInfo');
+    if (fileInfoEl) {
+      fileInfoEl.textContent = '';
+      fileInfoEl.removeAttribute('title');
+    }
     updateFileInfoVisibility();
     document.getElementById('newFile').disabled = true;
     document.getElementById('uploadFile').disabled = true;

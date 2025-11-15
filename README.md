@@ -15,25 +15,23 @@ A lightweight, web‑based code editor with real‑time collaboration, project/f
 
 <img alt="Banner" src="https://i.postimg.cc/7L4GsLkh/image.png">
 
-- **Real‑time collaboration**: live edits, remote cursor position, presence.
-- **Project & file management**: create, upload, delete, and organize assets.
+- **Real‑time collaboration**: live edits, remote cursor position, presence, and project chat.
+- **Project & file management**: create, upload, delete, and organize assets with nested folder support.
+- **Project chat**: real-time messaging for collaborators with automatic cleanup and message history.
 - **Invitations**: bring teammates into a project (default limit: up to 2 collaborators).
 - **Live preview**: instant preview for HTML/CSS/JS, Markdown, SVG, images, audio, and video.
-- **Modern UX**: dark/light themes, status bar, tabs, keyboard shortcuts.
+- **Modern UX**: dark/light themes, status bar, tabs, keyboard shortcuts, smooth animations.
 - **Security**: sessions with httpOnly cookies, CSRF token checks, protective headers, rate limiting.
 
 ### What's New?
 
 Latest updates and improvements:
 
-- **Kick notifications**: Real-time WebSocket events when users are removed from projects with automatic redirect
-- **Editor Settings**: Now you can customize the editor as you want!
-- **Enhanced security**: Full input validation with `isNaN()` checks, SQL injection protection, XSS prevention, role-based access control
-- **Database optimization**: Automatic VACUUM (weekly), PRAGMA optimize (daily), incremental vacuum for better performance
-- **SEO ready**: Complete meta tags (Open Graph, Twitter Cards, descriptions), favicon.svg, robots.txt, sitemap.xml for all domains (code-editor.run, code-editor.app, code-editor.lol)
-- **Welcome screen animations**: Smooth stars and comets animations with optimized performance and clean code architecture
-- **Code organization**: Utility functions extracted to separate utils.js file for better maintainability
-- **Access control**: Strengthened permission checks across all API endpoints with proper error handling
+- **Folder structure support**: Create nested directories and organize files hierarchically. Use paths like `assets/images/logo.svg` when creating files. Full path support in preview, imports, and file tree visualization
+- **Project chat system**: Real-time chat for project collaborators with automatic cleanup (24-hour inactivity), message history, timestamps, and toast notifications. Integrated into the Invite modal with tabbed interface
+- **Custom select menus**: Modern, theme-aware custom select components replacing default browser selects. Smooth animations, keyboard navigation, and consistent design across light/dark themes
+- **Enhanced UI animations**: Smooth message animations in chat, response time indicators, and polished transitions throughout the interface
+- **Terms of Service**: Comprehensive Terms of Service page covering platform rules, limits, data retention policies, and usage guidelines
 
 ### Quick Start
 
