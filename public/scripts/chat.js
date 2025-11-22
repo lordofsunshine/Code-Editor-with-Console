@@ -5,6 +5,7 @@ let currentProjectId = null;
 let socket = null;
 let chatMessages = [];
 let isChatTabOpen = false;
+let currentPing = 0;
 
 export function initChat(socketInstance) {
   socket = socketInstance;
@@ -19,10 +20,43 @@ export function initChat(socketInstance) {
   }
 
   setupChatUI();
+  measureInitialPing();
+  
+  if (typeof window !== 'undefined') {
+    window.measurePing = measurePing;
+  }
 }
 
 export function setCurrentProject(projectId) {
   currentProjectId = projectId;
+  if (projectId) {
+    measurePing(projectId);
+  }
+}
+
+async function measureInitialPing() {
+  try {
+    const startTime = Date.now();
+    await fetch('/api/auth/me');
+    const ping = Date.now() - startTime;
+    currentPing = Math.round(ping);
+    updatePingDisplay();
+  } catch (err) {
+    currentPing = 0;
+    updatePingDisplay();
+  }
+}
+
+async function measurePing(projectId) {
+  try {
+    const startTime = Date.now();
+    await fetch(`/api/files/${projectId}`);
+    const ping = Date.now() - startTime;
+    currentPing = Math.round(ping);
+    updatePingDisplay();
+  } catch (err) {
+    console.error('Failed to measure ping:', err);
+  }
 }
 
 function setupChatUI() {
@@ -45,10 +79,16 @@ function setupChatUI() {
     cancelChatBtn.addEventListener('click', () => {
       const inviteModal = document.getElementById('inviteModal');
       if (inviteModal) {
-        inviteModal.classList.remove('active');
+        inviteModal.classList.add('closing');
+        setTimeout(() => {
+          inviteModal.classList.remove('active', 'closing');
+        }, 300);
       }
     });
   }
+  
+  currentPing = 0;
+  updatePingDisplay();
 }
 
 async function sendMessage() {
@@ -162,16 +202,25 @@ function createMessageElement(message, isCurrentUser) {
   div.className = `chat-message ${isCurrentUser ? 'own' : ''}`;
   
   const date = new Date(message.created_at);
-  const timeStr = date.toLocaleTimeString('en-US', { 
+  const now = new Date();
+  
+  const timeStr = date.toLocaleTimeString(undefined, { 
     hour: '2-digit', 
     minute: '2-digit',
     hour12: false 
   });
-  const dateStr = date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
-  });
+  
+  const isToday = date.toDateString() === now.toDateString();
+  const isThisYear = date.getFullYear() === now.getFullYear();
+  
+  let dateStr = '';
+  if (!isToday) {
+    dateStr = date.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: !isThisYear ? 'numeric' : undefined
+    });
+  }
 
   const avatarHtml = message.avatar 
     ? `<img src="${escapeHtml(message.avatar)}" alt="${escapeHtml(message.username)}" class="chat-avatar">`
@@ -182,7 +231,7 @@ function createMessageElement(message, isCurrentUser) {
       ${avatarHtml}
       <div class="chat-message-info">
         <span class="chat-message-author">${escapeHtml(message.username)}</span>
-        <span class="chat-message-time">${dateStr} ${timeStr}</span>
+        <span class="chat-message-time">${dateStr ? dateStr + ' ' : ''}${timeStr}</span>
       </div>
     </div>
     <div class="chat-message-text">${escapeHtml(message.message)}</div>
@@ -192,28 +241,15 @@ function createMessageElement(message, isCurrentUser) {
 }
 
 function showResponseTime(ms) {
+  currentPing = Math.round(ms);
+  updatePingDisplay();
+}
+
+function updatePingDisplay() {
   const responseTimeEl = document.getElementById('chatResponseTime');
   if (!responseTimeEl) return;
 
-  responseTimeEl.textContent = `Response from server: ${ms} ms`;
-  responseTimeEl.style.display = 'block';
-  responseTimeEl.style.opacity = '0';
-  responseTimeEl.style.transform = 'translateY(-5px)';
-
-  requestAnimationFrame(() => {
-    responseTimeEl.style.transition = 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-    responseTimeEl.style.opacity = '1';
-    responseTimeEl.style.transform = 'translateY(0)';
-  });
-
-  setTimeout(() => {
-    responseTimeEl.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-    responseTimeEl.style.opacity = '0';
-    responseTimeEl.style.transform = 'translateY(-5px)';
-    setTimeout(() => {
-      responseTimeEl.style.display = 'none';
-    }, 300);
-  }, 3000);
+  responseTimeEl.textContent = `~${currentPing}ms`;
 }
 
 export async function loadChatMessages(projectId) {

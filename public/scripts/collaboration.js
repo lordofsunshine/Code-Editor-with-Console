@@ -99,6 +99,9 @@ export function joinProject(projectId) {
   if (socket && socket.connected) {
     socket.emit('join-project', projectId);
   }
+  if (window.measurePing) {
+    window.measurePing(projectId);
+  }
 }
 
 export function leaveProject(projectId) {
@@ -221,11 +224,14 @@ function setupInvitationUI() {
   });
 
   cancelInvite.addEventListener('click', () => {
-    inviteModal.classList.remove('active');
-    closeChatTab();
-    if (window.clearChatMessages) {
-      window.clearChatMessages();
-    }
+    inviteModal.classList.add('closing');
+    setTimeout(() => {
+      inviteModal.classList.remove('active', 'closing');
+      closeChatTab();
+      if (window.clearChatMessages) {
+        window.clearChatMessages();
+      }
+    }, 300);
   });
 
   sendInviteBtn.addEventListener('click', async () => {
@@ -271,11 +277,14 @@ function setupInvitationUI() {
 
   inviteModal.addEventListener('click', (e) => {
     if (e.target === inviteModal) {
-      inviteModal.classList.remove('active');
-      closeChatTab();
-      if (window.clearChatMessages) {
-        window.clearChatMessages();
-      }
+      inviteModal.classList.add('closing');
+      setTimeout(() => {
+        inviteModal.classList.remove('active', 'closing');
+        closeChatTab();
+        if (window.clearChatMessages) {
+          window.clearChatMessages();
+        }
+      }, 300);
     }
   });
 }

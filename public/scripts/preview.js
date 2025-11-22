@@ -179,10 +179,7 @@ export function checkPreviewAvailability(files) {
 function isPreviewable(filename) {
   const ext = filename.split('.').pop().toLowerCase();
   const previewableExts = [
-    'html', 'htm', 'txt', 'md', 'svg',
-    'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'ico', 'avif',
-    'mp4', 'webm', 'mov', 'avi',
-    'mp3', 'wav', 'ogg'
+    'html', 'htm', 'txt', 'md', 'svg'
   ];
   return previewableExts.includes(ext);
 }
@@ -221,32 +218,57 @@ function showPreviewOption() {
 }
 
 export function togglePreview() {
-  previewVisible = !previewVisible;
   const panel = document.getElementById('previewPanel');
   const editor = document.getElementById('monacoEditor');
   
   if (previewVisible) {
+    panel.classList.add('closing');
+    setTimeout(() => {
+      panel.classList.remove('active', 'closing');
+      panel.style.display = 'none';
+      editor.classList.remove('split');
+      previewVisible = false;
+      if (editor) {
+        editor.style.width = '100%';
+      }
+    }, 300);
+  } else {
+    previewVisible = true;
+    panel.style.display = 'flex';
     panel.classList.add('active');
     editor.classList.add('split');
+    if (editor) {
+      editor.style.width = '50%';
+    }
     updatePreview();
-  } else {
-    panel.classList.remove('active');
-    editor.classList.remove('split');
   }
 }
 
-function hidePreview() {
+export function hidePreview() {
   if (previewVisible) {
     togglePreview();
+  } else {
+    const panel = document.getElementById('previewPanel');
+    if (panel) {
+      panel.style.display = 'none';
+      panel.classList.remove('active', 'closing');
+    }
   }
   
   if (currentBlobUrl) {
     URL.revokeObjectURL(currentBlobUrl);
     currentBlobUrl = null;
   }
+  
+  const editor = document.getElementById('monacoEditor');
+  if (editor) {
+    editor.style.width = '100%';
+    editor.classList.remove('split');
+  }
 }
 
-export function updatePreview() {
+
+export async function updatePreview() {
   if (!previewVisible) return;
   
   const selectedFileId = document.getElementById('previewFileSelect').value;
@@ -260,28 +282,25 @@ export function updatePreview() {
   const iframe = document.getElementById('previewFrame');
   const ext = file.name.split('.').pop().toLowerCase();
   
-  const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'ico', 'avif'];
-  const videoExts = ['mp4', 'webm', 'mov', 'avi'];
-  const audioExts = ['mp3', 'wav', 'ogg'];
-  
   if (ext === 'html' || ext === 'htm') {
-    renderHTMLPreview(file, projectFiles, iframe);
+    await renderHTMLPreview(file, projectFiles, iframe);
   } else if (ext === 'txt') {
     renderTextPreview(file, iframe);
   } else if (ext === 'md') {
     renderMarkdownPreview(file, iframe);
   } else if (ext === 'svg') {
     renderSVGPreview(file, iframe);
-  } else if (imageExts.includes(ext)) {
-    renderImagePreview(file, iframe);
-  } else if (videoExts.includes(ext)) {
-    renderVideoPreview(file, iframe);
-  } else if (audioExts.includes(ext)) {
-    renderAudioPreview(file, iframe);
   }
 }
 
-function renderHTMLPreview(htmlFile, allFiles, iframe) {
+async function renderHTMLPreview(htmlFile, allFiles, iframe) {
+  const projectId = window.editorState?.currentProject?.id;
+  
+  if (!projectId) {
+    console.error('Project ID not found for preview');
+    return;
+  }
+
   const normalizedFiles = allFiles.map(file => {
     const rawPath = file.path || file.name || '';
     const normalizedPath = normalizeProjectPath(rawPath) || rawPath;
@@ -312,12 +331,33 @@ function renderHTMLPreview(htmlFile, allFiles, iframe) {
 
   const dataUriCache = new Map();
 
-  function getMediaDataUri(mediaFile) {
+  async function loadMediaFile(mediaFile) {
     if (dataUriCache.has(mediaFile.path)) {
       return dataUriCache.get(mediaFile.path);
     }
 
     let dataUri = mediaFile.content;
+    
+    if (dataUri && dataUri.startsWith('data:')) {
+      dataUriCache.set(mediaFile.path, dataUri);
+      return dataUri;
+    }
+
+    if (!mediaFile.content) {
+      try {
+        const response = await fetch(`/api/files/${projectId}/${mediaFile.id}/content`);
+        if (response.ok) {
+          const { content } = await response.json();
+          mediaFile.content = content;
+          dataUri = content;
+        }
+      } catch (err) {
+        console.error(`Failed to load media file ${mediaFile.name}:`, err);
+        dataUriCache.set(mediaFile.path, null);
+        return null;
+      }
+    }
+
     if (!dataUri || !dataUri.startsWith('data:')) {
       if (!mediaFile.content || typeof mediaFile.content !== 'string') {
         dataUriCache.set(mediaFile.path, null);
@@ -343,8 +383,12 @@ function renderHTMLPreview(htmlFile, allFiles, iframe) {
       const mimeType = mimeTypes[ext] || 'application/octet-stream';
 
       try {
-        const base64 = btoa(unescape(encodeURIComponent(mediaFile.content)));
-        dataUri = `data:${mimeType};base64,${base64}`;
+        if (mediaFile.is_media === 1 || mediaFile.is_media === true) {
+          dataUri = mediaFile.content;
+        } else {
+          const base64 = btoa(unescape(encodeURIComponent(mediaFile.content)));
+          dataUri = `data:${mimeType};base64,${base64}`;
+        }
       } catch (e) {
         dataUri = null;
       }
@@ -354,7 +398,7 @@ function renderHTMLPreview(htmlFile, allFiles, iframe) {
     return dataUri;
   }
 
-  function processMediaInContent(content, mediaList, basePath, context = 'html') {
+  async function processMediaInContent(content, mediaList, basePath, context = 'html') {
     if (!content) {
       return '';
     }
@@ -362,10 +406,10 @@ function renderHTMLPreview(htmlFile, allFiles, iframe) {
     let processed = content;
     const replaceAttributes = context === 'html';
 
-    mediaList.forEach(mediaFile => {
-      const dataUri = getMediaDataUri(mediaFile);
+    for (const mediaFile of mediaList) {
+      const dataUri = await loadMediaFile(mediaFile);
       if (!dataUri) {
-        return;
+        continue;
       }
 
       const candidates = buildReferenceCandidates(basePath, mediaFile.path, mediaFile.name);
@@ -386,12 +430,12 @@ function renderHTMLPreview(htmlFile, allFiles, iframe) {
         const cssRegex = new RegExp(`(url\\(["']?)${escapeRegex(value)}(["']?\\))`, 'gi');
         processed = processed.replace(cssRegex, `url(${dataUri})`);
       });
-    });
+    }
 
     return processed;
   }
 
-  function processCSSImports(cssContent, currentFile, processedFiles = new Set()) {
+  async function processCSSImports(cssContent, currentFile, processedFiles = new Set()) {
     let processed = cssContent || '';
     const source = cssContent || '';
     const importRegex = /@import\s+(?:url\()?["']?([^"')]+)["']?\)?;?/gi;
@@ -409,8 +453,21 @@ function renderHTMLPreview(htmlFile, allFiles, iframe) {
         }
 
         processedFiles.add(key);
-        const importedContent = processCSSImports(importedFile.content || '', importedFile, processedFiles);
-        const importedCSS = processMediaInContent(importedContent, mediaFiles, importedFile.path, 'css');
+        
+        if (!importedFile.content) {
+          try {
+            const response = await fetch(`/api/files/${projectId}/${importedFile.id}/content`);
+            if (response.ok) {
+              const { content } = await response.json();
+              importedFile.content = content;
+            }
+          } catch (err) {
+            console.error(`Failed to load CSS file ${importedFile.name}:`, err);
+          }
+        }
+
+        const importedContent = await processCSSImports(importedFile.content || '', importedFile, processedFiles);
+        const importedCSS = await processMediaInContent(importedContent, mediaFiles, importedFile.path, 'css');
         replacements.push({ original: match[0], replacement: importedCSS });
       }
     }
@@ -422,12 +479,24 @@ function renderHTMLPreview(htmlFile, allFiles, iframe) {
     return processed;
   }
 
-  html = processMediaInContent(html, mediaFiles, htmlFileEntry.path, 'html');
+  html = await processMediaInContent(html, mediaFiles, htmlFileEntry.path, 'html');
 
   const cssOutput = new Map();
-  cssFiles.forEach(cssFile => {
-    const processedCSS = processCSSImports(cssFile.content || '', cssFile);
-    const finalCSS = processMediaInContent(processedCSS, mediaFiles, cssFile.path, 'css');
+  for (const cssFile of cssFiles) {
+    if (!cssFile.content) {
+      try {
+        const response = await fetch(`/api/files/${projectId}/${cssFile.id}/content`);
+        if (response.ok) {
+          const { content } = await response.json();
+          cssFile.content = content;
+        }
+      } catch (err) {
+        console.error(`Failed to load CSS file ${cssFile.name}:`, err);
+      }
+    }
+    
+    const processedCSS = await processCSSImports(cssFile.content || '', cssFile);
+    const finalCSS = await processMediaInContent(processedCSS, mediaFiles, cssFile.path, 'css');
     cssOutput.set(cssFile.path, finalCSS);
 
     const candidates = buildReferenceCandidates(htmlFileEntry.path, cssFile.path, cssFile.name);
@@ -435,10 +504,22 @@ function renderHTMLPreview(htmlFile, allFiles, iframe) {
       const regex = new RegExp(`<link[^>]*href=["']${escapeRegex(value)}["'][^>]*>`, 'gi');
       html = html.replace(regex, `<style>${finalCSS}</style>`);
     });
-  });
+  }
 
   const jsOutput = new Map();
-  jsFiles.forEach(jsFile => {
+  for (const jsFile of jsFiles) {
+    if (!jsFile.content) {
+      try {
+        const response = await fetch(`/api/files/${projectId}/${jsFile.id}/content`);
+        if (response.ok) {
+          const { content } = await response.json();
+          jsFile.content = content;
+        }
+      } catch (err) {
+        console.error(`Failed to load JS file ${jsFile.name}:`, err);
+      }
+    }
+    
     const scriptContent = jsFile.content || '';
     jsOutput.set(jsFile.path, scriptContent);
 
@@ -447,7 +528,7 @@ function renderHTMLPreview(htmlFile, allFiles, iframe) {
       const regex = new RegExp(`<script[^>]*src=["']${escapeRegex(value)}["'][^>]*></script>`, 'gi');
       html = html.replace(regex, `<script>${scriptContent}</script>`);
     });
-  });
+  }
 
   let inlinedStyles = '';
   cssOutput.forEach(css => {
@@ -477,7 +558,7 @@ function renderHTMLPreview(htmlFile, allFiles, iframe) {
     }
   }
 
-  html = processMediaInContent(html, mediaFiles, htmlFileEntry.path, 'html');
+  html = await processMediaInContent(html, mediaFiles, htmlFileEntry.path, 'html');
 
   if (currentBlobUrl) {
     URL.revokeObjectURL(currentBlobUrl);

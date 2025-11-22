@@ -107,7 +107,7 @@
       </div>
 
       <div class="sidebar-footer">
-        <div class="user-info">
+        <div class="user-info" id="userInfo">
           <div class="user-avatar" id="userAvatar"></div>
           <span id="username"></span>
         </div>
@@ -116,12 +116,35 @@
         </button>
       </div>
       
-      <div class="avatar-menu" id="avatarMenu">
-        <input type="file" id="avatarInput" accept="image/*" style="display: none">
-        <button class="avatar-upload-btn" id="uploadAvatar">
-          <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
-          Upload Avatar
-        </button>
+      <div class="user-menu" id="userMenu">
+        <div class="user-menu-header">
+          <h3 class="user-menu-title">Profile Settings</h3>
+          <button class="user-menu-close" id="closeUserMenu" title="Close">
+            <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+          </button>
+        </div>
+        <div class="user-menu-content">
+          <div class="user-menu-section">
+            <label class="user-menu-label">Avatar</label>
+            <div class="user-menu-avatar-preview">
+              <div class="user-menu-avatar" id="userMenuAvatar"></div>
+              <input type="file" id="avatarInput" accept="image/jpeg,image/jpg,image/png,image/webp" style="display: none">
+              <button class="user-menu-btn-secondary" id="uploadAvatar">
+                <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+                Upload Avatar
+              </button>
+            </div>
+          </div>
+          <div class="user-menu-section">
+            <label class="user-menu-label" for="usernameInput">Username</label>
+            <input type="text" id="usernameInput" class="user-menu-input" placeholder="Enter username" maxlength="20">
+            <div class="user-menu-hint">3-20 characters, letters, numbers, and underscores only</div>
+          </div>
+        </div>
+        <div class="user-menu-actions">
+          <button class="user-menu-btn-cancel" id="cancelProfile">Cancel</button>
+          <button class="user-menu-btn-save" id="saveProfile">Save Changes</button>
+        </div>
       </div>
     </aside>
 
@@ -138,29 +161,19 @@
           </svg>
           <h2 id="welcomeTitle">Welcome to code-editor</h2>
           <p>Create or select a project to start coding</p>
-          <div class="shortcuts">
-            <div class="shortcut">
-              <span class="shortcut-label">New File</span>
-              <div class="shortcut-keys">
-                <kbd>Ctrl</kbd>
-                <span>+</span>
-                <kbd>N</kbd>
-              </div>
+          <div class="whats-new" id="whatsNewContainer">
+            <div class="whats-new-header">
+              <h3 style="text-align: start;" class="whats-new-title">What's New?</h3>
+              <a href="https://github.com/lordofsunshine/Code-Editor-with-Console" target="_blank" rel="noopener noreferrer" class="whats-new-link">
+                <svg viewBox="0 0 24 24" class="whats-new-link-icon">
+                  <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
+                </svg>
+                View on GitHub
+              </a>
             </div>
-            <div class="shortcut">
-              <span class="shortcut-label">Save File</span>
-              <div class="shortcut-keys">
-                <kbd>Ctrl</kbd>
-                <span>+</span>
-                <kbd>S</kbd>
-              </div>
-            </div>
-            <div class="shortcut">
-              <span class="shortcut-label">Find in File</span>
-              <div class="shortcut-keys">
-                <kbd>Ctrl</kbd>
-                <span>+</span>
-                <kbd>F</kbd>
+            <div class="whats-new-list" id="whatsNewList">
+              <div class="whats-new-item">
+                <div class="whats-new-item-skeleton"></div>
               </div>
             </div>
           </div>
@@ -281,9 +294,9 @@
               <svg viewBox="0 0 24 24" width="16" height="16"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor"/></svg>
             </button>
           </div>
-          <div class="chat-response-time" id="chatResponseTime" style="display: none;"></div>
         </div>
         <div class="modal-actions">
+          <span class="chat-response-time" id="chatResponseTime">0ms</span>
           <button class="btn-secondary" id="cancelChat">Close</button>
         </div>
       </div>

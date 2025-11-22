@@ -227,10 +227,14 @@ function renderFileNode(node, activeFileId) {
 }
 
 function handleClick(event) {
+  event.stopPropagation();
+  
   const actionTarget = event.target.closest('[data-action]');
-  if (!actionTarget || !state.container.contains(actionTarget)) {
+  if (!actionTarget || !state.container || !state.container.contains(actionTarget)) {
     return;
   }
+
+  event.preventDefault();
 
   const action = actionTarget.dataset.action;
 
@@ -246,23 +250,25 @@ function handleClick(event) {
 
   if (action === 'open-file') {
     const id = parseInt(actionTarget.dataset.id, 10);
-    if (!Number.isNaN(id) && state.onFileOpen) {
+    if (!Number.isNaN(id) && state.onFileOpen && typeof state.onFileOpen === 'function') {
       state.onFileOpen(id);
     }
     return;
   }
 
   if (action === 'delete-file') {
+    event.stopPropagation();
     const id = parseInt(actionTarget.dataset.id, 10);
-    if (!Number.isNaN(id) && state.onDeleteFile) {
+    if (!Number.isNaN(id) && state.onDeleteFile && typeof state.onDeleteFile === 'function') {
       state.onDeleteFile(id);
     }
     return;
   }
 
   if (action === 'delete-folder') {
+    event.stopPropagation();
     const path = actionTarget.dataset.path;
-    if (path && state.onDeleteFolder) {
+    if (path && state.onDeleteFolder && typeof state.onDeleteFolder === 'function') {
       const entry = state.folderLookup.get(path);
       const fileIds = entry ? Array.from(entry.fileIds) : [];
       state.onDeleteFolder(path, fileIds);

@@ -17,6 +17,7 @@ import { searchRoutes } from './routes/search.js';
 import { chatRoutes } from './routes/chat.js';
 import { initCleanupTasks } from './cleanup.js';
 import { initSocket } from './socket.js';
+import { initStorage } from './utils/fileManager.js';
 import chalk from 'chalk';
 import crypto from 'crypto';
 
@@ -28,7 +29,9 @@ const fastify = Fastify({
   trustProxy: true,
   bodyLimit: 50 * 1024 * 1024,
   requestIdLogLabel: 'reqId',
-  disableRequestLogging: true
+  disableRequestLogging: true,
+  connectionTimeout: 30000,
+  keepAliveTimeout: 5000
 });
 
 console.log(chalk.cyan('⚡ Initializing Code Editor...'));
@@ -36,6 +39,10 @@ console.log(chalk.cyan('⚡ Initializing Code Editor...'));
 const db = new Database();
 
 console.log(chalk.green('✓ Database initialized'));
+
+await initStorage();
+
+console.log(chalk.green('✓ Storage initialized'));
 
 initCleanupTasks(db);
 
@@ -79,10 +86,14 @@ fastify.addHook('onRequest', (request, reply, done) => {
 });
 
 fastify.addHook('preHandler', (request, reply, done) => {
-  const exemptRoutes = ['/api/auth/me', '/api/auth/logout', '/api/settings/'];
+  const exemptRoutes = ['/api/auth/me'];
   const exemptMethods = ['GET', 'HEAD', 'OPTIONS'];
   
-  if (exemptMethods.includes(request.method) || exemptRoutes.includes(request.url)) {
+  if (exemptMethods.includes(request.method)) {
+    return done();
+  }
+
+  if (exemptRoutes.some(route => request.url === route || request.url.startsWith(route + '?'))) {
     return done();
   }
   
@@ -96,11 +107,6 @@ fastify.addHook('preHandler', (request, reply, done) => {
   }
   
   done();
-});
-
-await fastify.register(fastifyStatic, {
-  root: join(__dirname, '..', 'public'),
-  prefix: '/'
 });
 
 fastify.decorate('db', db);
@@ -121,6 +127,104 @@ await fastify.register(invitationRoutes, { prefix: '/api/invitations' });
 await fastify.register(settingsRoutes, { prefix: '/api/settings' });
 await fastify.register(searchRoutes, { prefix: '/api/search' });
 await fastify.register(chatRoutes, { prefix: '/api/chat' });
+
+fastify.get('/@:username/:projectName/*', async (request, reply) => {
+  try {
+    if (!request.session.userId) {
+      return reply.redirect('/auth');
+    }
+
+    const username = request.params.username;
+    const projectName = request.params.projectName;
+    const filePath = request.params['*'] || '';
+
+    if (!username || typeof username !== 'string' || username.length < 3 || username.length > 100) {
+      return reply.redirect('/error?code=404');
+    }
+
+    if (!projectName || typeof projectName !== 'string' || projectName.length < 1 || projectName.length > 100) {
+      return reply.redirect('/error?code=404');
+    }
+
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      return reply.redirect('/error?code=404');
+    }
+
+    if (filePath && (filePath.includes('..') || filePath.includes('\0') || filePath.length > 500)) {
+      return reply.redirect('/error?code=400');
+    }
+
+    const project = db.getProjectByUsernameAndName(username, projectName);
+    if (!project) {
+      return reply.redirect('/error?code=404');
+    }
+
+    if (!db.hasProjectAccess(project.id, request.session.userId)) {
+      return reply.redirect('/error?code=403');
+    }
+
+    db.updateProjectLastAccess(project.id);
+    db.updateUserLastAccess(request.session.userId);
+
+    const normalizedPath = filePath ? filePath.replace(/\/+/g, '/').replace(/^\//, '').replace(/\/$/, '') : '';
+    
+    const queryParams = new URLSearchParams();
+    queryParams.set('projectId', project.id.toString());
+    if (normalizedPath) {
+      queryParams.set('filePath', normalizedPath);
+    }
+
+    reply.redirect(`/editor?${queryParams.toString()}`);
+  } catch (err) {
+    fastify.log.error(err);
+    return reply.redirect('/error?code=500');
+  }
+});
+
+fastify.get('/@:username/:projectName', async (request, reply) => {
+  try {
+    if (!request.session.userId) {
+      return reply.redirect('/auth');
+    }
+
+    const username = request.params.username;
+    const projectName = request.params.projectName;
+
+    if (!username || typeof username !== 'string' || username.length < 3 || username.length > 100) {
+      return reply.redirect('/error?code=404');
+    }
+
+    if (!projectName || typeof projectName !== 'string' || projectName.length < 1 || projectName.length > 100) {
+      return reply.redirect('/error?code=404');
+    }
+
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      return reply.redirect('/error?code=404');
+    }
+
+    const project = db.getProjectByUsernameAndName(username, projectName);
+    if (!project) {
+      return reply.redirect('/error?code=404');
+    }
+
+    if (!db.hasProjectAccess(project.id, request.session.userId)) {
+      return reply.redirect('/error?code=403');
+    }
+
+    db.updateProjectLastAccess(project.id);
+    db.updateUserLastAccess(request.session.userId);
+
+    reply.redirect(`/editor?projectId=${project.id}`);
+  } catch (err) {
+    fastify.log.error(err);
+    return reply.redirect('/error?code=500');
+  }
+});
+
+await fastify.register(fastifyStatic, {
+  root: join(__dirname, '..', 'public'),
+  prefix: '/'
+});
 
 fastify.get('/editor', (request, reply) => {
   if (!request.session.userId) {

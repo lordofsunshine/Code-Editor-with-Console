@@ -1,7 +1,7 @@
 import config from '../config.js';
 
 const userMessageTimestamps = new Map();
-const MESSAGE_RATE_LIMIT = 2000;
+const MESSAGE_RATE_LIMIT = 500;
 
 export async function chatRoutes(fastify, options) {
   fastify.addHook('preHandler', (request, reply, done) => {
@@ -28,61 +28,70 @@ export async function chatRoutes(fastify, options) {
   };
 
   fastify.get('/:projectId', async (request, reply) => {
-    const projectId = parseInt(request.params.projectId);
-    
-    if (isNaN(projectId)) {
-      return reply.code(400).send({ error: 'Invalid project ID' });
-    }
-    
-    if (!verifyProjectAccess(projectId, request.session.userId)) {
-      return reply.code(403).send({ error: 'Access denied' });
-    }
+    try {
+      const projectId = parseInt(request.params.projectId, 10);
+      
+      if (isNaN(projectId) || projectId <= 0) {
+        return reply.code(400).send({ error: 'Invalid project ID' });
+      }
+      
+      if (!verifyProjectAccess(projectId, request.session.userId)) {
+        return reply.code(403).send({ error: 'Access denied' });
+      }
 
-    const messages = fastify.db.getChatMessages(projectId);
-    return { messages };
+      const messages = fastify.db.getChatMessages(projectId);
+      return { messages };
+    } catch (err) {
+      fastify.log.error(err);
+      return reply.code(500).send({ error: 'Server error' });
+    }
   });
 
   fastify.post('/:projectId', async (request, reply) => {
-    const projectId = parseInt(request.params.projectId);
-    const { message } = request.body;
-    const userId = request.session.userId;
-    
-    if (isNaN(projectId)) {
-      return reply.code(400).send({ error: 'Invalid project ID' });
-    }
-    
-    if (!verifyProjectAccess(projectId, userId)) {
-      return reply.code(403).send({ error: 'Access denied' });
-    }
-
-    if (!message || typeof message !== 'string') {
-      return reply.code(400).send({ error: 'Message is required' });
-    }
-
-    const trimmedMessage = message.trim();
-    
-    if (trimmedMessage.length === 0) {
-      return reply.code(400).send({ error: 'Message cannot be empty' });
-    }
-
-    if (trimmedMessage.length > 2000) {
-      return reply.code(400).send({ error: 'Message too long. Maximum 2000 characters' });
-    }
-
-    if (!checkRateLimit(userId)) {
-      return reply.code(429).send({ error: 'Too many messages. Please wait a moment.' });
-    }
-
-    const sanitizedMessage = trimmedMessage
-      .replace(/[<>]/g, '')
-      .substring(0, 2000);
-
     try {
+      const projectId = parseInt(request.params.projectId, 10);
+      const { message } = request.body;
+      const userId = request.session.userId;
+      
+      if (isNaN(projectId) || projectId <= 0) {
+        return reply.code(400).send({ error: 'Invalid project ID' });
+      }
+      
+      if (!verifyProjectAccess(projectId, userId)) {
+        return reply.code(403).send({ error: 'Access denied' });
+      }
+
+      if (!message || typeof message !== 'string') {
+        return reply.code(400).send({ error: 'Message is required' });
+      }
+
+      const trimmedMessage = message.trim();
+      
+      if (trimmedMessage.length === 0) {
+        return reply.code(400).send({ error: 'Message cannot be empty' });
+      }
+
+      if (trimmedMessage.length > 2000) {
+        return reply.code(400).send({ error: 'Message too long. Maximum 2000 characters' });
+      }
+
+      if (!checkRateLimit(userId)) {
+        return reply.code(429).send({ error: 'Too many messages. Please wait a moment.' });
+      }
+
+      const sanitizedMessage = trimmedMessage
+        .replace(/[<>]/g, '')
+        .substring(0, 2000);
+
       const startTime = Date.now();
       const result = fastify.db.createChatMessage(projectId, userId, sanitizedMessage);
       const responseTime = Date.now() - startTime;
 
       const user = fastify.db.getUserById(userId);
+      if (!user) {
+        return reply.code(500).send({ error: 'User not found' });
+      }
+
       const newMessage = {
         id: result.lastInsertRowid,
         project_id: projectId,
@@ -106,6 +115,7 @@ export async function chatRoutes(fastify, options) {
         responseTime
       };
     } catch (err) {
+      fastify.log.error(err);
       return reply.code(500).send({ error: 'Failed to send message' });
     }
   });

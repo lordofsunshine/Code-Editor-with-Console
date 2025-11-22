@@ -27,11 +27,15 @@ A lightweight, web‑based code editor with real‑time collaboration, project/f
 
 Latest updates and improvements:
 
-- **Folder structure support**: Create nested directories and organize files hierarchically. Use paths like `assets/images/logo.svg` when creating files. Full path support in preview, imports, and file tree visualization
-- **Project chat system**: Real-time chat for project collaborators with automatic cleanup (24-hour inactivity), message history, timestamps, and toast notifications. Integrated into the Invite modal with tabbed interface
-- **Custom select menus**: Modern, theme-aware custom select components replacing default browser selects. Smooth animations, keyboard navigation, and consistent design across light/dark themes
-- **Enhanced UI animations**: Smooth message animations in chat, response time indicators, and polished transitions throughout the interface
-- **Terms of Service**: Comprehensive Terms of Service page covering platform rules, limits, data retention policies, and usage guidelines
+- **Secure file storage**: Migrated to encrypted file system with AES-256-GCM encryption and automatic compression
+- **Expanded limits**: Up to 6 projects, 32 files per project, 50MB files, 5MB avatars
+- **User profile panel**: Manage avatar and username from sidebar
+- **Session persistence**: Username remembered for one week
+- **What's New block**: Dynamic updates section on welcome screen
+- **Local time in chat**: Messages display user's local timezone
+- **UI animations**: Smooth transitions for preview panel, modals, and sidebar buttons
+- **Improved error handling**: Better file compression with fallback mechanisms
+- **Increased rate limits**: 100 requests per 15 minutes
 
 ### Quick Start
 

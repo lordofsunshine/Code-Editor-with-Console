@@ -7,10 +7,10 @@ const configPath = path.join(__dirname, '../config.json');
 
 let config = {
   limits: {
-    maxProjects: 3,
-    maxFilesPerProject: 16,
-    maxFileSize: 10485760,
-    maxAvatarSize: 2097152
+    maxProjects: 6,
+    maxFilesPerProject: 32,
+    maxFileSize: 52428800,
+    maxAvatarSize: 5242880
   },
   features: {
     enablePreview: true,
@@ -26,7 +26,19 @@ let config = {
 
 try {
   const configData = fs.readFileSync(configPath, 'utf8');
-  config = JSON.parse(configData);
+  const parsedConfig = JSON.parse(configData);
+  
+  if (parsedConfig && typeof parsedConfig === 'object') {
+    if (parsedConfig.limits && typeof parsedConfig.limits === 'object') {
+      config.limits = { ...config.limits, ...parsedConfig.limits };
+    }
+    if (parsedConfig.features && typeof parsedConfig.features === 'object') {
+      config.features = { ...config.features, ...parsedConfig.features };
+    }
+    if (parsedConfig.cleanup && typeof parsedConfig.cleanup === 'object') {
+      config.cleanup = { ...config.cleanup, ...parsedConfig.cleanup };
+    }
+  }
 } catch (err) {
   console.log('Using default config');
 }

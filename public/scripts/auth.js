@@ -1,3 +1,5 @@
+import { saveUserSession, getUserSession, clearUserSession } from './utils/session.js';
+
 const tabs = document.querySelectorAll('.tab');
 const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
@@ -11,6 +13,12 @@ const registerPassword = document.getElementById('registerPassword');
 
 const loginBtn = loginForm.querySelector('.btn-auth');
 const registerBtn = registerForm.querySelector('.btn-auth');
+
+const savedUsername = getUserSession();
+if (savedUsername && loginUsername) {
+  loginUsername.value = savedUsername;
+  updateButtonState(loginForm);
+}
 
 function sanitizeInput(input) {
   const div = document.createElement('div');
@@ -207,6 +215,7 @@ loginForm.addEventListener('submit', async (e) => {
     const data = await response.json();
     
     if (response.ok) {
+      saveUserSession(username);
       showMessage('Login successful! Redirecting...', 'success');
       setTimeout(() => {
         window.location.href = '/editor';
@@ -260,6 +269,7 @@ registerForm.addEventListener('submit', async (e) => {
     const data = await response.json();
     
     if (response.ok) {
+      saveUserSession(username);
       showMessage('Account created successfully! Please sign in.', 'success');
       
       setTimeout(() => {

@@ -1,9 +1,9 @@
 {
   "limits": {
-    "maxProjects": 3,
-    "maxFilesPerProject": 16,
-    "maxFileSize": 10485760,
-    "maxAvatarSize": 2097152
+    "maxProjects": 6,
+    "maxFilesPerProject": 32,
+    "maxFileSize": 52428800,
+    "maxAvatarSize": 5242880
   },
   "features": {
     "enablePreview": true,

@@ -1,5 +1,6 @@
 import cron from 'node-cron';
 import config from './config.js';
+import { deleteProject as deleteProjectFiles } from './utils/fileManager.js';
 
 export function initCleanupTasks(db) {
   
@@ -8,19 +9,34 @@ export function initCleanupTasks(db) {
     return;
   }
 
-  cron.schedule('0 3 * * *', () => {
+  cron.schedule('0 3 * * *', async () => {
     console.log('Running cleanup tasks...');
     
     try {
       const inactiveDays = config.cleanup.inactiveDays || 90;
+      
+      if (!Number.isInteger(inactiveDays) || inactiveDays <= 0) {
+        console.error('Invalid inactiveDays config');
+        return;
+      }
+      
+      const projectsToDelete = db.getInactiveProjects(inactiveDays);
+      for (const project of projectsToDelete) {
+        try {
+          await deleteProjectFiles(project.id);
+        } catch (err) {
+          console.error(`Error deleting files for project ${project.id}:`, err);
+        }
+      }
+      
       const inactiveProjects = db.deleteInactiveProjects(inactiveDays);
-      console.log(`Deleted ${inactiveProjects.changes} inactive projects`);
+      console.log(`Deleted ${inactiveProjects.changes || 0} inactive projects`);
       
       const inactiveUsers = db.deleteInactiveUsers(inactiveDays);
-      console.log(`Deleted ${inactiveUsers.changes} inactive users`);
+      console.log(`Deleted ${inactiveUsers.changes || 0} inactive users`);
       
       const oldChats = db.deleteOldChatMessages();
-      console.log(`Deleted old chat messages: ${oldChats.changes} rows`);
+      console.log(`Deleted old chat messages: ${oldChats.changes || 0} rows`);
       
       db.optimize();
       console.log('Database optimized');

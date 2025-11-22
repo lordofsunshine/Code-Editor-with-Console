@@ -1,10 +1,15 @@
 export function normalizeProjectPath(input) {
-  if (typeof input !== 'string') {
+  if (typeof input !== 'string' || input.length === 0 || input.length > 500) {
+    return null;
+  }
+
+  if (input.includes('\0')) {
     return null;
   }
 
   let normalized = input.replace(/\\+/g, '/').trim();
   normalized = normalized.replace(/\/+/g, '/');
+  normalized = normalized.replace(/^\/+/, '');
 
   const segments = normalized
     .split('/')
@@ -15,7 +20,12 @@ export function normalizeProjectPath(input) {
     return null;
   }
 
-  if (segments.some(segment => segment === '.' || segment === '..')) {
+  if (segments.some(segment => segment === '.' || segment === '..' || segment.includes('\0'))) {
+    return null;
+  }
+
+  const invalidChars = /[<>:"|?*\x00-\x1f]/;
+  if (segments.some(segment => invalidChars.test(segment))) {
     return null;
   }
 
@@ -23,13 +33,17 @@ export function normalizeProjectPath(input) {
 }
 
 export function extractFileNameFromPath(path) {
-  if (!path) {
+  if (!path || typeof path !== 'string') {
     return null;
   }
 
   const segments = path.split('/');
   const name = segments[segments.length - 1];
 
-  return name || null;
+  if (!name || name.length > 255) {
+    return null;
+  }
+
+  return name;
 }
 

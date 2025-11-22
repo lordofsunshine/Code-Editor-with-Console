@@ -18,7 +18,11 @@ export function initSocket(server, db) {
       const userId = socket.handshake.auth?.userId;
       const username = socket.handshake.auth?.username;
 
-      if (!userId || !username) {
+      if (!userId || !username || typeof userId !== 'number' || typeof username !== 'string') {
+        return next(new Error('Authentication error'));
+      }
+
+      if (!Number.isInteger(userId) || userId <= 0 || username.length > 100) {
         return next(new Error('Authentication error'));
       }
 
@@ -41,7 +45,7 @@ export function initSocket(server, db) {
     const activeRooms = new Set();
 
     socket.on('join-project', (projectId) => {
-      if (!projectId || typeof projectId !== 'number') {
+      if (!projectId || typeof projectId !== 'number' || !Number.isInteger(projectId) || projectId <= 0) {
         socket.emit('error', { message: 'Invalid project ID' });
         return;
       }
@@ -69,6 +73,10 @@ export function initSocket(server, db) {
     });
 
     socket.on('leave-project', (projectId) => {
+      if (!projectId || typeof projectId !== 'number' || !Number.isInteger(projectId) || projectId <= 0) {
+        return;
+      }
+
       socket.leave(`project:${projectId}`);
       
       if (projectRooms.has(projectId)) {
@@ -83,6 +91,16 @@ export function initSocket(server, db) {
     });
 
     socket.on('file-change', ({ projectId, fileId, content, cursorPosition, isTyping }) => {
+      if (!projectId || !fileId || typeof projectId !== 'number' || typeof fileId !== 'number') {
+        socket.emit('error', { message: 'Invalid data' });
+        return;
+      }
+
+      if (!Number.isInteger(projectId) || projectId <= 0 || !Number.isInteger(fileId) || fileId <= 0) {
+        socket.emit('error', { message: 'Invalid data' });
+        return;
+      }
+
       if (!db.hasProjectAccess(projectId, socket.userId)) {
         socket.emit('error', { message: 'Access denied' });
         return;
@@ -99,17 +117,22 @@ export function initSocket(server, db) {
         userId: socket.userId,
         username: socket.username,
         cursorPosition,
-        isTyping: isTyping || false
+        isTyping: !!isTyping
       });
     });
 
     socket.on('file-created', ({ projectId, file }) => {
+      if (!projectId || typeof projectId !== 'number' || !Number.isInteger(projectId) || projectId <= 0) {
+        socket.emit('error', { message: 'Invalid data' });
+        return;
+      }
+
       if (!db.hasProjectAccess(projectId, socket.userId)) {
         socket.emit('error', { message: 'Access denied' });
         return;
       }
 
-      if (!file || typeof file.name !== 'string' || file.name.length > 255) {
+      if (!file || typeof file !== 'object' || typeof file.name !== 'string' || file.name.length > 255) {
         socket.emit('error', { message: 'Invalid file data' });
         return;
       }
@@ -122,13 +145,18 @@ export function initSocket(server, db) {
     });
 
     socket.on('file-deleted', ({ projectId, fileId }) => {
-      if (!db.hasProjectAccess(projectId, socket.userId)) {
-        socket.emit('error', { message: 'Access denied' });
+      if (!projectId || !fileId || typeof projectId !== 'number' || typeof fileId !== 'number') {
+        socket.emit('error', { message: 'Invalid data' });
         return;
       }
 
-      if (!fileId || typeof fileId !== 'number') {
-        socket.emit('error', { message: 'Invalid file ID' });
+      if (!Number.isInteger(projectId) || projectId <= 0 || !Number.isInteger(fileId) || fileId <= 0) {
+        socket.emit('error', { message: 'Invalid data' });
+        return;
+      }
+
+      if (!db.hasProjectAccess(projectId, socket.userId)) {
+        socket.emit('error', { message: 'Access denied' });
         return;
       }
 
@@ -140,6 +168,14 @@ export function initSocket(server, db) {
     });
 
     socket.on('cursor-move', ({ projectId, fileId, position }) => {
+      if (!projectId || !fileId || typeof projectId !== 'number' || typeof fileId !== 'number') {
+        return;
+      }
+
+      if (!Number.isInteger(projectId) || projectId <= 0 || !Number.isInteger(fileId) || fileId <= 0) {
+        return;
+      }
+
       if (!db.hasProjectAccess(projectId, socket.userId)) {
         return;
       }

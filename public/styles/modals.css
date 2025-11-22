@@ -589,11 +589,10 @@
 }
 
 .chat-response-time {
-  margin-top: 8px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-tertiary);
-  text-align: center;
-  animation: responseTimeFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  font-weight: 500;
+  display: inline-block;
 }
 
 @keyframes responseTimeFadeIn {

@@ -4,6 +4,8 @@ import { initCollaboration, joinProject, leaveProject, emitFileChange, emitFileC
 import { initStarsObserver, fetchWithCSRF } from './utils.js';
 import { initIntegration, setCurrentProject, setCurrentFile, setUserRole, getUserRole } from './integration.js';
 import { initFileTree } from './file-tree.js';
+import { initWhatsNew } from './components/whatsnew.js';
+import { initUserMenu } from './components/user-menu.js';
 
 let editor;
 let currentProject = null;
@@ -122,13 +124,13 @@ function initEditor() {
   let lastContentLength = 0;
 
   editor.onDidChangeModelContent(() => {
-    if (currentFile && !isUpdatingFromRemote) {
+    if (currentFile && !isUpdatingFromRemote && editor) {
       clearTimeout(saveTimeout);
       saveTimeout = setTimeout(() => {
         saveFile();
         updatePreview();
         
-        if (currentProject) {
+        if (currentProject && editor) {
           const content = editor.getValue();
           const position = editor.getPosition();
           const isTyping = content.length > lastContentLength && content.length - lastContentLength <= 3;
@@ -140,8 +142,10 @@ function initEditor() {
   });
 
   editor.onDidChangeCursorPosition((e) => {
-    document.getElementById('cursorPosition').textContent = 
-      `Ln ${e.position.lineNumber}, Col ${e.position.column}`;
+    const cursorPositionEl = document.getElementById('cursorPosition');
+    if (cursorPositionEl && e && e.position) {
+      cursorPositionEl.textContent = `Ln ${e.position.lineNumber}, Col ${e.position.column}`;
+    }
   });
 }
 
@@ -172,6 +176,8 @@ async function init() {
   await loadUser();
   await loadProjects();
   initPreview();
+  initWhatsNew();
+  initUserMenu();
   setupCollaborationHandlers();
   initCollaboration();
   setupEventListeners();
@@ -213,6 +219,13 @@ async function init() {
   
   if (editor) {
     initIntegration(editor);
+  }
+  
+  const editorEl = document.getElementById('monacoEditor');
+  const previewPanel = document.getElementById('previewPanel');
+  if (editorEl && (!previewPanel || !previewPanel.classList.contains('active'))) {
+    editorEl.style.width = '100%';
+    editorEl.classList.remove('split');
   }
   
   window.openFile = openFile;
@@ -326,32 +339,50 @@ function renderProjects() {
     </div>
   `).join('');
   
-  container.querySelectorAll('.project-item').forEach(item => {
-    item.addEventListener('click', (e) => {
-      if (!e.target.closest('.project-delete') && !e.target.closest('.project-download')) {
-        selectProject(parseInt(item.dataset.id));
+  if (!container.hasAttribute('data-project-handler')) {
+    container.setAttribute('data-project-handler', 'true');
+    container.addEventListener('click', (e) => {
+      const projectItem = e.target.closest('.project-item');
+      if (projectItem) {
+        const downloadBtn = e.target.closest('.project-download');
+        const deleteBtn = e.target.closest('.project-delete');
+        
+        if (downloadBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const projectId = parseInt(downloadBtn.dataset.id);
+          if (projectId && !isNaN(projectId)) {
+            downloadProject(projectId);
+          }
+          return;
+        }
+        
+        if (deleteBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const projectId = parseInt(deleteBtn.dataset.id);
+          if (projectId && !isNaN(projectId) && confirm('Delete this project?')) {
+            deleteProject(projectId);
+          }
+          return;
+        }
+        
+        e.preventDefault();
+        e.stopPropagation();
+        const projectId = parseInt(projectItem.dataset.id);
+        if (projectId && !isNaN(projectId)) {
+          selectProject(projectId);
+        }
       }
     });
-  });
-  
-  container.querySelectorAll('.project-download').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      await downloadProject(parseInt(btn.dataset.id));
-    });
-  });
-  
-  container.querySelectorAll('.project-delete').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      if (confirm('Delete this project?')) {
-        await deleteProject(parseInt(btn.dataset.id));
-      }
-    });
-  });
+  }
 }
 
 async function selectProject(projectId) {
+  if (currentProject && currentProject.id === projectId) {
+    return;
+  }
+  
   if (currentProject) {
     leaveProject(currentProject.id);
   }
@@ -360,6 +391,7 @@ async function selectProject(projectId) {
   if (!project) return;
   
   currentProject = project;
+  window.editorState.currentProject = { id: projectId };
   renderProjects();
   await loadFiles(projectId);
   document.getElementById('newFile').disabled = false;
@@ -369,6 +401,13 @@ async function selectProject(projectId) {
   setCurrentProject(projectId);
   showInviteButton(project.isOwner);
   joinProject(projectId);
+  
+  const editorEl = document.getElementById('monacoEditor');
+  const previewPanel = document.getElementById('previewPanel');
+  if (editorEl && (!previewPanel || !previewPanel.classList.contains('active'))) {
+    editorEl.style.width = '100%';
+    editorEl.classList.remove('split');
+  }
   
   if (state.userId) {
     setUserRole(projectId, state.userId);
@@ -395,8 +434,26 @@ async function loadFiles(projectId) {
     const response = await fetch(`/api/files/${projectId}`);
     if (response.ok) {
       const files = await response.json();
-      state.files = files
-        .map((file) => normalizeFetchedFile(file))
+      
+      const filesWithContent = await Promise.all(
+        files.map(async (file) => {
+          const normalizedFile = normalizeFetchedFile(file);
+          
+          try {
+            const contentResponse = await fetch(`/api/files/${projectId}/${file.id}/content`);
+            if (contentResponse.ok) {
+              const { content } = await contentResponse.json();
+              return { ...normalizedFile, content };
+            }
+          } catch (err) {
+            console.error(`Failed to load content for file ${file.id}`);
+          }
+          
+          return { ...normalizedFile, content: '' };
+        })
+      );
+      
+      state.files = filesWithContent
         .sort((a, b) => a.path.localeCompare(b.path, undefined, { sensitivity: 'base' }));
 
       window.editorState.files = state.files;
@@ -490,12 +547,25 @@ function openFile(fileId) {
   const file = state.files.find(f => f.id === fileId);
   if (!file) return;
   
+  if (!editor) {
+    console.warn('Editor not initialized yet, waiting...');
+    setTimeout(() => openFile(fileId), 100);
+    return;
+  }
+  
   currentFile = file;
   setCurrentFile(fileId);
   
   if (!openTabs.find(t => t.id === fileId)) {
     openTabs.push(file);
     renderTabs();
+  }
+  
+  const editorEl = document.getElementById('monacoEditor');
+  const previewPanel = document.getElementById('previewPanel');
+  if (editorEl && (!previewPanel || !previewPanel.classList.contains('active'))) {
+    editorEl.style.width = '100%';
+    editorEl.classList.remove('split');
   }
   
   const ext = file.name.split('.').pop().toLowerCase();
@@ -507,11 +577,24 @@ function openFile(fileId) {
     showMediaViewer(file, ext, imageExts, videoExts, audioExts);
   } else {
     hideMediaViewer();
+    
+    if (!editor) {
+      console.error('Editor not initialized');
+      return;
+    }
+    
     editor.setValue(file.content || '');
     const language = detectLanguage(file.name);
     monaco.editor.setModelLanguage(editor.getModel(), language);
     
-    document.getElementById('monacoEditor').classList.add('active');
+    const editorEl = document.getElementById('monacoEditor');
+    editorEl.classList.add('active');
+    
+    const previewPanel = document.getElementById('previewPanel');
+    if (!previewPanel || !previewPanel.classList.contains('active')) {
+      editorEl.style.width = '100%';
+      editorEl.classList.remove('split');
+    }
   }
   
   document.getElementById('welcomeScreen').classList.add('hidden');
@@ -651,7 +734,7 @@ function closeTab(fileId) {
 }
 
 async function saveFile() {
-  if (!currentFile || !currentProject) return;
+  if (!currentFile || !currentProject || !editor) return;
   
   const content = editor.getValue();
   
@@ -696,7 +779,33 @@ async function downloadProject(projectId) {
 
     for (const file of files) {
       const safePath = normalizePathInput(file.path || file.name) || file.name;
-      projectFolder.file(safePath, file.content || '');
+      
+      let content = '';
+      try {
+        const contentResponse = await fetch(`/api/files/${projectId}/${file.id}/content`);
+        if (contentResponse.ok) {
+          const data = await contentResponse.json();
+          content = data.content || '';
+        }
+      } catch (err) {
+        console.error(`Failed to load content for file ${file.name}:`, err);
+      }
+
+      if (file.is_media === 1 || file.is_media === true) {
+        if (content && content.startsWith('data:')) {
+          const base64Data = content.split(',')[1];
+          const binaryString = atob(base64Data);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          projectFolder.file(safePath, bytes, { binary: true });
+        } else {
+          projectFolder.file(safePath, content, { binary: true });
+        }
+      } else {
+        projectFolder.file(safePath, content);
+      }
     }
 
     const blob = await zip.generateAsync({ type: 'blob' });
@@ -732,7 +841,9 @@ async function deleteProject(projectId) {
         window.editorState.files = [];
         window.editorState.projects = state.projects.filter(p => p.id !== projectId);
         
-        editor.setValue('');
+        if (editor) {
+          editor.setValue('');
+        }
         
         hideMediaViewer();
         
@@ -791,10 +902,27 @@ function updateURL() {
   let url = '/editor';
   
   if (currentProject) {
-    url += `?project=${currentProject.id}`;
+    const project = state.projects.find(p => p.id === currentProject.id);
     
-    if (currentFile) {
-      url += `&file=${currentFile.id}`;
+    if (project && (project.owner_username || project.isOwner)) {
+      const username = project.owner_username || state.username;
+      if (username && project.name) {
+        url = `/@${username}/${encodeURIComponent(project.name)}`;
+        
+        if (currentFile && currentFile.path) {
+          url += `/${encodeURIComponent(currentFile.path)}`;
+        }
+      } else {
+        url += `?projectId=${currentProject.id}`;
+        if (currentFile) {
+          url += `&filePath=${encodeURIComponent(currentFile.path)}`;
+        }
+      }
+    } else {
+      url += `?projectId=${currentProject.id}`;
+      if (currentFile) {
+        url += `&filePath=${encodeURIComponent(currentFile.path)}`;
+      }
     }
   }
   
@@ -803,8 +931,9 @@ function updateURL() {
 
 async function handleRouting() {
   const params = new URLSearchParams(window.location.search);
-  const projectId = params.get('project');
+  const projectId = params.get('projectId') || params.get('project');
   const fileId = params.get('file');
+  const filePath = params.get('filePath');
   
   if (projectId) {
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -818,6 +947,13 @@ async function handleRouting() {
         const file = state.files.find(f => f.id === parseInt(fileId));
         if (file) {
           openFile(parseInt(fileId));
+        }
+      } else if (filePath) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        const normalizedPath = filePath.replace(/\/+/g, '/').replace(/^\//, '').replace(/\/$/, '');
+        const file = state.files.find(f => f.path === normalizedPath || f.path === filePath);
+        if (file) {
+          openFile(file.id);
         }
       }
     }
@@ -877,62 +1013,6 @@ function setupEventListeners() {
     });
   }
 
-  document.getElementById('userAvatar').addEventListener('click', (e) => {
-    e.stopPropagation();
-    document.getElementById('avatarMenu').classList.toggle('active');
-  });
-
-  document.addEventListener('click', (e) => {
-    const menu = document.getElementById('avatarMenu');
-    if (!menu.contains(e.target) && !document.getElementById('userAvatar').contains(e.target)) {
-      menu.classList.remove('active');
-    }
-  });
-
-  document.getElementById('uploadAvatar').addEventListener('click', () => {
-    document.getElementById('avatarInput').click();
-  });
-
-  document.getElementById('avatarInput').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
-      return;
-    }
-
-    const maxAvatarSize = 2 * 1024 * 1024;
-    if (file.size > maxAvatarSize) {
-      alert('Image too large. Maximum size is 2MB');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const avatar = event.target.result;
-      
-      try {
-        const response = await fetchWithCSRF('/api/auth/avatar', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ avatar })
-        });
-
-        if (response.ok) {
-          const avatarEl = document.getElementById('userAvatar');
-          avatarEl.innerHTML = `<img src="${avatar}" alt="Avatar">`;
-          document.getElementById('avatarMenu').classList.remove('active');
-        } else {
-          const error = await response.json();
-          alert(error.error || 'Failed to upload avatar');
-        }
-      } catch (err) {
-        alert('Failed to upload avatar');
-      }
-    };
-    reader.readAsDataURL(file);
-  });
 
   document.getElementById('uploadFile').addEventListener('click', () => {
     document.getElementById('fileUploadInput').click();
@@ -942,7 +1022,7 @@ function setupEventListeners() {
     const files = Array.from(e.target.files);
     if (files.length === 0 || !currentProject) return;
 
-    const maxSize = 10 * 1024 * 1024;
+    const maxSize = 50 * 1024 * 1024;
     const rejectedFiles = [];
     const validFiles = [];
 
@@ -955,7 +1035,7 @@ function setupEventListeners() {
     });
 
     if (rejectedFiles.length > 0) {
-      alert(`Files exceeding 10MB limit:\n${rejectedFiles.join('\n')}`);
+      alert(`Files exceeding 50MB limit:\n${rejectedFiles.join('\n')}`);
     }
 
     for (const file of validFiles) {
@@ -1035,8 +1115,12 @@ function setupEventListeners() {
   });
   
   document.getElementById('cancelProject').addEventListener('click', () => {
-    document.getElementById('projectModal').classList.remove('active');
-    document.getElementById('projectName').value = '';
+    const modal = document.getElementById('projectModal');
+    modal.classList.add('closing');
+    setTimeout(() => {
+      modal.classList.remove('active', 'closing');
+      document.getElementById('projectName').value = '';
+    }, 300);
   });
   
   document.getElementById('createProject').addEventListener('click', async () => {
@@ -1070,8 +1154,12 @@ function setupEventListeners() {
   });
   
   document.getElementById('cancelFile').addEventListener('click', () => {
-    document.getElementById('fileModal').classList.remove('active');
-    document.getElementById('fileName').value = '';
+    const modal = document.getElementById('fileModal');
+    modal.classList.add('closing');
+    setTimeout(() => {
+      modal.classList.remove('active', 'closing');
+      document.getElementById('fileName').value = '';
+    }, 300);
   });
   
   document.getElementById('createFile').addEventListener('click', async () => {
@@ -1301,6 +1389,8 @@ function setupCollaborationHandlers() {
   let typingAnimation = null;
 
   window.onFileUpdatedByOther = (fileId, content, username, isTyping) => {
+    if (!editor) return;
+    
     const file = state.files.find(f => f.id === fileId);
     if (!file) return;
     
@@ -1319,23 +1409,25 @@ function setupCollaborationHandlers() {
         let charIndex = 0;
         
         const typeChar = () => {
-          if (charIndex < added.length) {
-            currentContent += added[charIndex];
-            const position = editor.getPosition();
-            editor.setValue(currentContent);
-            editor.setPosition(position);
-            charIndex++;
-            typingAnimation = setTimeout(typeChar, 30);
-          } else {
+          if (!editor || charIndex >= added.length) {
             isUpdatingFromRemote = false;
+            return;
           }
+          currentContent += added[charIndex];
+          const position = editor.getPosition();
+          editor.setValue(currentContent);
+          editor.setPosition(position);
+          charIndex++;
+          typingAnimation = setTimeout(typeChar, 30);
         };
         
         typeChar();
       } else {
-        const position = editor.getPosition();
-        editor.setValue(content);
-        editor.setPosition(position);
+        if (editor) {
+          const position = editor.getPosition();
+          editor.setValue(content);
+          editor.setPosition(position);
+        }
         setTimeout(() => {
           isUpdatingFromRemote = false;
         }, 100);

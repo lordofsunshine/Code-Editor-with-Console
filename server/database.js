@@ -35,6 +35,7 @@ export class Database {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         name TEXT NOT NULL,
+        encryption_key TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         last_accessed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -46,8 +47,9 @@ export class Database {
         project_id INTEGER NOT NULL,
         name TEXT NOT NULL,
         path TEXT NOT NULL,
-        content TEXT DEFAULT '',
         language TEXT DEFAULT 'plaintext',
+        size INTEGER DEFAULT 0,
+        is_media INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
@@ -141,148 +143,325 @@ export class Database {
         ALTER TABLE project_collaborators ADD COLUMN role TEXT DEFAULT 'editor';
       `);
     }
+
+    const projectColumns = this.db.pragma('table_info(projects)');
+    const hasEncryptionKey = projectColumns.some(col => col.name === 'encryption_key');
+    
+    if (!hasEncryptionKey) {
+      this.db.exec(`
+        ALTER TABLE projects ADD COLUMN encryption_key TEXT;
+      `);
+    }
+
+    const fileColumns = this.db.pragma('table_info(files)');
+    const hasSize = fileColumns.some(col => col.name === 'size');
+    const hasIsMedia = fileColumns.some(col => col.name === 'is_media');
+    
+    if (!hasSize) {
+      this.db.exec(`
+        ALTER TABLE files ADD COLUMN size INTEGER DEFAULT 0;
+        ALTER TABLE files ADD COLUMN is_media INTEGER DEFAULT 0;
+      `);
+    } else if (!hasIsMedia) {
+      this.db.exec(`
+        ALTER TABLE files ADD COLUMN is_media INTEGER DEFAULT 0;
+      `);
+    }
+
+    const hasContent = fileColumns.some(col => col.name === 'content');
+    if (hasContent) {
+      const files = this.db.prepare('SELECT id, project_id FROM files WHERE content IS NOT NULL AND content != ?').all('');
+      if (files.length > 0) {
+        console.log(`Warning: ${files.length} files have content in database. Migration needed.`);
+      }
+    }
   }
 
   createUser(username, password) {
+    if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
+      throw new Error('Invalid user data');
+    }
     const stmt = this.db.prepare('INSERT INTO users (username, password) VALUES (?, ?)');
     return stmt.run(username, password);
   }
 
   getUserByUsername(username) {
+    if (!username || typeof username !== 'string' || username.length > 100) {
+      return null;
+    }
     const stmt = this.db.prepare('SELECT * FROM users WHERE username = ?');
     return stmt.get(username);
   }
 
   updateUserLastAccess(userId) {
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return;
+    }
     const stmt = this.db.prepare('UPDATE users SET last_accessed_at = CURRENT_TIMESTAMP WHERE id = ?');
     return stmt.run(userId);
   }
 
-  createProject(userId, name) {
-    const stmt = this.db.prepare('INSERT INTO projects (user_id, name) VALUES (?, ?)');
-    return stmt.run(userId, name);
+  createProject(userId, name, encryptionKey) {
+    if (!Number.isInteger(userId) || userId <= 0 || !name || !encryptionKey) {
+      throw new Error('Invalid project data');
+    }
+    const stmt = this.db.prepare('INSERT INTO projects (user_id, name, encryption_key) VALUES (?, ?, ?)');
+    return stmt.run(userId, name, encryptionKey);
   }
 
   getProjects(userId) {
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return [];
+    }
     const stmt = this.db.prepare('SELECT * FROM projects WHERE user_id = ? ORDER BY updated_at DESC');
     return stmt.all(userId);
   }
 
   getProject(projectId, userId) {
+    if (!Number.isInteger(projectId) || projectId <= 0 || !Number.isInteger(userId) || userId <= 0) {
+      return null;
+    }
     const stmt = this.db.prepare('SELECT * FROM projects WHERE id = ? AND user_id = ?');
     return stmt.get(projectId, userId);
   }
 
+  getProjectById(projectId) {
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      return null;
+    }
+    const stmt = this.db.prepare('SELECT * FROM projects WHERE id = ?');
+    return stmt.get(projectId);
+  }
+
+  getProjectByUsernameAndName(username, projectName) {
+    if (!username || typeof username !== 'string' || username.length > 100) {
+      return null;
+    }
+    if (!projectName || typeof projectName !== 'string' || projectName.length > 100) {
+      return null;
+    }
+    const stmt = this.db.prepare(`
+      SELECT p.*, u.username 
+      FROM projects p
+      JOIN users u ON p.user_id = u.id
+      WHERE u.username = ? AND p.name = ?
+      LIMIT 1
+    `);
+    return stmt.get(username, projectName);
+  }
+
+  getFileByPath(projectId, filePath) {
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      return null;
+    }
+    if (!filePath || typeof filePath !== 'string' || filePath.length > 500) {
+      return null;
+    }
+    const stmt = this.db.prepare('SELECT * FROM files WHERE project_id = ? AND path = ? LIMIT 1');
+    return stmt.get(projectId, filePath);
+  }
+
+  getProjectEncryptionKey(projectId) {
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      return null;
+    }
+    const stmt = this.db.prepare('SELECT encryption_key FROM projects WHERE id = ?');
+    const result = stmt.get(projectId);
+    return result?.encryption_key;
+  }
+
   updateProjectLastAccess(projectId) {
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      return;
+    }
     const stmt = this.db.prepare('UPDATE projects SET last_accessed_at = CURRENT_TIMESTAMP WHERE id = ?');
     return stmt.run(projectId);
   }
 
   deleteProject(projectId, userId) {
+    if (!Number.isInteger(projectId) || projectId <= 0 || !Number.isInteger(userId) || userId <= 0) {
+      return { changes: 0 };
+    }
     const stmt = this.db.prepare('DELETE FROM projects WHERE id = ? AND user_id = ?');
     return stmt.run(projectId, userId);
   }
 
-  createFile(projectId, name, path, content = '', language = 'plaintext', isMedia = false) {
+  createFile(projectId, name, path, language = 'plaintext', size = 0, isMedia = 0) {
+    if (!Number.isInteger(projectId) || projectId <= 0 || !name || !path) {
+      throw new Error('Invalid file data');
+    }
+    if (!Number.isInteger(size) || size < 0) {
+      size = 0;
+    }
     const stmt = this.db.prepare(
-      'INSERT INTO files (project_id, name, path, content, language) VALUES (@projectId, @name, @path, @content, @language)'
+      'INSERT INTO files (project_id, name, path, language, size, is_media) VALUES (@projectId, @name, @path, @language, @size, @isMedia)'
     );
-    return stmt.run({ projectId, name, path, content, language });
+    return stmt.run({ projectId, name, path, language, size, isMedia: isMedia ? 1 : 0 });
   }
 
   getFiles(projectId) {
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      return [];
+    }
     const stmt = this.db.prepare('SELECT * FROM files WHERE project_id = ? ORDER BY path');
     return stmt.all(projectId);
   }
 
   getFile(fileId, projectId) {
+    if (!Number.isInteger(fileId) || fileId <= 0 || !Number.isInteger(projectId) || projectId <= 0) {
+      return null;
+    }
     const stmt = this.db.prepare('SELECT * FROM files WHERE id = ? AND project_id = ?');
     return stmt.get(fileId, projectId);
   }
 
-  updateFile(fileId, content) {
+  getFileWithContent(fileId, projectId) {
+    if (!Number.isInteger(fileId) || fileId <= 0 || !Number.isInteger(projectId) || projectId <= 0) {
+      return null;
+    }
+    
+    try {
+      const fileColumns = this.db.pragma('table_info(files)');
+      const hasContent = fileColumns.some(col => col.name === 'content');
+      
+      if (hasContent) {
+        const stmt = this.db.prepare('SELECT * FROM files WHERE id = ? AND project_id = ?');
+        const file = stmt.get(fileId, projectId);
+        if (file && file.content && file.content.trim() !== '') {
+          return file;
+        }
+      }
+    } catch (err) {
+      return null;
+    }
+    
+    return null;
+  }
+
+  updateFile(fileId, size) {
+    if (!Number.isInteger(fileId) || fileId <= 0 || !Number.isInteger(size) || size < 0) {
+      return;
+    }
     const stmt = this.db.prepare(
-      'UPDATE files SET content = @content, updated_at = CURRENT_TIMESTAMP WHERE id = @fileId'
+      'UPDATE files SET size = @size, updated_at = CURRENT_TIMESTAMP WHERE id = @fileId'
     );
-    return stmt.run({ content, fileId });
+    return stmt.run({ size, fileId });
   }
 
   deleteFile(fileId, projectId) {
+    if (!Number.isInteger(fileId) || fileId <= 0 || !Number.isInteger(projectId) || projectId <= 0) {
+      return { changes: 0 };
+    }
     const stmt = this.db.prepare('DELETE FROM files WHERE id = ? AND project_id = ?');
     return stmt.run(fileId, projectId);
   }
 
   updateProjectTimestamp(projectId) {
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      return;
+    }
     const stmt = this.db.prepare('UPDATE projects SET updated_at = CURRENT_TIMESTAMP WHERE id = ?');
     return stmt.run(projectId);
   }
 
   updateUserAvatar(userId, avatar) {
+    if (!Number.isInteger(userId) || userId <= 0 || typeof avatar !== 'string') {
+      return;
+    }
     const stmt = this.db.prepare('UPDATE users SET avatar = ? WHERE id = ?');
     return stmt.run(avatar, userId);
   }
 
+  updateUsername(userId, username) {
+    if (!Number.isInteger(userId) || userId <= 0 || !username || typeof username !== 'string') {
+      return;
+    }
+    const stmt = this.db.prepare('UPDATE users SET username = ? WHERE id = ?');
+    return stmt.run(username, userId);
+  }
+
   getUserAvatar(userId) {
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return null;
+    }
     const stmt = this.db.prepare('SELECT avatar FROM users WHERE id = ?');
     return stmt.get(userId);
   }
 
   getInactiveProjects(daysInactive) {
+    if (!Number.isInteger(daysInactive) || daysInactive <= 0) {
+      return [];
+    }
     const stmt = this.db.prepare(`
       SELECT p.*, u.username 
       FROM projects p
       JOIN users u ON p.user_id = u.id
-      WHERE datetime(p.last_accessed_at) <= datetime('now', '-' || ? || ' days')
+      WHERE datetime(p.last_accessed_at) <= datetime('now', ? || ' days')
     `);
-    return stmt.all(daysInactive);
+    return stmt.all(-Math.abs(daysInactive));
   }
 
   getInactiveUsers(daysInactive) {
+    if (!Number.isInteger(daysInactive) || daysInactive <= 0) {
+      return [];
+    }
     const stmt = this.db.prepare(`
       SELECT id, username, last_accessed_at
       FROM users
-      WHERE datetime(last_accessed_at) <= datetime('now', '-' || ? || ' days')
+      WHERE datetime(last_accessed_at) <= datetime('now', ? || ' days')
     `);
-    return stmt.all(daysInactive);
+    return stmt.all(-Math.abs(daysInactive));
   }
 
   deleteInactiveProjects(daysInactive) {
+    if (!Number.isInteger(daysInactive) || daysInactive <= 0) {
+      return { changes: 0 };
+    }
     const stmt = this.db.prepare(`
       DELETE FROM projects 
-      WHERE datetime(last_accessed_at) <= datetime('now', '-' || ? || ' days')
+      WHERE datetime(last_accessed_at) <= datetime('now', ? || ' days')
     `);
-    return stmt.run(daysInactive);
+    return stmt.run(-Math.abs(daysInactive));
   }
 
   deleteInactiveUsers(daysInactive) {
+    if (!Number.isInteger(daysInactive) || daysInactive <= 0) {
+      return { changes: 0 };
+    }
     const stmt = this.db.prepare(`
       DELETE FROM users 
-      WHERE datetime(last_accessed_at) <= datetime('now', '-' || ? || ' days')
+      WHERE datetime(last_accessed_at) <= datetime('now', ? || ' days')
     `);
-    return stmt.run(daysInactive);
+    return stmt.run(-Math.abs(daysInactive));
   }
 
   getExpiringProjects(userId, warningDays) {
+    if (!Number.isInteger(userId) || userId <= 0 || !Number.isInteger(warningDays) || warningDays <= 0) {
+      return [];
+    }
     const stmt = this.db.prepare(`
       SELECT id, name, last_accessed_at,
              julianday('now') - julianday(last_accessed_at) as days_inactive
       FROM projects
       WHERE user_id = ?
-      AND datetime(last_accessed_at) <= datetime('now', '-' || ? || ' days')
+      AND datetime(last_accessed_at) <= datetime('now', ? || ' days')
       ORDER BY last_accessed_at ASC
     `);
-    return stmt.all(userId, warningDays);
+    return stmt.all(userId, -Math.abs(warningDays));
   }
 
   getAccountExpirationInfo(userId, warningDays) {
+    if (!Number.isInteger(userId) || userId <= 0 || !Number.isInteger(warningDays) || warningDays <= 0) {
+      return null;
+    }
     const stmt = this.db.prepare(`
       SELECT id, username, last_accessed_at,
              julianday('now') - julianday(last_accessed_at) as days_inactive
       FROM users
       WHERE id = ?
-      AND datetime(last_accessed_at) <= datetime('now', '-' || ? || ' days')
+      AND datetime(last_accessed_at) <= datetime('now', ? || ' days')
     `);
-    return stmt.get(userId, warningDays);
+    return stmt.get(userId, -Math.abs(warningDays));
   }
 
   vacuum() {
@@ -295,11 +474,20 @@ export class Database {
   }
 
   createInvitation(projectId, fromUserId, toUserId, role = 'editor') {
+    if (!Number.isInteger(projectId) || projectId <= 0 || !Number.isInteger(fromUserId) || fromUserId <= 0 || !Number.isInteger(toUserId) || toUserId <= 0) {
+      throw new Error('Invalid invitation data');
+    }
+    if (!['viewer', 'editor'].includes(role)) {
+      role = 'editor';
+    }
     const stmt = this.db.prepare('INSERT INTO invitations (project_id, from_user_id, to_user_id, role) VALUES (?, ?, ?, ?)');
     return stmt.run(projectId, fromUserId, toUserId, role);
   }
 
   getInvitation(invitationId) {
+    if (!Number.isInteger(invitationId) || invitationId <= 0) {
+      return null;
+    }
     const stmt = this.db.prepare(`
       SELECT i.*, p.name as project_name, u1.username as from_username, u2.username as to_username
       FROM invitations i
@@ -312,6 +500,9 @@ export class Database {
   }
 
   getInvitationsByUser(userId) {
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return [];
+    }
     const stmt = this.db.prepare(`
       SELECT i.*, p.name as project_name, u.username as from_username
       FROM invitations i
@@ -324,6 +515,9 @@ export class Database {
   }
 
   getInvitationsByProject(projectId) {
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      return [];
+    }
     const stmt = this.db.prepare(`
       SELECT i.*, u.username as to_username
       FROM invitations i
@@ -335,16 +529,32 @@ export class Database {
   }
 
   updateInvitationStatus(invitationId, status) {
+    if (!Number.isInteger(invitationId) || invitationId <= 0 || typeof status !== 'string') {
+      return;
+    }
+    const validStatuses = ['pending', 'accepted', 'rejected', 'cancelled', 'removed', 'left'];
+    if (!validStatuses.includes(status)) {
+      return;
+    }
     const stmt = this.db.prepare('UPDATE invitations SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
     return stmt.run(status, invitationId);
   }
 
   addCollaborator(projectId, userId, role = 'editor') {
+    if (!Number.isInteger(projectId) || projectId <= 0 || !Number.isInteger(userId) || userId <= 0) {
+      throw new Error('Invalid collaborator data');
+    }
+    if (!['viewer', 'editor'].includes(role)) {
+      role = 'editor';
+    }
     const stmt = this.db.prepare('INSERT INTO project_collaborators (project_id, user_id, role) VALUES (?, ?, ?)');
     return stmt.run(projectId, userId, role);
   }
 
   getCollaborators(projectId) {
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      return [];
+    }
     const stmt = this.db.prepare(`
       SELECT pc.*, u.username, u.avatar
       FROM project_collaborators pc
@@ -355,11 +565,17 @@ export class Database {
   }
 
   removeCollaborator(projectId, userId) {
+    if (!Number.isInteger(projectId) || projectId <= 0 || !Number.isInteger(userId) || userId <= 0) {
+      return { changes: 0 };
+    }
     const stmt = this.db.prepare('DELETE FROM project_collaborators WHERE project_id = ? AND user_id = ?');
     return stmt.run(projectId, userId);
   }
 
   isCollaborator(projectId, userId) {
+    if (!Number.isInteger(projectId) || projectId <= 0 || !Number.isInteger(userId) || userId <= 0) {
+      return false;
+    }
     const ownerStmt = this.db.prepare('SELECT 1 FROM projects WHERE id = ? AND user_id = ?');
     if (ownerStmt.get(projectId, userId)) {
       return true;
@@ -370,6 +586,9 @@ export class Database {
   }
 
   getSharedProjects(userId) {
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return [];
+    }
     const stmt = this.db.prepare(`
       SELECT p.*, u.username as owner_username
       FROM projects p
@@ -382,6 +601,9 @@ export class Database {
   }
 
   hasProjectAccess(projectId, userId) {
+    if (!Number.isInteger(projectId) || projectId <= 0 || !Number.isInteger(userId) || userId <= 0) {
+      return false;
+    }
     const stmt = this.db.prepare(`
       SELECT 1 FROM projects WHERE id = ? AND user_id = ?
       UNION
@@ -391,27 +613,43 @@ export class Database {
   }
 
   getUserByUsernameForInvite(username) {
+    if (!username || typeof username !== 'string' || username.length > 100) {
+      return null;
+    }
     const stmt = this.db.prepare('SELECT id, username FROM users WHERE username = ?');
     return stmt.get(username);
   }
 
   getUserById(userId) {
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return null;
+    }
     const stmt = this.db.prepare('SELECT * FROM users WHERE id = ?');
     return stmt.get(userId);
   }
 
-  getUserIdFromSession(sessionId) {
-    return null;
-  }
-
   getEditorSettings(userId) {
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return null;
+    }
     const stmt = this.db.prepare('SELECT settings FROM editor_settings WHERE user_id = ?');
     const result = stmt.get(userId);
-    return result ? JSON.parse(result.settings) : null;
+    if (!result) return null;
+    try {
+      return JSON.parse(result.settings);
+    } catch (err) {
+      return null;
+    }
   }
 
   saveEditorSettings(userId, settings) {
+    if (!Number.isInteger(userId) || userId <= 0 || !settings || typeof settings !== 'object') {
+      return;
+    }
     const settingsJson = JSON.stringify(settings);
+    if (settingsJson.length > 1048576) {
+      throw new Error('Settings too large');
+    }
     const stmt = this.db.prepare(`
       INSERT INTO editor_settings (user_id, settings) VALUES (?, ?)
       ON CONFLICT(user_id) DO UPDATE SET settings = ?, updated_at = CURRENT_TIMESTAMP
@@ -420,6 +658,9 @@ export class Database {
   }
 
   getUserRole(projectId, userId) {
+    if (!Number.isInteger(projectId) || projectId <= 0 || !Number.isInteger(userId) || userId <= 0) {
+      return null;
+    }
     const project = this.db.prepare('SELECT user_id FROM projects WHERE id = ?').get(projectId);
     if (project && project.user_id === userId) {
       return 'owner';
@@ -430,11 +671,23 @@ export class Database {
   }
 
   updateCollaboratorRole(projectId, userId, role) {
+    if (!Number.isInteger(projectId) || projectId <= 0 || !Number.isInteger(userId) || userId <= 0) {
+      return;
+    }
+    if (!['viewer', 'editor'].includes(role)) {
+      return;
+    }
     const stmt = this.db.prepare('UPDATE project_collaborators SET role = ? WHERE project_id = ? AND user_id = ?');
     return stmt.run(role, projectId, userId);
   }
 
   searchFiles(projectId, query) {
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      return [];
+    }
+    if (typeof query !== 'string' || query.length > 200) {
+      return [];
+    }
     const stmt = this.db.prepare(`
       SELECT * FROM files 
       WHERE project_id = ? AND (name LIKE ? OR path LIKE ?)
@@ -444,6 +697,12 @@ export class Database {
   }
 
   searchFilesByContent(projectId, query) {
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      return [];
+    }
+    if (typeof query !== 'string' || query.length > 200) {
+      return [];
+    }
     const stmt = this.db.prepare(`
       SELECT * FROM files 
       WHERE project_id = ? AND content LIKE ?
@@ -453,6 +712,12 @@ export class Database {
   }
 
   createChatMessage(projectId, userId, message) {
+    if (!Number.isInteger(projectId) || projectId <= 0 || !Number.isInteger(userId) || userId <= 0 || !message || typeof message !== 'string') {
+      throw new Error('Invalid chat message data');
+    }
+    if (message.length > 2000) {
+      throw new Error('Message too long');
+    }
     const stmt = this.db.prepare(
       'INSERT INTO chat_messages (project_id, user_id, message) VALUES (?, ?, ?)'
     );
@@ -460,6 +725,12 @@ export class Database {
   }
 
   getChatMessages(projectId, limit = 100) {
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      return [];
+    }
+    if (!Number.isInteger(limit) || limit <= 0 || limit > 1000) {
+      limit = 100;
+    }
     const stmt = this.db.prepare(`
       SELECT cm.*, u.username, u.avatar
       FROM chat_messages cm
@@ -472,6 +743,9 @@ export class Database {
   }
 
   getLastChatMessage(projectId) {
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      return null;
+    }
     const stmt = this.db.prepare(`
       SELECT cm.*, u.username
       FROM chat_messages cm
