@@ -32,31 +32,31 @@ export async function invitationRoutes(fastify, options) {
         return reply.code(403).send({ error: 'Access denied' });
       }
 
-    const existingInvitations = fastify.db.getInvitationsByProject(projectId);
-    const activeInvitations = existingInvitations.filter(inv => 
-      inv.status === 'accepted' || inv.status === 'pending'
-    );
+      const existingInvitations = fastify.db.getInvitationsByProject(projectId);
+      const activeInvitations = existingInvitations.filter(inv => 
+        inv.status === 'accepted' || inv.status === 'pending'
+      );
 
-    if (activeInvitations.length >= 2) {
-      return reply.code(400).send({ error: 'Maximum 2 collaborators allowed per project' });
-    }
+      if (activeInvitations.length >= 2) {
+        return reply.code(400).send({ error: 'Maximum 2 collaborators allowed per project' });
+      }
 
-    const toUser = fastify.db.getUserByUsernameForInvite(username);
-    if (!toUser) {
-      return reply.code(404).send({ error: 'User not found' });
-    }
+      const toUser = fastify.db.getUserByUsernameForInvite(username);
+      if (!toUser) {
+        return reply.code(404).send({ error: 'User not found' });
+      }
 
-    if (toUser.id === fromUserId) {
-      return reply.code(400).send({ error: 'Cannot invite yourself' });
-    }
+      if (toUser.id === fromUserId) {
+        return reply.code(400).send({ error: 'Cannot invite yourself' });
+      }
 
-    if (fastify.db.isCollaborator(projectId, toUser.id)) {
-      return reply.code(400).send({ error: 'User is already a collaborator' });
-    }
+      if (fastify.db.isCollaborator(projectId, toUser.id)) {
+        return reply.code(400).send({ error: 'User is already a collaborator' });
+      }
 
-    const userInvitations = existingInvitations.filter(inv => 
-      inv.to_user_id === toUser.id && inv.status === 'pending'
-    );
+      const userInvitations = existingInvitations.filter(inv => 
+        inv.to_user_id === toUser.id && inv.status === 'pending'
+      );
 
       if (userInvitations.length > 0) {
         return reply.code(400).send({ error: 'Invitation already pending for this user' });

@@ -27,6 +27,9 @@ A lightweight, web‑based code editor with real‑time collaboration, project/f
 
 Latest updates and improvements:
 
+- **Content search fixes**: File-content search now works with storage-backed files and handles legacy databases safely
+- **Legacy encryption resilience**: Missing project encryption keys are generated on demand and migrated file contents are cleaned up
+- **Realtime permission hardening**: Viewers can no longer emit edit/create/delete socket events, with stronger payload validation
 - **Secure file storage**: Migrated to encrypted file system with AES-256-GCM encryption and automatic compression
 - **Expanded limits**: Up to 6 projects, 32 files per project, 50MB files, 5MB avatars
 - **User profile panel**: Manage avatar and username from sidebar

@@ -1,5 +1,3 @@
-import config from '../config.js';
-
 const userMessageTimestamps = new Map();
 const MESSAGE_RATE_LIMIT = 500;
 

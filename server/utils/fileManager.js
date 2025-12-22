@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { existsSync } from 'fs';
-import { encryptData, decryptData, generateProjectKey, hashProjectId, hashFileName } from './encryption.js';
+import { encryptData, decryptData, hashProjectId, hashFileName } from './encryption.js';
 import { compressFile, decompressFile, isMediaFile } from './compression.js';
 
 const STORAGE_ROOT = path.join(process.cwd(), 'storage');
@@ -33,10 +33,6 @@ function validatePath(filePath) {
 
 export async function initStorage() {
   await ensureStorageExists();
-}
-
-export function createProjectKey() {
-  return generateProjectKey();
 }
 
 function getProjectDir(projectId) {
@@ -218,36 +214,4 @@ export async function deleteProject(projectId) {
   await fs.rm(projectDir, { recursive: true, force: true });
 }
 
-export async function getStorageStats() {
-  const stats = {
-    totalProjects: 0,
-    totalFiles: 0,
-    totalSize: 0
-  };
-  
-  if (!existsSync(PROJECTS_DIR)) {
-    return stats;
-  }
-  
-  const projects = await fs.readdir(PROJECTS_DIR);
-  stats.totalProjects = projects.length;
-  
-  for (const project of projects) {
-    const projectPath = path.join(PROJECTS_DIR, project);
-    const projectStats = await fs.stat(projectPath);
-    
-    if (projectStats.isDirectory()) {
-      const files = await fs.readdir(projectPath);
-      stats.totalFiles += files.length;
-      
-      for (const file of files) {
-        const filePath = path.join(projectPath, file);
-        const fileStats = await fs.stat(filePath);
-        stats.totalSize += fileStats.size;
-      }
-    }
-  }
-  
-  return stats;
-}
 

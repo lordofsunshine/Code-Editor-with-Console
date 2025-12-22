@@ -106,6 +106,12 @@ export function initSocket(server, db) {
         return;
       }
 
+      const role = db.getUserRole(projectId, socket.userId);
+      if (role !== 'owner' && role !== 'editor') {
+        socket.emit('error', { message: 'Access denied' });
+        return;
+      }
+
       if (typeof content !== 'string' || content.length > 10485760) {
         socket.emit('error', { message: 'Invalid content' });
         return;
@@ -128,6 +134,12 @@ export function initSocket(server, db) {
       }
 
       if (!db.hasProjectAccess(projectId, socket.userId)) {
+        socket.emit('error', { message: 'Access denied' });
+        return;
+      }
+
+      const role = db.getUserRole(projectId, socket.userId);
+      if (role !== 'owner' && role !== 'editor') {
         socket.emit('error', { message: 'Access denied' });
         return;
       }
@@ -156,6 +168,12 @@ export function initSocket(server, db) {
       }
 
       if (!db.hasProjectAccess(projectId, socket.userId)) {
+        socket.emit('error', { message: 'Access denied' });
+        return;
+      }
+
+      const role = db.getUserRole(projectId, socket.userId);
+      if (role !== 'owner' && role !== 'editor') {
         socket.emit('error', { message: 'Access denied' });
         return;
       }

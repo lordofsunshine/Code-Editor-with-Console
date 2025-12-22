@@ -73,6 +73,7 @@ export async function fileRoutes(fastify, options) {
         
         try {
           await saveFile(projectId, fileId, file.name, fileWithContent.content, encryptionKey);
+          fastify.db.clearFileContent(fileId, projectId);
         } catch (migrateErr) {
           fastify.log.warn(`Error migrating file ${fileId} to storage:`, migrateErr);
         }
@@ -126,6 +127,10 @@ export async function fileRoutes(fastify, options) {
     const existingFiles = fastify.db.getFiles(projectId);
     if (existingFiles.length >= config.limits.maxFilesPerProject) {
       return reply.code(400).send({ error: `Maximum ${config.limits.maxFilesPerProject} files allowed per project` });
+    }
+
+    if (typeof content !== 'string' && !Buffer.isBuffer(content)) {
+      return reply.code(400).send({ error: 'Invalid file content' });
     }
 
     const contentSize = typeof content === 'string' ? Buffer.byteLength(content, 'utf8') : content.length;
@@ -186,6 +191,10 @@ export async function fileRoutes(fastify, options) {
     const file = fastify.db.getFile(fileId, projectId);
     if (!file) {
       return reply.code(404).send({ error: 'File not found' });
+    }
+
+    if (typeof content !== 'string' && !Buffer.isBuffer(content)) {
+      return reply.code(400).send({ error: 'Invalid file content' });
     }
 
     const contentSize = typeof content === 'string' ? Buffer.byteLength(content, 'utf8') : content.length;

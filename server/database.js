@@ -1,6 +1,6 @@
 import Database3 from 'better-sqlite3';
 import { existsSync, mkdirSync } from 'fs';
-import { dirname } from 'path';
+import { generateProjectKey } from './utils/encryption.js';
 
 export class Database {
   constructor() {
@@ -169,6 +169,7 @@ export class Database {
     }
 
     const hasContent = fileColumns.some(col => col.name === 'content');
+    this.fileContentColumnExists = hasContent;
     if (hasContent) {
       const files = this.db.prepare('SELECT id, project_id FROM files WHERE content IS NOT NULL AND content != ?').all('');
       if (files.length > 0) {
@@ -250,24 +251,29 @@ export class Database {
     return stmt.get(username, projectName);
   }
 
-  getFileByPath(projectId, filePath) {
-    if (!Number.isInteger(projectId) || projectId <= 0) {
-      return null;
-    }
-    if (!filePath || typeof filePath !== 'string' || filePath.length > 500) {
-      return null;
-    }
-    const stmt = this.db.prepare('SELECT * FROM files WHERE project_id = ? AND path = ? LIMIT 1');
-    return stmt.get(projectId, filePath);
-  }
-
   getProjectEncryptionKey(projectId) {
     if (!Number.isInteger(projectId) || projectId <= 0) {
       return null;
     }
     const stmt = this.db.prepare('SELECT encryption_key FROM projects WHERE id = ?');
     const result = stmt.get(projectId);
-    return result?.encryption_key;
+    if (!result) {
+      return null;
+    }
+    if (result.encryption_key && typeof result.encryption_key === 'string' && result.encryption_key.length >= 32) {
+      return result.encryption_key;
+    }
+    const newKey = generateProjectKey();
+    const update = this.db.prepare(
+      "UPDATE projects SET encryption_key = ? WHERE id = ? AND (encryption_key IS NULL OR encryption_key = '')"
+    );
+    update.run(newKey, projectId);
+    const refreshed = stmt.get(projectId);
+    return refreshed?.encryption_key || newKey;
+  }
+
+  hasFileContentColumn() {
+    return !!this.fileContentColumnExists;
   }
 
   updateProjectLastAccess(projectId) {
@@ -319,23 +325,31 @@ export class Database {
     if (!Number.isInteger(fileId) || fileId <= 0 || !Number.isInteger(projectId) || projectId <= 0) {
       return null;
     }
-    
+    if (!this.fileContentColumnExists) {
+      return null;
+    }
     try {
-      const fileColumns = this.db.pragma('table_info(files)');
-      const hasContent = fileColumns.some(col => col.name === 'content');
-      
-      if (hasContent) {
-        const stmt = this.db.prepare('SELECT * FROM files WHERE id = ? AND project_id = ?');
-        const file = stmt.get(fileId, projectId);
-        if (file && file.content && file.content.trim() !== '') {
-          return file;
-        }
+      const stmt = this.db.prepare('SELECT content FROM files WHERE id = ? AND project_id = ?');
+      const file = stmt.get(fileId, projectId);
+      if (file && file.content && file.content.trim() !== '') {
+        return file;
       }
     } catch (err) {
       return null;
     }
     
     return null;
+  }
+
+  clearFileContent(fileId, projectId) {
+    if (!Number.isInteger(fileId) || fileId <= 0 || !Number.isInteger(projectId) || projectId <= 0) {
+      return;
+    }
+    if (!this.fileContentColumnExists) {
+      return;
+    }
+    const stmt = this.db.prepare('UPDATE files SET content = NULL WHERE id = ? AND project_id = ?');
+    return stmt.run(fileId, projectId);
   }
 
   updateFile(fileId, size) {
@@ -397,18 +411,6 @@ export class Database {
       FROM projects p
       JOIN users u ON p.user_id = u.id
       WHERE datetime(p.last_accessed_at) <= datetime('now', ? || ' days')
-    `);
-    return stmt.all(-Math.abs(daysInactive));
-  }
-
-  getInactiveUsers(daysInactive) {
-    if (!Number.isInteger(daysInactive) || daysInactive <= 0) {
-      return [];
-    }
-    const stmt = this.db.prepare(`
-      SELECT id, username, last_accessed_at
-      FROM users
-      WHERE datetime(last_accessed_at) <= datetime('now', ? || ' days')
     `);
     return stmt.all(-Math.abs(daysInactive));
   }
@@ -703,6 +705,9 @@ export class Database {
     if (typeof query !== 'string' || query.length > 200) {
       return [];
     }
+    if (!this.fileContentColumnExists) {
+      return [];
+    }
     const stmt = this.db.prepare(`
       SELECT * FROM files 
       WHERE project_id = ? AND content LIKE ?
@@ -740,21 +745,6 @@ export class Database {
       LIMIT ?
     `);
     return stmt.all(projectId, limit).reverse();
-  }
-
-  getLastChatMessage(projectId) {
-    if (!Number.isInteger(projectId) || projectId <= 0) {
-      return null;
-    }
-    const stmt = this.db.prepare(`
-      SELECT cm.*, u.username
-      FROM chat_messages cm
-      JOIN users u ON cm.user_id = u.id
-      WHERE cm.project_id = ?
-      ORDER BY cm.created_at DESC
-      LIMIT 1
-    `);
-    return stmt.get(projectId);
   }
 
   deleteOldChatMessages() {

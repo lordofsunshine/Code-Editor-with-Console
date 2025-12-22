@@ -2,8 +2,6 @@ import sharp from 'sharp';
 import { promisify } from 'util';
 import zlib from 'zlib';
 
-const gzip = promisify(zlib.gzip);
-const gunzip = promisify(zlib.gunzip);
 const brotli = promisify(zlib.brotliCompress);
 const unbrotli = promisify(zlib.brotliDecompress);
 

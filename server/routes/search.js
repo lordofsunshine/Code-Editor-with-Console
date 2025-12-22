@@ -1,3 +1,8 @@
+import config from '../config.js';
+import { readFile } from '../utils/fileManager.js';
+
+const MAX_CONTENT_SEARCH_SIZE = config.limits?.maxFileSize || 52428800;
+
 export async function searchRoutes(fastify, options) {
   fastify.addHook('preHandler', (request, reply, done) => {
     if (!request.session.userId) {
@@ -31,9 +36,55 @@ export async function searchRoutes(fastify, options) {
         return reply.code(403).send({ error: 'Access denied' });
       }
 
+      const searchStorage = async () => {
+        const files = fastify.db.getFiles(projectId);
+        const encryptionKey = fastify.db.getProjectEncryptionKey(projectId);
+        if (!encryptionKey) {
+          return { error: 'Project encryption key not found' };
+        }
+        const queryLower = query.toLowerCase();
+        const results = [];
+        for (const file of files) {
+          if (file.is_media === 1) {
+            continue;
+          }
+          if (Number.isInteger(file.size) && file.size > MAX_CONTENT_SEARCH_SIZE) {
+            continue;
+          }
+          let content;
+          try {
+            content = await readFile(projectId, file.id, file.name, encryptionKey);
+          } catch (err) {
+            continue;
+          }
+          if (typeof content !== 'string') {
+            continue;
+          }
+          if (content.toLowerCase().includes(queryLower)) {
+            results.push({ ...file, content });
+          }
+        }
+        return { results };
+      };
+
       let results;
       if (searchIn === 'content') {
-        results = fastify.db.searchFilesByContent(projectId, query);
+        if (fastify.db.hasFileContentColumn()) {
+          results = fastify.db.searchFilesByContent(projectId, query);
+          if (!results.length) {
+            const storageResults = await searchStorage();
+            if (storageResults.error) {
+              return reply.code(500).send({ error: storageResults.error });
+            }
+            results = storageResults.results;
+          }
+        } else {
+          const storageResults = await searchStorage();
+          if (storageResults.error) {
+            return reply.code(500).send({ error: storageResults.error });
+          }
+          results = storageResults.results;
+        }
       } else {
         results = fastify.db.searchFiles(projectId, query);
       }
