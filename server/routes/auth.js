@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import rateLimit from '@fastify/rate-limit';
 import config from '../config.js';
+import { isValidUsername } from '../utils/request.js';
 
 export async function authRoutes(fastify, options) {
   await fastify.register(rateLimit, {
@@ -26,7 +27,7 @@ export async function authRoutes(fastify, options) {
         return reply.code(400).send({ error: 'Password must be 6-128 characters' });
       }
 
-      if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      if (!isValidUsername(username)) {
         return reply.code(400).send({ error: 'Username can only contain letters, numbers, and underscores' });
       }
 
@@ -161,7 +162,7 @@ export async function authRoutes(fastify, options) {
         return reply.code(400).send({ error: 'Username must be 3-20 characters' });
       }
 
-      if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      if (!isValidUsername(username)) {
         return reply.code(400).send({ error: 'Username can only contain letters, numbers, and underscores' });
       }
 
@@ -179,4 +180,3 @@ export async function authRoutes(fastify, options) {
     }
   });
 }
-

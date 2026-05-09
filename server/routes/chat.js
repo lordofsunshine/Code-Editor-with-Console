@@ -1,13 +1,10 @@
+import { parsePositiveIntegerParam, requireAuth } from '../utils/request.js';
+
 const userMessageTimestamps = new Map();
 const MESSAGE_RATE_LIMIT = 500;
 
 export async function chatRoutes(fastify, options) {
-  fastify.addHook('preHandler', (request, reply, done) => {
-    if (!request.session.userId) {
-      return reply.code(401).send({ error: 'Not authenticated' });
-    }
-    done();
-  });
+  fastify.addHook('preHandler', requireAuth);
 
   const verifyProjectAccess = (projectId, userId) => {
     return fastify.db.hasProjectAccess(projectId, userId);
@@ -27,9 +24,9 @@ export async function chatRoutes(fastify, options) {
 
   fastify.get('/:projectId', async (request, reply) => {
     try {
-      const projectId = parseInt(request.params.projectId, 10);
+      const projectId = parsePositiveIntegerParam(request, 'projectId');
       
-      if (isNaN(projectId) || projectId <= 0) {
+      if (!projectId) {
         return reply.code(400).send({ error: 'Invalid project ID' });
       }
       
@@ -47,11 +44,11 @@ export async function chatRoutes(fastify, options) {
 
   fastify.post('/:projectId', async (request, reply) => {
     try {
-      const projectId = parseInt(request.params.projectId, 10);
+      const projectId = parsePositiveIntegerParam(request, 'projectId');
       const { message } = request.body;
       const userId = request.session.userId;
       
-      if (isNaN(projectId) || projectId <= 0) {
+      if (!projectId) {
         return reply.code(400).send({ error: 'Invalid project ID' });
       }
       

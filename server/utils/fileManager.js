@@ -1,11 +1,29 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { existsSync } from 'fs';
+import { tmpdir } from 'os';
 import { encryptData, decryptData, hashProjectId, hashFileName } from './encryption.js';
 import { compressFile, decompressFile, isMediaFile } from './compression.js';
 
-const STORAGE_ROOT = path.join(process.cwd(), 'storage');
+const STORAGE_ROOT = process.env.VERCEL
+  ? path.join(tmpdir(), 'code-editor-storage')
+  : path.join(process.cwd(), 'storage');
 const PROJECTS_DIR = path.join(STORAGE_ROOT, 'projects');
+const MAX_CONTENT_SIZE = 50 * 1024 * 1024;
+const MAX_STORED_FILE_SIZE = 100 * 1024 * 1024;
+const MIME_TYPES = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  svg: 'image/svg+xml',
+  mp4: 'video/mp4',
+  webm: 'video/webm',
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  ogg: 'audio/ogg'
+};
 
 async function ensureStorageExists() {
   if (!existsSync(STORAGE_ROOT)) {
@@ -29,6 +47,11 @@ function validatePath(filePath) {
     throw new Error('Invalid path');
   }
   return normalized;
+}
+
+function isPathInside(parent, child) {
+  const relativePath = path.relative(path.resolve(parent), path.resolve(child));
+  return relativePath && !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
 }
 
 export async function initStorage() {
@@ -89,7 +112,7 @@ export async function saveFile(projectId, fileId, fileName, content, projectKey)
   
   let buffer;
   if (typeof content === 'string') {
-    if (content.length > 52428800) {
+    if (content.length > MAX_CONTENT_SIZE) {
       throw new Error('Content too large');
     }
     if (content.startsWith('data:')) {
@@ -108,7 +131,7 @@ export async function saveFile(projectId, fileId, fileName, content, projectKey)
     throw new Error('Invalid content type');
   }
 
-  if (buffer.length > 52428800) {
+  if (buffer.length > MAX_CONTENT_SIZE) {
     throw new Error('Content too large');
   }
   
@@ -144,7 +167,7 @@ export async function readFile(projectId, fileId, fileName, projectKey, asDataUr
   }
 
   const stats = await fs.stat(filePath);
-  if (stats.size > 104857600) {
+  if (stats.size > MAX_STORED_FILE_SIZE) {
     throw new Error('File too large');
   }
   
@@ -154,18 +177,7 @@ export async function readFile(projectId, fileId, fileName, projectKey, asDataUr
   
   if (asDataUrl && isMediaFile(fileName)) {
     const ext = fileName.split('.').pop().toLowerCase();
-    let mimeType = 'application/octet-stream';
-    
-    if (['jpg', 'jpeg'].includes(ext)) mimeType = 'image/jpeg';
-    else if (ext === 'png') mimeType = 'image/png';
-    else if (ext === 'gif') mimeType = 'image/gif';
-    else if (ext === 'webp') mimeType = 'image/webp';
-    else if (ext === 'svg') mimeType = 'image/svg+xml';
-    else if (ext === 'mp4') mimeType = 'video/mp4';
-    else if (ext === 'webm') mimeType = 'video/webm';
-    else if (ext === 'mp3') mimeType = 'audio/mpeg';
-    else if (ext === 'wav') mimeType = 'audio/wav';
-    else if (ext === 'ogg') mimeType = 'audio/ogg';
+    const mimeType = MIME_TYPES[ext] || 'application/octet-stream';
     
     const base64 = decompressed.toString('base64');
     return `data:${mimeType};base64,${base64}`;
@@ -204,10 +216,7 @@ export async function deleteProject(projectId) {
     return;
   }
 
-  const resolvedProjectDir = path.resolve(projectDir);
-  const resolvedProjectsDir = path.resolve(PROJECTS_DIR);
-  
-  if (!resolvedProjectDir.startsWith(resolvedProjectsDir)) {
+  if (!isPathInside(PROJECTS_DIR, projectDir)) {
     throw new Error('Invalid project directory');
   }
   

@@ -1,4 +1,5 @@
 import { Server } from 'socket.io';
+import { WRITE_ROLES, parsePositiveInteger } from './utils/request.js';
 
 export function initSocket(server, db) {
   const io = new Server(server, {
@@ -13,20 +14,31 @@ export function initSocket(server, db) {
     pingInterval: 25000
   });
 
+  const getProjectId = (projectId) => parsePositiveInteger(projectId);
+  const getProjectFileIds = (projectId, fileId) => {
+    const normalizedProjectId = parsePositiveInteger(projectId);
+    const normalizedFileId = parsePositiveInteger(fileId);
+    return normalizedProjectId && normalizedFileId
+      ? { projectId: normalizedProjectId, fileId: normalizedFileId }
+      : null;
+  };
+  const canWrite = (projectId, userId) => WRITE_ROLES.has(db.getUserRole(projectId, userId));
+
   io.use(async (socket, next) => {
     try {
       const userId = socket.handshake.auth?.userId;
       const username = socket.handshake.auth?.username;
 
-      if (!userId || !username || typeof userId !== 'number' || typeof username !== 'string') {
+      if (!userId || !username || typeof username !== 'string') {
         return next(new Error('Authentication error'));
       }
 
-      if (!Number.isInteger(userId) || userId <= 0 || username.length > 100) {
+      const normalizedUserId = parsePositiveInteger(userId);
+      if (!normalizedUserId || username.length > 100) {
         return next(new Error('Authentication error'));
       }
 
-      const user = db.getUserById(userId);
+      const user = db.getUserById(normalizedUserId);
       if (!user || user.username !== username) {
         return next(new Error('Authentication error'));
       }
@@ -41,73 +53,96 @@ export function initSocket(server, db) {
 
   const projectRooms = new Map();
 
+  const addProjectUser = (projectId, userId) => {
+    if (!projectRooms.has(projectId)) {
+      projectRooms.set(projectId, new Map());
+    }
+
+    const users = projectRooms.get(projectId);
+    users.set(userId, (users.get(userId) || 0) + 1);
+  };
+
+  const removeProjectUser = (projectId, userId) => {
+    const users = projectRooms.get(projectId);
+    if (!users) {
+      return;
+    }
+
+    const count = users.get(userId) || 0;
+    if (count <= 1) {
+      users.delete(userId);
+    } else {
+      users.set(userId, count - 1);
+    }
+
+    if (users.size === 0) {
+      projectRooms.delete(projectId);
+    }
+  };
+
+  const emitCollaboratorsUpdate = (projectId) => {
+    const users = projectRooms.get(projectId);
+    const collaborators = users ? Array.from(users.keys()) : [];
+    io.to(`project:${projectId}`).emit('collaborators-update', {
+      collaborators,
+      projectId
+    });
+  };
+
   io.on('connection', (socket) => {
     const activeRooms = new Set();
 
     socket.on('join-project', (projectId) => {
-      if (!projectId || typeof projectId !== 'number' || !Number.isInteger(projectId) || projectId <= 0) {
+      const normalizedProjectId = getProjectId(projectId);
+      if (!normalizedProjectId) {
         socket.emit('error', { message: 'Invalid project ID' });
         return;
       }
 
-      if (!db.hasProjectAccess(projectId, socket.userId)) {
+      if (!db.hasProjectAccess(normalizedProjectId, socket.userId)) {
         socket.emit('error', { message: 'Access denied' });
         return;
       }
 
-      socket.join(`project:${projectId}`);
-      activeRooms.add(projectId);
-      
-      if (!projectRooms.has(projectId)) {
-        projectRooms.set(projectId, new Set());
+      socket.join(`project:${normalizedProjectId}`);
+
+      if (!activeRooms.has(normalizedProjectId)) {
+        activeRooms.add(normalizedProjectId);
+        addProjectUser(normalizedProjectId, socket.userId);
       }
-      projectRooms.get(projectId).add(socket.userId);
 
-      const collaborators = Array.from(projectRooms.get(projectId));
-      io.to(`project:${projectId}`).emit('collaborators-update', { 
-        collaborators,
-        projectId 
-      });
+      emitCollaboratorsUpdate(normalizedProjectId);
 
-      socket.emit('joined-project', { projectId });
+      socket.emit('joined-project', { projectId: normalizedProjectId });
     });
 
     socket.on('leave-project', (projectId) => {
-      if (!projectId || typeof projectId !== 'number' || !Number.isInteger(projectId) || projectId <= 0) {
+      const normalizedProjectId = getProjectId(projectId);
+      if (!normalizedProjectId) {
         return;
       }
 
-      socket.leave(`project:${projectId}`);
-      
-      if (projectRooms.has(projectId)) {
-        projectRooms.get(projectId).delete(socket.userId);
-        
-        const collaborators = Array.from(projectRooms.get(projectId));
-        io.to(`project:${projectId}`).emit('collaborators-update', { 
-          collaborators,
-          projectId 
-        });
+      socket.leave(`project:${normalizedProjectId}`);
+
+      if (activeRooms.delete(normalizedProjectId)) {
+        removeProjectUser(normalizedProjectId, socket.userId);
+        emitCollaboratorsUpdate(normalizedProjectId);
       }
     });
 
     socket.on('file-change', ({ projectId, fileId, content, cursorPosition, isTyping }) => {
-      if (!projectId || !fileId || typeof projectId !== 'number' || typeof fileId !== 'number') {
+      const ids = getProjectFileIds(projectId, fileId);
+      if (!ids) {
         socket.emit('error', { message: 'Invalid data' });
         return;
       }
 
-      if (!Number.isInteger(projectId) || projectId <= 0 || !Number.isInteger(fileId) || fileId <= 0) {
-        socket.emit('error', { message: 'Invalid data' });
-        return;
-      }
-
-      if (!db.hasProjectAccess(projectId, socket.userId)) {
+      if (!db.hasProjectAccess(ids.projectId, socket.userId)) {
         socket.emit('error', { message: 'Access denied' });
         return;
       }
 
-      const role = db.getUserRole(projectId, socket.userId);
-      if (role !== 'owner' && role !== 'editor') {
+      if (!canWrite(ids.projectId, socket.userId)) {
         socket.emit('error', { message: 'Access denied' });
         return;
       }
@@ -117,8 +152,8 @@ export function initSocket(server, db) {
         return;
       }
 
-      socket.to(`project:${projectId}`).emit('file-updated', {
-        fileId,
+      socket.to(`project:${ids.projectId}`).emit('file-updated', {
+        fileId: ids.fileId,
         content,
         userId: socket.userId,
         username: socket.username,
@@ -128,18 +163,18 @@ export function initSocket(server, db) {
     });
 
     socket.on('file-created', ({ projectId, file }) => {
-      if (!projectId || typeof projectId !== 'number' || !Number.isInteger(projectId) || projectId <= 0) {
+      const normalizedProjectId = getProjectId(projectId);
+      if (!normalizedProjectId) {
         socket.emit('error', { message: 'Invalid data' });
         return;
       }
 
-      if (!db.hasProjectAccess(projectId, socket.userId)) {
+      if (!db.hasProjectAccess(normalizedProjectId, socket.userId)) {
         socket.emit('error', { message: 'Access denied' });
         return;
       }
 
-      const role = db.getUserRole(projectId, socket.userId);
-      if (role !== 'owner' && role !== 'editor') {
+      if (!canWrite(normalizedProjectId, socket.userId)) {
         socket.emit('error', { message: 'Access denied' });
         return;
       }
@@ -149,7 +184,7 @@ export function initSocket(server, db) {
         return;
       }
 
-      socket.to(`project:${projectId}`).emit('file-added', {
+      socket.to(`project:${normalizedProjectId}`).emit('file-added', {
         file,
         userId: socket.userId,
         username: socket.username
@@ -157,49 +192,41 @@ export function initSocket(server, db) {
     });
 
     socket.on('file-deleted', ({ projectId, fileId }) => {
-      if (!projectId || !fileId || typeof projectId !== 'number' || typeof fileId !== 'number') {
+      const ids = getProjectFileIds(projectId, fileId);
+      if (!ids) {
         socket.emit('error', { message: 'Invalid data' });
         return;
       }
 
-      if (!Number.isInteger(projectId) || projectId <= 0 || !Number.isInteger(fileId) || fileId <= 0) {
-        socket.emit('error', { message: 'Invalid data' });
-        return;
-      }
-
-      if (!db.hasProjectAccess(projectId, socket.userId)) {
+      if (!db.hasProjectAccess(ids.projectId, socket.userId)) {
         socket.emit('error', { message: 'Access denied' });
         return;
       }
 
-      const role = db.getUserRole(projectId, socket.userId);
-      if (role !== 'owner' && role !== 'editor') {
+      if (!canWrite(ids.projectId, socket.userId)) {
         socket.emit('error', { message: 'Access denied' });
         return;
       }
 
-      socket.to(`project:${projectId}`).emit('file-removed', {
-        fileId,
+      socket.to(`project:${ids.projectId}`).emit('file-removed', {
+        fileId: ids.fileId,
         userId: socket.userId,
         username: socket.username
       });
     });
 
     socket.on('cursor-move', ({ projectId, fileId, position }) => {
-      if (!projectId || !fileId || typeof projectId !== 'number' || typeof fileId !== 'number') {
+      const ids = getProjectFileIds(projectId, fileId);
+      if (!ids) {
         return;
       }
 
-      if (!Number.isInteger(projectId) || projectId <= 0 || !Number.isInteger(fileId) || fileId <= 0) {
+      if (!db.hasProjectAccess(ids.projectId, socket.userId)) {
         return;
       }
 
-      if (!db.hasProjectAccess(projectId, socket.userId)) {
-        return;
-      }
-
-      socket.to(`project:${projectId}`).emit('cursor-position', {
-        fileId,
+      socket.to(`project:${ids.projectId}`).emit('cursor-position', {
+        fileId: ids.fileId,
         userId: socket.userId,
         username: socket.username,
         position
@@ -207,15 +234,9 @@ export function initSocket(server, db) {
     });
 
     socket.on('disconnect', () => {
-      projectRooms.forEach((users, projectId) => {
-        if (users.has(socket.userId)) {
-          users.delete(socket.userId);
-          const collaborators = Array.from(users);
-          io.to(`project:${projectId}`).emit('collaborators-update', { 
-            collaborators,
-            projectId 
-          });
-        }
+      activeRooms.forEach((projectId) => {
+        removeProjectUser(projectId, socket.userId);
+        emitCollaboratorsUpdate(projectId);
       });
     });
   });

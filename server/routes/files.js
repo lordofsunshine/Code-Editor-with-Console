@@ -2,23 +2,19 @@ import config from '../config.js';
 import { normalizeProjectPath, extractFileNameFromPath } from '../utils/path.js';
 import { saveFile, readFile, deleteFile } from '../utils/fileManager.js';
 import { isMediaFile } from '../utils/compression.js';
+import { canWriteProject, parsePositiveIntegerParam, requireAuth } from '../utils/request.js';
 
 export async function fileRoutes(fastify, options) {
-  fastify.addHook('preHandler', (request, reply, done) => {
-    if (!request.session.userId) {
-      return reply.code(401).send({ error: 'Not authenticated' });
-    }
-    done();
-  });
+  fastify.addHook('preHandler', requireAuth);
 
   const verifyProjectAccess = (projectId, userId) => {
     return fastify.db.hasProjectAccess(projectId, userId);
   };
 
   fastify.get('/:projectId', async (request, reply) => {
-    const projectId = parseInt(request.params.projectId);
+    const projectId = parsePositiveIntegerParam(request, 'projectId');
     
-    if (isNaN(projectId)) {
+    if (!projectId) {
       return reply.code(400).send({ error: 'Invalid project ID' });
     }
     
@@ -43,10 +39,10 @@ export async function fileRoutes(fastify, options) {
   });
 
   fastify.get('/:projectId/:fileId/content', async (request, reply) => {
-    const projectId = parseInt(request.params.projectId);
-    const fileId = parseInt(request.params.fileId);
+    const projectId = parsePositiveIntegerParam(request, 'projectId');
+    const fileId = parsePositiveIntegerParam(request, 'fileId');
     
-    if (isNaN(projectId) || isNaN(fileId)) {
+    if (!projectId || !fileId) {
       return reply.code(400).send({ error: 'Invalid IDs' });
     }
     
@@ -97,11 +93,11 @@ export async function fileRoutes(fastify, options) {
   });
 
   fastify.post('/:projectId', async (request, reply) => {
-    const projectId = parseInt(request.params.projectId);
+    const projectId = parsePositiveIntegerParam(request, 'projectId');
     const { name, path, content = '', language = 'plaintext' } = request.body;
     const userId = request.session.userId;
     
-    if (isNaN(projectId)) {
+    if (!projectId) {
       return reply.code(400).send({ error: 'Invalid project ID' });
     }
     
@@ -109,8 +105,7 @@ export async function fileRoutes(fastify, options) {
       return reply.code(403).send({ error: 'Access denied' });
     }
 
-    const userRole = fastify.db.getUserRole(projectId, userId);
-    if (userRole === 'viewer') {
+    if (!canWriteProject(fastify.db, projectId, userId)) {
       return reply.code(403).send({ error: 'Viewers cannot create files' });
     }
 
@@ -170,12 +165,12 @@ export async function fileRoutes(fastify, options) {
   });
 
   fastify.put('/:projectId/:fileId', async (request, reply) => {
-    const projectId = parseInt(request.params.projectId);
-    const fileId = parseInt(request.params.fileId);
+    const projectId = parsePositiveIntegerParam(request, 'projectId');
+    const fileId = parsePositiveIntegerParam(request, 'fileId');
     const { content } = request.body;
     const userId = request.session.userId;
     
-    if (isNaN(projectId) || isNaN(fileId)) {
+    if (!projectId || !fileId) {
       return reply.code(400).send({ error: 'Invalid IDs' });
     }
     
@@ -183,8 +178,7 @@ export async function fileRoutes(fastify, options) {
       return reply.code(403).send({ error: 'Access denied' });
     }
 
-    const userRole = fastify.db.getUserRole(projectId, userId);
-    if (userRole === 'viewer') {
+    if (!canWriteProject(fastify.db, projectId, userId)) {
       return reply.code(403).send({ error: 'Viewers cannot edit files' });
     }
 
@@ -221,11 +215,11 @@ export async function fileRoutes(fastify, options) {
   });
 
   fastify.delete('/:projectId/:fileId', async (request, reply) => {
-    const projectId = parseInt(request.params.projectId);
-    const fileId = parseInt(request.params.fileId);
+    const projectId = parsePositiveIntegerParam(request, 'projectId');
+    const fileId = parsePositiveIntegerParam(request, 'fileId');
     const userId = request.session.userId;
     
-    if (isNaN(projectId) || isNaN(fileId)) {
+    if (!projectId || !fileId) {
       return reply.code(400).send({ error: 'Invalid IDs' });
     }
     
@@ -233,8 +227,7 @@ export async function fileRoutes(fastify, options) {
       return reply.code(403).send({ error: 'Access denied' });
     }
 
-    const userRole = fastify.db.getUserRole(projectId, userId);
-    if (userRole === 'viewer') {
+    if (!canWriteProject(fastify.db, projectId, userId)) {
       return reply.code(403).send({ error: 'Viewers cannot delete files' });
     }
 

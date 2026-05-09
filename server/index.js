@@ -18,6 +18,7 @@ import { chatRoutes } from './routes/chat.js';
 import { initCleanupTasks } from './cleanup.js';
 import { initSocket } from './socket.js';
 import { initStorage } from './utils/fileManager.js';
+import { USERNAME_PATTERN } from './utils/request.js';
 import chalk from 'chalk';
 import crypto from 'crypto';
 
@@ -34,19 +35,19 @@ const fastify = Fastify({
   keepAliveTimeout: 5000
 });
 
-console.log(chalk.cyan('⚡ Initializing Code Editor...'));
+console.log(chalk.cyan('Initializing Code Editor...'));
 
 const db = new Database();
 
-console.log(chalk.green('✓ Database initialized'));
+console.log(chalk.green('Database initialized'));
 
 await initStorage();
 
-console.log(chalk.green('✓ Storage initialized'));
+console.log(chalk.green('Storage initialized'));
 
 initCleanupTasks(db);
 
-console.log(chalk.green('✓ Cleanup tasks registered'));
+console.log(chalk.green('Cleanup tasks registered'));
 
 const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 
@@ -128,7 +129,7 @@ await fastify.register(settingsRoutes, { prefix: '/api/settings' });
 await fastify.register(searchRoutes, { prefix: '/api/search' });
 await fastify.register(chatRoutes, { prefix: '/api/chat' });
 
-fastify.get('/@:username/:projectName/*', async (request, reply) => {
+async function redirectToProject(request, reply, includePath) {
   try {
     if (!request.session.userId) {
       return reply.redirect('/auth');
@@ -136,7 +137,7 @@ fastify.get('/@:username/:projectName/*', async (request, reply) => {
 
     const username = request.params.username;
     const projectName = request.params.projectName;
-    const filePath = request.params['*'] || '';
+    const filePath = includePath ? request.params['*'] || '' : '';
 
     if (!username || typeof username !== 'string' || username.length < 3 || username.length > 100) {
       return reply.redirect('/error?code=404');
@@ -146,7 +147,7 @@ fastify.get('/@:username/:projectName/*', async (request, reply) => {
       return reply.redirect('/error?code=404');
     }
 
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+    if (!USERNAME_PATTERN.test(username)) {
       return reply.redirect('/error?code=404');
     }
 
@@ -179,46 +180,14 @@ fastify.get('/@:username/:projectName/*', async (request, reply) => {
     fastify.log.error(err);
     return reply.redirect('/error?code=500');
   }
+}
+
+fastify.get('/@:username/:projectName/*', (request, reply) => {
+  return redirectToProject(request, reply, true);
 });
 
-fastify.get('/@:username/:projectName', async (request, reply) => {
-  try {
-    if (!request.session.userId) {
-      return reply.redirect('/auth');
-    }
-
-    const username = request.params.username;
-    const projectName = request.params.projectName;
-
-    if (!username || typeof username !== 'string' || username.length < 3 || username.length > 100) {
-      return reply.redirect('/error?code=404');
-    }
-
-    if (!projectName || typeof projectName !== 'string' || projectName.length < 1 || projectName.length > 100) {
-      return reply.redirect('/error?code=404');
-    }
-
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      return reply.redirect('/error?code=404');
-    }
-
-    const project = db.getProjectByUsernameAndName(username, projectName);
-    if (!project) {
-      return reply.redirect('/error?code=404');
-    }
-
-    if (!db.hasProjectAccess(project.id, request.session.userId)) {
-      return reply.redirect('/error?code=403');
-    }
-
-    db.updateProjectLastAccess(project.id);
-    db.updateUserLastAccess(request.session.userId);
-
-    reply.redirect(`/editor?projectId=${project.id}`);
-  } catch (err) {
-    fastify.log.error(err);
-    return reply.redirect('/error?code=500');
-  }
+fastify.get('/@:username/:projectName', (request, reply) => {
+  return redirectToProject(request, reply, false);
 });
 
 await fastify.register(fastifyStatic, {
@@ -294,22 +263,26 @@ const start = async () => {
     const io = initSocket(fastify.server, db);
     fastify.io = io;
     
-    console.log('\n' + chalk.cyan.bold('═'.repeat(50)));
-    console.log(chalk.green.bold('  ✓ code-editor Started Successfully'));
-    console.log(chalk.cyan.bold('═'.repeat(50)));
-    console.log(chalk.white('  🌐 Server:     ') + chalk.yellow.bold('http://localhost:3000'));
-    console.log(chalk.white('  🔌 WebSocket:  ') + chalk.green('Initialized'));
-    console.log(chalk.white('  🧹 Cleanup:    ') + chalk.blue('Scheduled'));
-    console.log(chalk.white('  📊 Database:   ') + chalk.magenta('Connected'));
-    console.log(chalk.cyan.bold('═'.repeat(50)) + '\n');
+    console.log('\n' + chalk.cyan.bold('='.repeat(50)));
+    console.log(chalk.green.bold('  code-editor Started Successfully'));
+    console.log(chalk.cyan.bold('='.repeat(50)));
+    console.log(chalk.white('  Server:    ') + chalk.yellow.bold('http://localhost:3000'));
+    console.log(chalk.white('  WebSocket: ') + chalk.green('Initialized'));
+    console.log(chalk.white('  Cleanup:   ') + chalk.blue('Scheduled'));
+    console.log(chalk.white('  Database:  ') + chalk.magenta('Connected'));
+    console.log(chalk.cyan.bold('='.repeat(50)) + '\n');
   } catch (err) {
-    console.log('\n' + chalk.red.bold('═'.repeat(50)));
-    console.log(chalk.red.bold('  ✗ Server Failed to Start'));
-    console.log(chalk.red.bold('═'.repeat(50)));
+    console.log('\n' + chalk.red.bold('='.repeat(50)));
+    console.log(chalk.red.bold('  Server Failed to Start'));
+    console.log(chalk.red.bold('='.repeat(50)));
     console.error(chalk.red(err));
-    console.log(chalk.red.bold('═'.repeat(50)) + '\n');
+    console.log(chalk.red.bold('='.repeat(50)) + '\n');
     process.exit(1);
   }
 };
 
-start();
+if (!process.env.VERCEL) {
+  start();
+}
+
+export { fastify, db };

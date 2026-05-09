@@ -1,14 +1,10 @@
 import config from '../config.js';
 import { generateProjectKey } from '../utils/encryption.js';
 import { createProjectStorage, deleteProject as deleteProjectFiles } from '../utils/fileManager.js';
+import { parsePositiveIntegerParam, requireAuth } from '../utils/request.js';
 
 export async function projectRoutes(fastify, options) {
-  fastify.addHook('preHandler', (request, reply, done) => {
-    if (!request.session.userId) {
-      return reply.code(401).send({ error: 'Not authenticated' });
-    }
-    done();
-  });
+  fastify.addHook('preHandler', requireAuth);
 
   fastify.get('/', async (request, reply) => {
     try {
@@ -62,9 +58,9 @@ export async function projectRoutes(fastify, options) {
 
   fastify.delete('/:id', async (request, reply) => {
     try {
-      const projectId = parseInt(request.params.id, 10);
+      const projectId = parsePositiveIntegerParam(request, 'id');
       
-      if (isNaN(projectId) || projectId <= 0) {
+      if (!projectId) {
         return reply.code(400).send({ error: 'Invalid project ID' });
       }
       
@@ -93,10 +89,10 @@ export async function projectRoutes(fastify, options) {
 
   fastify.get('/:projectId/role/:userId', async (request, reply) => {
     try {
-      const projectId = parseInt(request.params.projectId, 10);
-      const userId = parseInt(request.params.userId, 10);
+      const projectId = parsePositiveIntegerParam(request, 'projectId');
+      const userId = parsePositiveIntegerParam(request, 'userId');
       
-      if (isNaN(projectId) || projectId <= 0 || isNaN(userId) || userId <= 0) {
+      if (!projectId || !userId) {
         return reply.code(400).send({ error: 'Invalid IDs' });
       }
       

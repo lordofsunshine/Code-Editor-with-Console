@@ -1,10 +1,7 @@
+import { isPlainObject, requireAuth } from '../utils/request.js';
+
 export async function settingsRoutes(fastify, options) {
-  fastify.addHook('preHandler', (request, reply, done) => {
-    if (!request.session.userId) {
-      return reply.code(401).send({ error: 'Not authenticated' });
-    }
-    done();
-  });
+  fastify.addHook('preHandler', requireAuth);
 
   fastify.get('/', async (request, reply) => {
     const userId = request.session.userId;
@@ -17,7 +14,7 @@ export async function settingsRoutes(fastify, options) {
       const userId = request.session.userId;
       const { settings } = request.body;
 
-      if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
+      if (!isPlainObject(settings)) {
         return reply.code(400).send({ error: 'Invalid settings data' });
       }
 
@@ -34,4 +31,3 @@ export async function settingsRoutes(fastify, options) {
     }
   });
 }
-

@@ -1,26 +1,23 @@
 import config from '../config.js';
 import { readFile } from '../utils/fileManager.js';
+import { parsePositiveInteger, requireAuth } from '../utils/request.js';
 
 const MAX_CONTENT_SEARCH_SIZE = config.limits?.maxFileSize || 52428800;
 
 export async function searchRoutes(fastify, options) {
-  fastify.addHook('preHandler', (request, reply, done) => {
-    if (!request.session.userId) {
-      return reply.code(401).send({ error: 'Not authenticated' });
-    }
-    done();
-  });
+  fastify.addHook('preHandler', requireAuth);
 
   fastify.post('/files', async (request, reply) => {
     try {
       const { projectId, query, searchIn = 'names' } = request.body;
       const userId = request.session.userId;
 
-      if (!projectId || typeof projectId !== 'number' || !query || typeof query !== 'string') {
+      if (!projectId || !query || typeof query !== 'string') {
         return reply.code(400).send({ error: 'Invalid request' });
       }
 
-      if (!Number.isInteger(projectId) || projectId <= 0) {
+      const normalizedProjectId = parsePositiveInteger(projectId);
+      if (!normalizedProjectId) {
         return reply.code(400).send({ error: 'Invalid project ID' });
       }
 
@@ -32,13 +29,13 @@ export async function searchRoutes(fastify, options) {
         return reply.code(400).send({ error: 'Invalid search type' });
       }
 
-      if (!fastify.db.hasProjectAccess(projectId, userId)) {
+      if (!fastify.db.hasProjectAccess(normalizedProjectId, userId)) {
         return reply.code(403).send({ error: 'Access denied' });
       }
 
       const searchStorage = async () => {
-        const files = fastify.db.getFiles(projectId);
-        const encryptionKey = fastify.db.getProjectEncryptionKey(projectId);
+        const files = fastify.db.getFiles(normalizedProjectId);
+        const encryptionKey = fastify.db.getProjectEncryptionKey(normalizedProjectId);
         if (!encryptionKey) {
           return { error: 'Project encryption key not found' };
         }
@@ -53,7 +50,7 @@ export async function searchRoutes(fastify, options) {
           }
           let content;
           try {
-            content = await readFile(projectId, file.id, file.name, encryptionKey);
+            content = await readFile(normalizedProjectId, file.id, file.name, encryptionKey);
           } catch (err) {
             continue;
           }
@@ -70,7 +67,7 @@ export async function searchRoutes(fastify, options) {
       let results;
       if (searchIn === 'content') {
         if (fastify.db.hasFileContentColumn()) {
-          results = fastify.db.searchFilesByContent(projectId, query);
+          results = fastify.db.searchFilesByContent(normalizedProjectId, query);
           if (!results.length) {
             const storageResults = await searchStorage();
             if (storageResults.error) {
@@ -86,7 +83,7 @@ export async function searchRoutes(fastify, options) {
           results = storageResults.results;
         }
       } else {
-        results = fastify.db.searchFiles(projectId, query);
+        results = fastify.db.searchFiles(normalizedProjectId, query);
       }
       return { results };
     } catch (err) {

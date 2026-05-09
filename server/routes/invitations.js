@@ -1,25 +1,30 @@
+import {
+  emitToUser,
+  emitToUsers,
+  isValidUsername,
+  parsePositiveInteger,
+  parsePositiveIntegerParam,
+  requireAuth
+} from '../utils/request.js';
+
 export async function invitationRoutes(fastify, options) {
-  fastify.addHook('preHandler', (request, reply, done) => {
-    if (!request.session.userId) {
-      return reply.code(401).send({ error: 'Not authenticated' });
-    }
-    done();
-  });
+  fastify.addHook('preHandler', requireAuth);
 
   fastify.post('/send', async (request, reply) => {
     try {
       const { projectId, username, role = 'editor' } = request.body;
       const fromUserId = request.session.userId;
+      const normalizedProjectId = parsePositiveInteger(projectId);
 
-      if (!projectId || typeof projectId !== 'number' || !username || typeof username !== 'string') {
+      if (!projectId || !username || typeof username !== 'string') {
         return reply.code(400).send({ error: 'Invalid request' });
       }
 
-      if (!Number.isInteger(projectId) || projectId <= 0) {
+      if (!normalizedProjectId) {
         return reply.code(400).send({ error: 'Invalid project ID' });
       }
 
-      if (username.length < 3 || username.length > 100) {
+      if (!isValidUsername(username, 3, 100)) {
         return reply.code(400).send({ error: 'Invalid username' });
       }
 
@@ -27,12 +32,12 @@ export async function invitationRoutes(fastify, options) {
         return reply.code(400).send({ error: 'Invalid role' });
       }
 
-      const project = fastify.db.getProject(projectId, fromUserId);
+      const project = fastify.db.getProject(normalizedProjectId, fromUserId);
       if (!project) {
         return reply.code(403).send({ error: 'Access denied' });
       }
 
-      const existingInvitations = fastify.db.getInvitationsByProject(projectId);
+      const existingInvitations = fastify.db.getInvitationsByProject(normalizedProjectId);
       const activeInvitations = existingInvitations.filter(inv => 
         inv.status === 'accepted' || inv.status === 'pending'
       );
@@ -50,7 +55,7 @@ export async function invitationRoutes(fastify, options) {
         return reply.code(400).send({ error: 'Cannot invite yourself' });
       }
 
-      if (fastify.db.isCollaborator(projectId, toUser.id)) {
+      if (fastify.db.isCollaborator(normalizedProjectId, toUser.id)) {
         return reply.code(400).send({ error: 'User is already a collaborator' });
       }
 
@@ -62,17 +67,10 @@ export async function invitationRoutes(fastify, options) {
         return reply.code(400).send({ error: 'Invitation already pending for this user' });
       }
 
-      const result = fastify.db.createInvitation(projectId, fromUserId, toUser.id, role);
+      const result = fastify.db.createInvitation(normalizedProjectId, fromUserId, toUser.id, role);
       const invitation = fastify.db.getInvitation(result.lastInsertRowid);
       
-      if (fastify.io) {
-        const userSockets = Array.from(fastify.io.sockets.sockets.values())
-          .filter(s => s.userId === toUser.id);
-        
-        userSockets.forEach(s => {
-          s.emit('invitation-received', invitation);
-        });
-      }
+      emitToUser(fastify.io, toUser.id, 'invitation-received', invitation);
 
       return { success: true, invitation };
     } catch (err) {
@@ -89,10 +87,10 @@ export async function invitationRoutes(fastify, options) {
 
   fastify.get('/project/:projectId', async (request, reply) => {
     try {
-      const projectId = parseInt(request.params.projectId, 10);
+      const projectId = parsePositiveIntegerParam(request, 'projectId');
       const userId = request.session.userId;
 
-      if (isNaN(projectId) || projectId <= 0) {
+      if (!projectId) {
         return reply.code(400).send({ error: 'Invalid project ID' });
       }
 
@@ -111,10 +109,10 @@ export async function invitationRoutes(fastify, options) {
 
   fastify.post('/:invitationId/accept', async (request, reply) => {
     try {
-      const invitationId = parseInt(request.params.invitationId, 10);
+      const invitationId = parsePositiveIntegerParam(request, 'invitationId');
       const userId = request.session.userId;
 
-      if (isNaN(invitationId) || invitationId <= 0) {
+      if (!invitationId) {
         return reply.code(400).send({ error: 'Invalid invitation ID' });
       }
 
@@ -133,16 +131,7 @@ export async function invitationRoutes(fastify, options) {
 
       fastify.db.addCollaborator(invitation.project_id, userId, invitation.role);
       fastify.db.updateInvitationStatus(invitationId, 'accepted');
-      
-      if (fastify.io) {
-        const fromUserSockets = Array.from(fastify.io.sockets.sockets.values())
-          .filter(s => s.userId === invitation.from_user_id);
-        fromUserSockets.forEach(s => s.emit('invitation-updated'));
-        
-        const toUserSockets = Array.from(fastify.io.sockets.sockets.values())
-          .filter(s => s.userId === userId);
-        toUserSockets.forEach(s => s.emit('invitation-updated'));
-      }
+      emitToUsers(fastify.io, [invitation.from_user_id, userId], 'invitation-updated');
       
       return { success: true };
     } catch (err) {
@@ -153,10 +142,10 @@ export async function invitationRoutes(fastify, options) {
 
   fastify.post('/:invitationId/reject', async (request, reply) => {
     try {
-      const invitationId = parseInt(request.params.invitationId, 10);
+      const invitationId = parsePositiveIntegerParam(request, 'invitationId');
       const userId = request.session.userId;
 
-      if (isNaN(invitationId) || invitationId <= 0) {
+      if (!invitationId) {
         return reply.code(400).send({ error: 'Invalid invitation ID' });
       }
 
@@ -174,16 +163,7 @@ export async function invitationRoutes(fastify, options) {
       }
 
       fastify.db.updateInvitationStatus(invitationId, 'rejected');
-      
-      if (fastify.io) {
-        const fromUserSockets = Array.from(fastify.io.sockets.sockets.values())
-          .filter(s => s.userId === invitation.from_user_id);
-        fromUserSockets.forEach(s => s.emit('invitation-updated'));
-        
-        const toUserSockets = Array.from(fastify.io.sockets.sockets.values())
-          .filter(s => s.userId === userId);
-        toUserSockets.forEach(s => s.emit('invitation-updated'));
-      }
+      emitToUsers(fastify.io, [invitation.from_user_id, userId], 'invitation-updated');
       
       return { success: true };
     } catch (err) {
@@ -194,10 +174,10 @@ export async function invitationRoutes(fastify, options) {
 
   fastify.get('/collaborators/:projectId', async (request, reply) => {
     try {
-      const projectId = parseInt(request.params.projectId, 10);
+      const projectId = parsePositiveIntegerParam(request, 'projectId');
       const userId = request.session.userId;
 
-      if (isNaN(projectId) || projectId <= 0) {
+      if (!projectId) {
         return reply.code(400).send({ error: 'Invalid project ID' });
       }
 
@@ -215,11 +195,11 @@ export async function invitationRoutes(fastify, options) {
 
   fastify.delete('/collaborators/:projectId/:collaboratorId', async (request, reply) => {
     try {
-      const projectId = parseInt(request.params.projectId, 10);
-      const collaboratorId = parseInt(request.params.collaboratorId, 10);
+      const projectId = parsePositiveIntegerParam(request, 'projectId');
+      const collaboratorId = parsePositiveIntegerParam(request, 'collaboratorId');
       const userId = request.session.userId;
 
-      if (isNaN(projectId) || projectId <= 0 || isNaN(collaboratorId) || collaboratorId <= 0) {
+      if (!projectId || !collaboratorId) {
         return reply.code(400).send({ error: 'Invalid IDs' });
       }
 
@@ -245,22 +225,12 @@ export async function invitationRoutes(fastify, options) {
         fastify.db.updateInvitationStatus(userInvitation.id, 'removed');
       }
       
-      if (fastify.io) {
-        const collabSockets = Array.from(fastify.io.sockets.sockets.values())
-          .filter(s => s.userId === collaboratorId);
-        collabSockets.forEach(s => {
-          s.emit('kicked-from-project', { 
-            projectId, 
-            projectName: project.name,
-            reason: 'removed' 
-          });
-          s.emit('invitation-updated');
-        });
-        
-        const ownerSockets = Array.from(fastify.io.sockets.sockets.values())
-          .filter(s => s.userId === userId);
-        ownerSockets.forEach(s => s.emit('invitation-updated'));
-      }
+      emitToUser(fastify.io, collaboratorId, 'kicked-from-project', {
+        projectId,
+        projectName: project.name,
+        reason: 'removed'
+      });
+      emitToUsers(fastify.io, [collaboratorId, userId], 'invitation-updated');
       
       return { success: true };
     } catch (err) {
@@ -271,10 +241,10 @@ export async function invitationRoutes(fastify, options) {
 
   fastify.post('/:invitationId/cancel', async (request, reply) => {
     try {
-      const invitationId = parseInt(request.params.invitationId, 10);
+      const invitationId = parsePositiveIntegerParam(request, 'invitationId');
       const userId = request.session.userId;
 
-      if (isNaN(invitationId) || invitationId <= 0) {
+      if (!invitationId) {
         return reply.code(400).send({ error: 'Invalid invitation ID' });
       }
 
@@ -293,16 +263,7 @@ export async function invitationRoutes(fastify, options) {
       }
 
       fastify.db.updateInvitationStatus(invitationId, 'cancelled');
-      
-      if (fastify.io) {
-        const toUserSockets = Array.from(fastify.io.sockets.sockets.values())
-          .filter(s => s.userId === invitation.to_user_id);
-        toUserSockets.forEach(s => s.emit('invitation-updated'));
-        
-        const fromUserSockets = Array.from(fastify.io.sockets.sockets.values())
-          .filter(s => s.userId === userId);
-        fromUserSockets.forEach(s => s.emit('invitation-updated'));
-      }
+      emitToUsers(fastify.io, [invitation.to_user_id, userId], 'invitation-updated');
       
       return { success: true };
     } catch (err) {
@@ -313,10 +274,10 @@ export async function invitationRoutes(fastify, options) {
 
   fastify.post('/leave/:projectId', async (request, reply) => {
     try {
-      const projectId = parseInt(request.params.projectId, 10);
+      const projectId = parsePositiveIntegerParam(request, 'projectId');
       const userId = request.session.userId;
 
-      if (isNaN(projectId) || projectId <= 0) {
+      if (!projectId) {
         return reply.code(400).send({ error: 'Invalid project ID' });
       }
 
@@ -337,11 +298,7 @@ export async function invitationRoutes(fastify, options) {
       if (userInvitation) {
         fastify.db.updateInvitationStatus(userInvitation.id, 'left');
         
-        if (fastify.io && userInvitation.from_user_id) {
-          const ownerSockets = Array.from(fastify.io.sockets.sockets.values())
-            .filter(s => s.userId === userInvitation.from_user_id);
-          ownerSockets.forEach(s => s.emit('invitation-updated'));
-        }
+        emitToUser(fastify.io, userInvitation.from_user_id, 'invitation-updated');
       }
       
       return { success: true };

@@ -1,12 +1,8 @@
 import config from '../config.js';
+import { requireAuth } from '../utils/request.js';
 
 export async function warningRoutes(fastify, options) {
-  fastify.addHook('preHandler', (request, reply, done) => {
-    if (!request.session.userId) {
-      return reply.code(401).send({ error: 'Not authenticated' });
-    }
-    done();
-  });
+  fastify.addHook('preHandler', requireAuth);
 
   fastify.get('/expiring-projects', async (request, reply) => {
     try {

@@ -1,15 +1,20 @@
 import Database3 from 'better-sqlite3';
 import { existsSync, mkdirSync } from 'fs';
+import path from 'path';
+import { tmpdir } from 'os';
 import { generateProjectKey } from './utils/encryption.js';
 
 export class Database {
   constructor() {
-    const dbPath = './data';
+    const dbPath = process.env.VERCEL
+      ? path.join(tmpdir(), 'code-editor-data')
+      : './data';
+
     if (!existsSync(dbPath)) {
       mkdirSync(dbPath, { recursive: true });
     }
     
-    this.db = new Database3('./data/editor.db');
+    this.db = new Database3(path.join(dbPath, 'editor.db'));
     this.db.pragma('foreign_keys = ON');
     this.db.pragma('journal_mode = WAL');
     this.db.pragma('synchronous = NORMAL');

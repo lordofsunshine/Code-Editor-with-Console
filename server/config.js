@@ -24,20 +24,23 @@ let config = {
   }
 };
 
+function mergeSection(target, source) {
+  return source && typeof source === 'object' && !Array.isArray(source)
+    ? { ...target, ...source }
+    : target;
+}
+
 try {
   const configData = fs.readFileSync(configPath, 'utf8');
   const parsedConfig = JSON.parse(configData);
   
   if (parsedConfig && typeof parsedConfig === 'object') {
-    if (parsedConfig.limits && typeof parsedConfig.limits === 'object') {
-      config.limits = { ...config.limits, ...parsedConfig.limits };
-    }
-    if (parsedConfig.features && typeof parsedConfig.features === 'object') {
-      config.features = { ...config.features, ...parsedConfig.features };
-    }
-    if (parsedConfig.cleanup && typeof parsedConfig.cleanup === 'object') {
-      config.cleanup = { ...config.cleanup, ...parsedConfig.cleanup };
-    }
+    config = {
+      ...config,
+      limits: mergeSection(config.limits, parsedConfig.limits),
+      features: mergeSection(config.features, parsedConfig.features),
+      cleanup: mergeSection(config.cleanup, parsedConfig.cleanup)
+    };
   }
 } catch (err) {
   console.log('Using default config');
