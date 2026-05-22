@@ -23,7 +23,25 @@ A lightweight, web‑based code editor with real‑time collaboration, project/f
 - **Modern UX**: dark/light themes, status bar, tabs, keyboard shortcuts, smooth animations.
 - **Security**: sessions with httpOnly cookies, CSRF token checks, protective headers, rate limiting.
 
-### What's New?
+## Security Updates
+
+1. **Safer editor preview**
+   Removed `allow-same-origin` from the sandboxed preview iframe in `public/editor.html`. This makes the preview area more isolated and safer.
+
+2. **Safer content search**
+   Content search now has limits for file size, total search budget, number of files, and number of results. This helps protect the service from heavy or abusive searches.
+
+3. **Preview instead of full content**
+   Search results now return only a small preview fragment instead of the full file content. This makes search faster, lighter, and safer.
+
+4. **File migration lock**
+   Added a per-file lock when moving stored database content to disk. This helps prevent conflicts when the same file is processed at the same time.
+
+5. **Improved HTML escaping**
+   Updated HTML escaping in client-side scripts across preview, file tree, chat, search, editor, auth, collaboration, warnings, user menu, and what’s new pages.
+
+6. **Stronger text escaping rules**
+   User-facing text now escapes `&`, `<`, `>`, `"`, and `'`. This reduces the risk of unsafe HTML being rendered in the interface.
 
 Latest updates and improvements:
 

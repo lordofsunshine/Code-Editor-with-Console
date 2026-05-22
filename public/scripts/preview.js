@@ -190,7 +190,7 @@ function updatePreviewFileSelect(files) {
   
   const currentValue = select.value;
   select.innerHTML = files.map(f => 
-    `<option value="${f.id}" ${f.id == currentValue ? 'selected' : ''}>${f.name}</option>`
+    `<option value="${f.id}" ${f.id == currentValue ? 'selected' : ''}>${escapeHtml(f.name)}</option>`
   ).join('');
   
   if (files.length > 0 && !select.value) {
@@ -662,9 +662,15 @@ function renderSVGPreview(file, iframe) {
 }
 
 function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+  if (typeof text !== 'string') {
+    return '';
+  }
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function renderMarkdownPreview(file, iframe) {
@@ -957,4 +963,3 @@ function renderAudioPreview(file, iframe) {
     iframe.srcdoc = html;
   }
 }
-

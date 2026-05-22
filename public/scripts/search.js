@@ -148,7 +148,7 @@ function displaySearchResults(results, query, searchType) {
         </div>
         <div class="search-result-content">
           <div class="search-result-name">${highlightMatch(file.name, query)}</div>
-          <div class="search-result-path">${file.path}</div>
+          <div class="search-result-path">${escapeHtml(file.path)}</div>
           ${searchType === 'content' ? `<div class="search-result-preview">${getContentPreview(file.content, query)}</div>` : ''}
         </div>
       </div>
@@ -167,11 +167,16 @@ function displaySearchResults(results, query, searchType) {
 }
 
 function highlightMatch(text, query) {
-  const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
-  return text.replace(regex, '<mark>$1</mark>');
+  const safeText = escapeHtml(text);
+  const safeQuery = escapeHtml(query);
+  const regex = new RegExp(`(${escapeRegex(safeQuery)})`, 'gi');
+  return safeText.replace(regex, '<mark>$1</mark>');
 }
 
 function getContentPreview(content, query) {
+  if (typeof content !== 'string') {
+    return '';
+  }
   const index = content.toLowerCase().indexOf(query.toLowerCase());
   if (index === -1) return '';
   
@@ -187,6 +192,18 @@ function getContentPreview(content, query) {
 
 function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function escapeHtml(text) {
+  if (typeof text !== 'string') {
+    return '';
+  }
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function showMessage(message, type = 'info') {

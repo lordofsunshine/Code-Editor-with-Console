@@ -703,7 +703,7 @@ export class Database {
     return stmt.all(projectId, `%${query}%`, `%${query}%`);
   }
 
-  searchFilesByContent(projectId, query) {
+  searchFilesByContent(projectId, query, options = {}) {
     if (!Number.isInteger(projectId) || projectId <= 0) {
       return [];
     }
@@ -713,12 +713,23 @@ export class Database {
     if (!this.fileContentColumnExists) {
       return [];
     }
+    const maxContentSize = Number.isInteger(options.maxContentSize) && options.maxContentSize > 0 ? options.maxContentSize : 1048576;
+    const maxResults = Number.isInteger(options.maxResults) && options.maxResults > 0 ? options.maxResults : 50;
+    const previewContext = Number.isInteger(options.previewContext) && options.previewContext >= 0 ? options.previewContext : 80;
+    const previewLength = previewContext * 2 + query.length;
     const stmt = this.db.prepare(`
-      SELECT * FROM files 
-      WHERE project_id = ? AND content LIKE ?
+      SELECT id, project_id, name, path, language, size, is_media, created_at, updated_at,
+             substr(content, max(1, instr(lower(content), lower(?)) - ?), ?) AS content
+      FROM files 
+      WHERE project_id = ?
+        AND content IS NOT NULL
+        AND content != ''
+        AND length(content) <= ?
+        AND content LIKE ?
       ORDER BY name
+      LIMIT ?
     `);
-    return stmt.all(projectId, `%${query}%`);
+    return stmt.all(query, previewContext, previewLength, projectId, maxContentSize, `%${query}%`, maxResults);
   }
 
   createChatMessage(projectId, userId, message) {

@@ -6,9 +6,27 @@ import { canWriteProject, parsePositiveIntegerParam, requireAuth } from '../util
 
 export async function fileRoutes(fastify, options) {
   fastify.addHook('preHandler', requireAuth);
+  const migrationLocks = new Map();
 
   const verifyProjectAccess = (projectId, userId) => {
     return fastify.db.hasProjectAccess(projectId, userId);
+  };
+
+  const migrateFileContentOnce = (projectId, fileId, task) => {
+    const key = `${projectId}:${fileId}`;
+    const activeMigration = migrationLocks.get(key);
+    if (activeMigration) {
+      return activeMigration;
+    }
+    const migration = Promise.resolve()
+      .then(task)
+      .finally(() => {
+        if (migrationLocks.get(key) === migration) {
+          migrationLocks.delete(key);
+        }
+      });
+    migrationLocks.set(key, migration);
+    return migration;
   };
 
   fastify.get('/:projectId', async (request, reply) => {
@@ -68,8 +86,14 @@ export async function fileRoutes(fastify, options) {
         content = fileWithContent.content;
         
         try {
-          await saveFile(projectId, fileId, file.name, fileWithContent.content, encryptionKey);
-          fastify.db.clearFileContent(fileId, projectId);
+          await migrateFileContentOnce(projectId, fileId, async () => {
+            const currentFileWithContent = fastify.db.getFileWithContent(fileId, projectId);
+            if (!currentFileWithContent || !currentFileWithContent.content) {
+              return;
+            }
+            await saveFile(projectId, fileId, file.name, currentFileWithContent.content, encryptionKey);
+            fastify.db.clearFileContent(fileId, projectId);
+          });
         } catch (migrateErr) {
           fastify.log.warn(`Error migrating file ${fileId} to storage:`, migrateErr);
         }
